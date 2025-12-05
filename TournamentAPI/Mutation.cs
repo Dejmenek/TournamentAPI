@@ -75,4 +75,16 @@ public class Mutation
 
         return tournament;
     }
+
+    public async Task<bool> DeleteTournament(int tournamentId, [Service] ApplicationDbContext context)
+    {
+        var tournament = await context.Tournaments.FirstOrDefaultAsync(t => t.Id == tournamentId);
+
+        if (tournament is null) return false;
+
+        context.Tournaments.Remove(tournament);
+        await context.SaveChangesAsync();
+
+        return true;
+    }
 }
