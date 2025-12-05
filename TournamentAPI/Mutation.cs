@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Data;
+using TournamentAPI.Inputs;
 using TournamentAPI.Models;
 
 namespace TournamentAPI;
@@ -28,6 +29,26 @@ public class Mutation
         {
             throw new GraphQLException("Failed to add participant due to a database error.");
         }
+
+        return tournament;
+    }
+
+    public async Task<Tournament> CreateTournament(TournamentInput input, [Service] ApplicationDbContext context)
+    {
+        if (string.IsNullOrWhiteSpace(input.Name))
+        {
+            throw new GraphQLException("Tournament name cannot be empty.");
+        }
+
+        var tournament = new Tournament
+        {
+            Name = input.Name,
+            StartDate = input.StartDate,
+            Status = input.Status
+        };
+
+        context.Tournaments.Add(tournament);
+        await context.SaveChangesAsync();
 
         return tournament;
     }
