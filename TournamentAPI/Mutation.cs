@@ -33,7 +33,7 @@ public class Mutation
         return tournament;
     }
 
-    public async Task<Tournament> CreateTournament(TournamentInput input, [Service] ApplicationDbContext context)
+    public async Task<Tournament> CreateTournament(CreateTournamentInput input, [Service] ApplicationDbContext context)
     {
         if (string.IsNullOrWhiteSpace(input.Name))
         {
@@ -48,6 +48,29 @@ public class Mutation
         };
 
         context.Tournaments.Add(tournament);
+        await context.SaveChangesAsync();
+
+        return tournament;
+    }
+
+    public async Task<Tournament> UpdateTournament(int tournamentId, UpdateTournamentInput input, [Service] ApplicationDbContext context)
+    {
+        var tournament = await context.Tournaments.FirstOrDefaultAsync(t => t.Id == tournamentId)
+            ?? throw new GraphQLException("Tournament doesn't exist");
+
+        if (input.Name != null)
+        {
+            if (string.IsNullOrWhiteSpace(input.Name))
+                throw new GraphQLException("Tournament name cannot be empty.");
+            tournament.Name = input.Name;
+        }
+
+        if (input.StartDate != null)
+            tournament.StartDate = input.StartDate.Value;
+
+        if (input.Status != null)
+            tournament.Status = input.Status.Value;
+
         await context.SaveChangesAsync();
 
         return tournament;
