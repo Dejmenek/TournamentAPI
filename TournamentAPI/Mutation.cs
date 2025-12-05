@@ -87,4 +87,52 @@ public class Mutation
 
         return true;
     }
+
+    public async Task<Bracket> GenerateBracket(int tournamentId, [Service] ApplicationDbContext context)
+    {
+        var tournament = await context.Tournaments
+            .Include(t => t.Participants)
+            .Include(t => t.Bracket)
+            .FirstOrDefaultAsync(t => t.Id == tournamentId)
+            ?? throw new GraphQLException("Tournament doesn't exist");
+
+        if (tournament.Status != TournamentStatus.Closed)
+            throw new GraphQLException("Bracket can only be generated when the tournament is closed.");
+
+        if (tournament.Bracket != null)
+            throw new GraphQLException("Bracket already exists for this tournament.");
+
+        if (tournament.Participants.Count < 2)
+            throw new GraphQLException("Not enough participants to create a bracket");
+
+        var bracket = new Bracket
+        {
+            TournamentId = tournamentId,
+            Matches = new List<Match>()
+        };
+
+        var participants = tournament.Participants.ToList();
+        var random = new Random();
+        participants = [.. participants.OrderBy(x => random.Next())];
+
+        for (int i = 0; i < participants.Count; i++)
+        {
+            Match match = new()
+            {
+                Round = 1,
+                Player1Id = participants[i].Id,
+                Player2Id = (i + 1 < participants.Count) ? participants[i + 1].Id : null,
+                Bracket = bracket,
+            };
+
+            bracket.Matches.Add(match);
+        }
+
+        context.Brackets.Add(bracket);
+        tournament.Bracket = bracket;
+
+        await context.SaveChangesAsync();
+
+        return bracket;
+    }
 }
