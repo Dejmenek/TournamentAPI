@@ -136,6 +136,36 @@ public class Mutation
         return bracket;
     }
 
+    public async Task<Bracket> UpdateRound(int bracketId, int roundNumber, [Service] ApplicationDbContext context)
+    {
+        var bracket = await context.Brackets
+            .Include(b => b.Matches)
+            .ThenInclude(m => m.Winner)
+            .FirstOrDefaultAsync(b => b.Id == bracketId)
+            ?? throw new GraphQLException("Bracket doesn't exist");
+
+        var matchesInRound = bracket.Matches.Where(m => m.Round == roundNumber).ToList();
+        if (matchesInRound.Any(m => m.WinnerId == null))
+            throw new GraphQLException("Not all matches in the current round have been played.");
+
+        var winners = matchesInRound.Select(m => m.Winner!).ToList();
+        for (int i = 0; i < winners.Count; i += 2)
+        {
+            Match match = new()
+            {
+                Round = roundNumber + 1,
+                Player1Id = winners[i].Id,
+                Player2Id = (i + 1 < winners.Count) ? winners[i + 1].Id : null,
+                BracketId = bracket.Id,
+            };
+            bracket.Matches.Add(match);
+        }
+
+        await context.SaveChangesAsync();
+
+        return bracket;
+    }
+
     public async Task<bool> Play(int matchId, int winnerId, [Service] ApplicationDbContext context)
     {
         var match = await context.Matches
