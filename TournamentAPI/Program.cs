@@ -13,6 +13,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services
+    .AddGraphQLServer()
+    .AddQueryType<Query>()
+    .AddMutationType<Mutation>()
+    .AddProjections()
+    .AddFiltering()
+    .AddSorting();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -22,5 +31,7 @@ using (var scope = app.Services.CreateScope())
     await context.Database.EnsureDeletedAsync();
     await context.Database.EnsureCreatedAsync();
 }
+
+app.MapGraphQL();
 
 app.Run();
