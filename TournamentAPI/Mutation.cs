@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Data;
 using TournamentAPI.Inputs;
 using TournamentAPI.Models;
+using TournamentAPI.Services;
 
 namespace TournamentAPI;
 
@@ -189,5 +191,17 @@ public class Mutation
         await context.SaveChangesAsync();
 
         return true;
+    }
+
+    public async Task<string> LoginUser(LoginUserInput input, [Service] UserManager<ApplicationUser> userManager, [Service] JwtService jwtService)
+    {
+        var user = await userManager.FindByEmailAsync(input.Email)
+            ?? throw new GraphQLException("Invalid username or password.");
+
+        if (!await userManager.CheckPasswordAsync(user, input.Password))
+            throw new GraphQLException("Invalid username or password.");
+
+        var token = jwtService.CreateToken(user);
+        return token;
     }
 }
