@@ -193,6 +193,24 @@ public class Mutation
         return true;
     }
 
+    public async Task<bool> RegisterUser(RegisterUserInput input, [Service] UserManager<ApplicationUser> userManager)
+    {
+        var user = new ApplicationUser
+        {
+            UserName = input.UserName,
+            Email = input.Email
+        };
+
+        var result = await userManager.CreateAsync(user, input.Password);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            throw new GraphQLException($"User registration failed: {errors}");
+        }
+
+        return true;
+    }
+
     public async Task<string> LoginUser(LoginUserInput input, [Service] UserManager<ApplicationUser> userManager, [Service] JwtService jwtService)
     {
         var user = await userManager.FindByEmailAsync(input.Email)
