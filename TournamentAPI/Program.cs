@@ -10,7 +10,7 @@ using TournamentAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
@@ -40,6 +40,7 @@ builder.Services.AddScoped<JwtService>();
 
 builder.Services
     .AddGraphQLServer()
+    .RegisterDbContextFactory<ApplicationDbContext>()
     .AddAuthorization()
     .AddQueryType<Query>()
     .AddMutationType<Mutation>()
