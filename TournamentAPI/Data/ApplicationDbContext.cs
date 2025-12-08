@@ -65,5 +65,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .WithMany(u => u.MatchesWon)
             .HasForeignKey(m => m.WinnerId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Match>()
+            .HasOne(m => m.Bracket)
+            .WithMany(b => b.Matches)
+            .HasForeignKey(m => m.BracketId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

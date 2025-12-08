@@ -12,16 +12,15 @@ public class Mutation
     public async Task<Tournament> AddParticipant(int userId, int tournamentId, [Service] ApplicationDbContext context)
     {
         var tournament = await context.Tournaments
-            .Include(t => t.Participants)
-            .FirstOrDefaultAsync(t => t.Id == tournamentId)
-            ?? throw new GraphQLException("Tournament doesn't exist");
+        .Include(t => t.Participants)
+        .FirstOrDefaultAsync(t => t.Id == tournamentId)
+        ?? throw new GraphQLException("Tournament doesn't exist");
 
         if (tournament.Status == TournamentStatus.Closed)
             throw new GraphQLException("Tournament is closed");
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId)
             ?? throw new GraphQLException("User doesn't exist");
-        if (tournament.Participants.Contains(user)) throw new GraphQLException("User already participates in the tournament");
 
         bool alreadyParticipates = tournament.Participants.Any(tp => tp.ParticipantId == userId);
         if (alreadyParticipates)
@@ -94,11 +93,16 @@ public class Mutation
 
     public async Task<bool> DeleteTournament(int tournamentId, [Service] ApplicationDbContext context)
     {
-        var tournament = await context.Tournaments.FirstOrDefaultAsync(t => t.Id == tournamentId);
+        var tournament = await context.Tournaments
+        .Include(t => t.Bracket)
+            .ThenInclude(b => b.Matches)
+        .Include(t => t.Participants)
+        .FirstOrDefaultAsync(t => t.Id == tournamentId);
 
         if (tournament is null) return false;
 
         tournament.IsDeleted = true;
+
         if (tournament.Bracket != null)
         {
             tournament.Bracket.IsDeleted = true;
@@ -106,6 +110,11 @@ public class Mutation
             {
                 match.IsDeleted = true;
             }
+        }
+
+        foreach (var participant in tournament.Participants)
+        {
+            participant.IsDeleted = true;
         }
 
         await context.SaveChangesAsync();
@@ -145,8 +154,8 @@ public class Mutation
             Match match = new()
             {
                 Round = 1,
-                Player1Id = participants[i].Id,
-                Player2Id = (i + 1 < participants.Count) ? participants[i + 1].Id : null,
+                Player1Id = participants[i].ParticipantId,
+                Player2Id = (i + 1 < participants.Count) ? participants[i + 1].ParticipantId : null,
                 Bracket = bracket,
             };
 
