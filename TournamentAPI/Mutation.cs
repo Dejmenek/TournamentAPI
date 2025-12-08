@@ -84,7 +84,16 @@ public class Mutation
 
         if (tournament is null) return false;
 
-        context.Tournaments.Remove(tournament);
+        tournament.IsDeleted = true;
+        if (tournament.Bracket != null)
+        {
+            tournament.Bracket.IsDeleted = true;
+            foreach (var match in tournament.Bracket.Matches)
+            {
+                match.IsDeleted = true;
+            }
+        }
+
         await context.SaveChangesAsync();
 
         return true;

@@ -8,6 +8,7 @@ public class Match
     public int Player1Id { get; set; }
     public int? Player2Id { get; set; }
     public int? WinnerId { get; set; }
+    public bool IsDeleted { get; set; }
 
     public ApplicationUser Player1 { get; set; } = null!;
     public ApplicationUser? Player2 { get; set; }

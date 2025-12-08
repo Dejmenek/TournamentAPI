@@ -31,10 +31,14 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasForeignKey(m => m.Player2Id)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<Tournament>().HasQueryFilter(t => !t.IsDeleted);
+        builder.Entity<Match>().HasQueryFilter(m => !m.IsDeleted);
+        builder.Entity<Bracket>().HasQueryFilter(b => !b.IsDeleted);
+
         builder.Entity<Match>()
             .HasOne(m => m.Winner)
             .WithMany(u => u.MatchesWon)
             .HasForeignKey(m => m.WinnerId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
