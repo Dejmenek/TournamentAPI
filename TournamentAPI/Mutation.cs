@@ -16,13 +16,27 @@ public class Mutation
             .FirstOrDefaultAsync(t => t.Id == tournamentId)
             ?? throw new GraphQLException("Tournament doesn't exist");
 
-        if (tournament.Status == TournamentStatus.Closed) throw new GraphQLException("Tournament is closed");
+        if (tournament.Status == TournamentStatus.Closed)
+            throw new GraphQLException("Tournament is closed");
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId)
             ?? throw new GraphQLException("User doesn't exist");
         if (tournament.Participants.Contains(user)) throw new GraphQLException("User already participates in the tournament");
 
-        tournament.Participants.Add(user);
+        bool alreadyParticipates = tournament.Participants.Any(tp => tp.ParticipantId == userId);
+        if (alreadyParticipates)
+            throw new GraphQLException("User already participates in the tournament");
+
+        var participant = new TournamentParticipant
+        {
+            TournamentId = tournamentId,
+            ParticipantId = userId,
+            Tournament = tournament,
+            Participant = user
+        };
+
+        context.TournamentParticipants.Add(participant);
+
         try
         {
             await context.SaveChangesAsync();

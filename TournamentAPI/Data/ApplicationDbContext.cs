@@ -12,6 +12,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     }
 
     public DbSet<Tournament> Tournaments { get; set; }
+    public DbSet<TournamentParticipant> TournamentParticipants { get; set; }
     public DbSet<Bracket> Brackets { get; set; }
     public DbSet<Match> Matches { get; set; }
 
@@ -31,7 +32,31 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasForeignKey(m => m.Player2Id)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<Tournament>()
+            .HasOne(t => t.Owner)
+            .WithMany(u => u.OwnedTournaments)
+            .HasForeignKey(t => t.OwnerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Entity<Tournament>().HasQueryFilter(t => !t.IsDeleted);
+
+        builder.Entity<TournamentParticipant>()
+            .HasKey(tp => new { tp.TournamentId, tp.ParticipantId });
+
+        builder.Entity<TournamentParticipant>().HasQueryFilter(tp => !tp.IsDeleted);
+
+        builder.Entity<TournamentParticipant>()
+            .HasOne(tp => tp.Tournament)
+            .WithMany(t => t.Participants)
+            .HasForeignKey(tp => tp.TournamentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<TournamentParticipant>()
+            .HasOne(tp => tp.Participant)
+            .WithMany(u => u.ParticipatedTournaments)
+            .HasForeignKey(tp => tp.ParticipantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Entity<Match>().HasQueryFilter(m => !m.IsDeleted);
         builder.Entity<Bracket>().HasQueryFilter(b => !b.IsDeleted);
 
