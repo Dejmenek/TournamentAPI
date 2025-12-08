@@ -5,10 +5,10 @@ namespace TournamentAPI;
 
 public class Query
 {
+    [UsePaging(MaxPageSize = 100, IncludeTotalCount = true)]
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    [UsePaging(MaxPageSize = 100, IncludeTotalCount = true)]
     public IQueryable<Tournament> GetTournaments([Service] ApplicationDbContext context) =>
         context.Tournaments;
 
