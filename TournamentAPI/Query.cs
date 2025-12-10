@@ -23,6 +23,14 @@ public class Query
     }
 
     [UseProjection]
+    public Task<Tournament?> GetTournamentByIdAsync(int id)
+    {
+        using var context = _contextFactory.CreateDbContext();
+
+        return context.Tournaments
+            .FirstOrDefaultAsync(t => t.Id == id);
+    }
+
     [UseProjection]
     [UseFiltering]
     [UseSorting]
