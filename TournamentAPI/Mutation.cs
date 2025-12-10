@@ -67,9 +67,47 @@ public class Mutation
         return tournament;
     }
 
-    public async Task<Tournament> CreateTournament(CreateTournamentInput input, [Service] ApplicationDbContext context)
-    public async Task<Tournament> CreateTournament(CreateTournamentInput input)
+    public async Task<bool> JoinTournament(int tournamentId, [Service] ClaimsPrincipal userClaims)
     {
+        var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
+            ?? throw new GraphQLException("User is not authenticated.");
+
+        if (!int.TryParse(userIdClaim.Value, out int userId))
+            throw new GraphQLException("Invalid user ID.");
+
+        using var context = _contextFactory.CreateDbContext();
+
+        var tournament = await context.Tournaments
+            .Include(t => t.Participants)
+            .FirstOrDefaultAsync(t => t.Id == tournamentId)
+            ?? throw new GraphQLException("Tournament doesn't exist");
+
+        if (tournament.Status == TournamentStatus.Closed)
+            throw new GraphQLException("Tournament is closed");
+
+        bool alreadyParticipates = tournament.Participants.Any(tp => tp.ParticipantId == userId);
+        if (alreadyParticipates)
+            throw new GraphQLException("User already participates in the tournament");
+
+        var participant = new TournamentParticipant
+        {
+            TournamentId = tournamentId,
+            ParticipantId = userId
+        };
+
+        context.TournamentParticipants.Add(participant);
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+    {
+            throw new GraphQLException("Failed to join tournament due to a database error.");
+        }
+
+        return true;
+    }
+
     public async Task<Tournament> CreateTournament(CreateTournamentInput input, [Service] ClaimsPrincipal userClaims)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
