@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using TournamentAPI.Data;
 using TournamentAPI.Inputs;
 using TournamentAPI.Models;
@@ -16,14 +17,23 @@ public class Mutation
         _contextFactory = contextFactory;
     }
 
-    public async Task<Tournament> AddParticipant(AddParticipantInput input)
+    public async Task<Tournament> AddParticipant(AddParticipantInput input, [Service] ClaimsPrincipal userClaims)
     {
+        var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
+            ?? throw new GraphQLException("User is not authenticated.");
+
+        if (!int.TryParse(userIdClaim.Value, out int userId))
+            throw new GraphQLException("Invalid user ID.");
+
         using var context = _contextFactory.CreateDbContext();
 
         var tournament = await context.Tournaments
         .Include(t => t.Participants)
         .FirstOrDefaultAsync(t => t.Id == input.TournamentId)
         ?? throw new GraphQLException("Tournament doesn't exist");
+
+        if (tournament.OwnerId != userId)
+            throw new GraphQLException("Only the tournament owner can add participants.");
 
         if (tournament.Status == TournamentStatus.Closed)
             throw new GraphQLException("Tournament is closed");
@@ -60,6 +70,14 @@ public class Mutation
     public async Task<Tournament> CreateTournament(CreateTournamentInput input, [Service] ApplicationDbContext context)
     public async Task<Tournament> CreateTournament(CreateTournamentInput input)
     {
+    public async Task<Tournament> CreateTournament(CreateTournamentInput input, [Service] ClaimsPrincipal userClaims)
+    {
+        var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
+            ?? throw new GraphQLException("User is not authenticated.");
+
+        if (!int.TryParse(userIdClaim.Value, out int userId))
+            throw new GraphQLException("Invalid user ID.");
+
         if (string.IsNullOrWhiteSpace(input.Name))
         {
             throw new GraphQLException("Tournament name cannot be empty.");
@@ -80,12 +98,21 @@ public class Mutation
         return tournament;
     }
 
-    public async Task<Tournament> UpdateTournament(int tournamentId, UpdateTournamentInput input)
+    public async Task<Tournament> UpdateTournament(UpdateTournamentInput input, [Service] ClaimsPrincipal userClaims)
     {
+        var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
+            ?? throw new GraphQLException("User is not authenticated.");
+
+        if (!int.TryParse(userIdClaim.Value, out int userId))
+            throw new GraphQLException("Invalid user ID.");
+
         using var context = _contextFactory.CreateDbContext();
 
-        var tournament = await context.Tournaments.FirstOrDefaultAsync(t => t.Id == tournamentId)
+        var tournament = await context.Tournaments.FirstOrDefaultAsync(t => t.Id == input.TournamentId)
             ?? throw new GraphQLException("Tournament doesn't exist");
+
+        if (tournament.OwnerId != userId)
+            throw new GraphQLException("Only the tournament owner can update the tournament.");
 
         if (input.Name != null)
         {
@@ -105,8 +132,14 @@ public class Mutation
         return tournament;
     }
 
-    public async Task<bool> DeleteTournament(int tournamentId)
+    public async Task<bool> DeleteTournament(int tournamentId, [Service] ClaimsPrincipal userClaims)
     {
+        var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
+            ?? throw new GraphQLException("User is not authenticated.");
+
+        if (!int.TryParse(userIdClaim.Value, out int userId))
+            throw new GraphQLException("Invalid user ID.");
+
         using var context = _contextFactory.CreateDbContext();
 
         var tournament = await context.Tournaments
@@ -116,6 +149,9 @@ public class Mutation
         .FirstOrDefaultAsync(t => t.Id == tournamentId);
 
         if (tournament is null) return false;
+
+        if (tournament.OwnerId != userId)
+            throw new GraphQLException("Only the tournament owner can delete the tournament.");
 
         tournament.IsDeleted = true;
 
@@ -138,8 +174,14 @@ public class Mutation
         return true;
     }
 
-    public async Task<Bracket> GenerateBracket(int tournamentId)
+    public async Task<Bracket> GenerateBracket(int tournamentId, [Service] ClaimsPrincipal userClaims)
     {
+        var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
+            ?? throw new GraphQLException("User is not authenticated.");
+
+        if (!int.TryParse(userIdClaim.Value, out int userId))
+            throw new GraphQLException("Invalid user ID.");
+
         using var context = _contextFactory.CreateDbContext();
 
         var tournament = await context.Tournaments
@@ -147,6 +189,9 @@ public class Mutation
             .Include(t => t.Bracket)
             .FirstOrDefaultAsync(t => t.Id == tournamentId)
             ?? throw new GraphQLException("Tournament doesn't exist");
+
+        if (tournament.OwnerId != userId)
+            throw new GraphQLException("Only the tournament owner can generate the bracket.");
 
         if (tournament.Status != TournamentStatus.Closed)
             throw new GraphQLException("Bracket can only be generated when the tournament is closed.");
@@ -188,15 +233,24 @@ public class Mutation
         return bracket;
     }
 
-    public async Task<Bracket> UpdateRound(int bracketId, int roundNumber)
+    public async Task<Bracket> UpdateRound(int bracketId, int roundNumber, [Service] ClaimsPrincipal userClaims)
     {
+        var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
+            ?? throw new GraphQLException("User is not authenticated.");
+
+        if (!int.TryParse(userIdClaim.Value, out int userId))
+            throw new GraphQLException("Invalid user ID.");
+
         using var context = _contextFactory.CreateDbContext();
 
         var bracket = await context.Brackets
+            .Include(b => b.Tournament)
             .Include(b => b.Matches)
-            .ThenInclude(m => m.Winner)
             .FirstOrDefaultAsync(b => b.Id == bracketId)
             ?? throw new GraphQLException("Bracket doesn't exist");
+
+        if (bracket.Tournament.OwnerId != userId)
+            throw new GraphQLException("Only the tournament owner can update the bracket.");
 
         var matchesInRound = bracket.Matches.Where(m => m.Round == roundNumber).ToList();
         if (matchesInRound.Any(m => m.WinnerId == null))
@@ -220,8 +274,14 @@ public class Mutation
         return bracket;
     }
 
-    public async Task<bool> Play(int matchId, int winnerId)
+    public async Task<bool> Play(int matchId, int winnerId, [Service] ClaimsPrincipal userClaims)
     {
+        var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
+            ?? throw new GraphQLException("User is not authenticated.");
+
+        if (!int.TryParse(userIdClaim.Value, out int userId))
+            throw new GraphQLException("Invalid user ID.");
+
         using var context = _contextFactory.CreateDbContext();
 
         var match = await context.Matches
@@ -231,6 +291,9 @@ public class Mutation
             ?? throw new GraphQLException("Match doesn't exist");
 
         var tournament = match.Bracket.Tournament;
+
+        if (tournament.OwnerId != userId)
+            throw new GraphQLException("Only the tournament owner can record match results.");
 
         if (tournament.Status != TournamentStatus.Closed)
             throw new GraphQLException("Matches can only be played when the tournament is closed.");
