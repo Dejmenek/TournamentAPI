@@ -9,8 +9,17 @@ namespace TournamentAPI;
 
 public class Mutation
 {
-    public async Task<Tournament> AddParticipant(int userId, int tournamentId, [Service] ApplicationDbContext context)
+    private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
+
+    public Mutation(IDbContextFactory<ApplicationDbContext> contextFactory)
     {
+        _contextFactory = contextFactory;
+    }
+
+    public async Task<Tournament> AddParticipant(AddParticipantInput input)
+    {
+        using var context = _contextFactory.CreateDbContext();
+
         var tournament = await context.Tournaments
         .Include(t => t.Participants)
         .FirstOrDefaultAsync(t => t.Id == tournamentId)
@@ -49,6 +58,7 @@ public class Mutation
     }
 
     public async Task<Tournament> CreateTournament(CreateTournamentInput input, [Service] ApplicationDbContext context)
+    public async Task<Tournament> CreateTournament(CreateTournamentInput input)
     {
         if (string.IsNullOrWhiteSpace(input.Name))
         {
@@ -62,14 +72,18 @@ public class Mutation
             Status = input.Status
         };
 
+        using var context = _contextFactory.CreateDbContext();
+
         context.Tournaments.Add(tournament);
         await context.SaveChangesAsync();
 
         return tournament;
     }
 
-    public async Task<Tournament> UpdateTournament(int tournamentId, UpdateTournamentInput input, [Service] ApplicationDbContext context)
+    public async Task<Tournament> UpdateTournament(int tournamentId, UpdateTournamentInput input)
     {
+        using var context = _contextFactory.CreateDbContext();
+
         var tournament = await context.Tournaments.FirstOrDefaultAsync(t => t.Id == tournamentId)
             ?? throw new GraphQLException("Tournament doesn't exist");
 
@@ -91,8 +105,10 @@ public class Mutation
         return tournament;
     }
 
-    public async Task<bool> DeleteTournament(int tournamentId, [Service] ApplicationDbContext context)
+    public async Task<bool> DeleteTournament(int tournamentId)
     {
+        using var context = _contextFactory.CreateDbContext();
+
         var tournament = await context.Tournaments
         .Include(t => t.Bracket)
             .ThenInclude(b => b.Matches)
@@ -122,8 +138,10 @@ public class Mutation
         return true;
     }
 
-    public async Task<Bracket> GenerateBracket(int tournamentId, [Service] ApplicationDbContext context)
+    public async Task<Bracket> GenerateBracket(int tournamentId)
     {
+        using var context = _contextFactory.CreateDbContext();
+
         var tournament = await context.Tournaments
             .Include(t => t.Participants)
             .Include(t => t.Bracket)
@@ -170,8 +188,10 @@ public class Mutation
         return bracket;
     }
 
-    public async Task<Bracket> UpdateRound(int bracketId, int roundNumber, [Service] ApplicationDbContext context)
+    public async Task<Bracket> UpdateRound(int bracketId, int roundNumber)
     {
+        using var context = _contextFactory.CreateDbContext();
+
         var bracket = await context.Brackets
             .Include(b => b.Matches)
             .ThenInclude(m => m.Winner)
@@ -200,8 +220,10 @@ public class Mutation
         return bracket;
     }
 
-    public async Task<bool> Play(int matchId, int winnerId, [Service] ApplicationDbContext context)
+    public async Task<bool> Play(int matchId, int winnerId)
     {
+        using var context = _contextFactory.CreateDbContext();
+
         var match = await context.Matches
             .Include(m => m.Bracket)
             .ThenInclude(b => b.Tournament)
@@ -243,7 +265,10 @@ public class Mutation
         return true;
     }
 
-    public async Task<string> LoginUser(LoginUserInput input, [Service] UserManager<ApplicationUser> userManager, [Service] JwtService jwtService)
+    public async Task<string> LoginUser(
+        LoginUserInput input,
+        [Service] UserManager<ApplicationUser> userManager,
+        [Service] JwtService jwtService)
     {
         var user = await userManager.FindByEmailAsync(input.Email)
             ?? throw new GraphQLException("Invalid username or password.");
