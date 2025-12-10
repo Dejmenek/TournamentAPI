@@ -22,23 +22,23 @@ public class Mutation
 
         var tournament = await context.Tournaments
         .Include(t => t.Participants)
-        .FirstOrDefaultAsync(t => t.Id == tournamentId)
+        .FirstOrDefaultAsync(t => t.Id == input.TournamentId)
         ?? throw new GraphQLException("Tournament doesn't exist");
 
         if (tournament.Status == TournamentStatus.Closed)
             throw new GraphQLException("Tournament is closed");
 
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId)
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == input.UserId)
             ?? throw new GraphQLException("User doesn't exist");
 
-        bool alreadyParticipates = tournament.Participants.Any(tp => tp.ParticipantId == userId);
+        bool alreadyParticipates = tournament.Participants.Any(tp => tp.ParticipantId == input.UserId);
         if (alreadyParticipates)
             throw new GraphQLException("User already participates in the tournament");
 
         var participant = new TournamentParticipant
         {
-            TournamentId = tournamentId,
-            ParticipantId = userId,
+            TournamentId = input.TournamentId,
+            ParticipantId = input.UserId,
             Tournament = tournament,
             Participant = user
         };
