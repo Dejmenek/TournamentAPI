@@ -53,7 +53,8 @@ builder.Services
     .AddType<ApplicationUserType>()
     .AddProjections()
     .AddFiltering()
-    .AddSorting();
+    .AddSorting()
+    .AddMaxExecutionDepthRule(5);
 
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
