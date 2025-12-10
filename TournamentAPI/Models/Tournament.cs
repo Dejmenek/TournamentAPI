@@ -9,7 +9,7 @@ public class Tournament
     public int OwnerId { get; set; }
     public bool IsDeleted { get; set; }
 
-    public Bracket Bracket { get; set; } = null!;
+    public Bracket? Bracket { get; set; }
     public ApplicationUser Owner { get; set; } = null!;
     public ICollection<TournamentParticipant> Participants { get; set; } = new List<TournamentParticipant>();
 }
