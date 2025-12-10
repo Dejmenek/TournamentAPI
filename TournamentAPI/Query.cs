@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Data;
 using TournamentAPI.Models;
 
