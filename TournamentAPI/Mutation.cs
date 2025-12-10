@@ -48,9 +48,7 @@ public class Mutation
         var participant = new TournamentParticipant
         {
             TournamentId = input.TournamentId,
-            ParticipantId = input.UserId,
-            Tournament = tournament,
-            Participant = user
+            ParticipantId = input.UserId
         };
 
         context.TournamentParticipants.Add(participant);
@@ -101,7 +99,7 @@ public class Mutation
             await context.SaveChangesAsync();
         }
         catch (DbUpdateException)
-    {
+        {
             throw new GraphQLException("Failed to join tournament due to a database error.");
         }
 
@@ -125,7 +123,8 @@ public class Mutation
         {
             Name = input.Name,
             StartDate = input.StartDate,
-            Status = input.Status
+            Status = input.Status,
+            OwnerId = userId
         };
 
         using var context = _contextFactory.CreateDbContext();
@@ -324,7 +323,7 @@ public class Mutation
 
         var match = await context.Matches
             .Include(m => m.Bracket)
-            .ThenInclude(b => b.Tournament)
+                .ThenInclude(b => b.Tournament)
             .FirstOrDefaultAsync(m => m.Id == matchId)
             ?? throw new GraphQLException("Match doesn't exist");
 
