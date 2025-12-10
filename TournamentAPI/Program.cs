@@ -7,6 +7,8 @@ using TournamentAPI;
 using TournamentAPI.Data;
 using TournamentAPI.Models;
 using TournamentAPI.Services;
+using TournamentAPI.Types;
+using MatchType = TournamentAPI.Types.MatchType;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +46,11 @@ builder.Services
     .AddAuthorization()
     .AddQueryType<Query>()
     .AddMutationType<Mutation>()
+    .AddType<TournamentType>()
+    .AddType<BracketType>()
+    .AddType<MatchType>()
+    .AddType<TournamentParticipantType>()
+    .AddType<ApplicationUserType>()
     .AddProjections()
     .AddFiltering()
     .AddSorting();
