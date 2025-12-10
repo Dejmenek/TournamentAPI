@@ -38,6 +38,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasForeignKey(t => t.OwnerId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<Bracket>()
+            .HasOne(b => b.Tournament)
+            .WithOne(t => t.Bracket)
+            .HasForeignKey<Bracket>(b => b.TournamentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Entity<Tournament>().HasQueryFilter(t => !t.IsDeleted);
 
         builder.Entity<TournamentParticipant>()
