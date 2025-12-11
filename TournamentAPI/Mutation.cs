@@ -17,7 +17,8 @@ public class Mutation
         _contextFactory = contextFactory;
     }
 
-    public async Task<Tournament> AddParticipant(AddParticipantInput input, [Service] ClaimsPrincipal userClaims)
+    [Authorize]
+    public async Task<Tournament> AddParticipant(AddParticipantInput input, ClaimsPrincipal userClaims)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
@@ -65,7 +66,8 @@ public class Mutation
         return tournament;
     }
 
-    public async Task<bool> JoinTournament(int tournamentId, [Service] ClaimsPrincipal userClaims)
+    [Authorize]
+    public async Task<bool> JoinTournament(int tournamentId, ClaimsPrincipal userClaims)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
@@ -106,7 +108,8 @@ public class Mutation
         return true;
     }
 
-    public async Task<Tournament> CreateTournament(CreateTournamentInput input, [Service] ClaimsPrincipal userClaims)
+    [Authorize]
+    public async Task<Tournament> CreateTournament(CreateTournamentInput input, ClaimsPrincipal userClaims)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
@@ -135,7 +138,8 @@ public class Mutation
         return tournament;
     }
 
-    public async Task<Tournament> UpdateTournament(UpdateTournamentInput input, [Service] ClaimsPrincipal userClaims)
+    [Authorize]
+    public async Task<Tournament> UpdateTournament(UpdateTournamentInput input, ClaimsPrincipal userClaims)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
@@ -169,7 +173,8 @@ public class Mutation
         return tournament;
     }
 
-    public async Task<bool> DeleteTournament(int tournamentId, [Service] ClaimsPrincipal userClaims)
+    [Authorize]
+    public async Task<bool> DeleteTournament(int tournamentId, ClaimsPrincipal userClaims)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
@@ -211,7 +216,8 @@ public class Mutation
         return true;
     }
 
-    public async Task<Bracket> GenerateBracket(int tournamentId, [Service] ClaimsPrincipal userClaims)
+    [Authorize]
+    public async Task<Bracket> GenerateBracket(int tournamentId, ClaimsPrincipal userClaims)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
@@ -270,7 +276,8 @@ public class Mutation
         return bracket;
     }
 
-    public async Task<Bracket> UpdateRound(int bracketId, int roundNumber, [Service] ClaimsPrincipal userClaims)
+    [Authorize]
+    public async Task<Bracket> UpdateRound(int bracketId, int roundNumber, ClaimsPrincipal userClaims)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
@@ -311,7 +318,8 @@ public class Mutation
         return bracket;
     }
 
-    public async Task<bool> Play(int matchId, int winnerId, [Service] ClaimsPrincipal userClaims)
+    [Authorize]
+    public async Task<bool> Play(int matchId, int winnerId, [GlobalState("User")] ClaimsPrincipal userClaims)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
