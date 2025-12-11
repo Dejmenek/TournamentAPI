@@ -1,4 +1,6 @@
+using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using TournamentAPI.Data;
 using TournamentAPI.Models;
 
@@ -20,31 +22,26 @@ public class Query
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Tournament> GetTournaments()
+    public IQueryable<Tournament> GetTournaments([Service] ApplicationDbContext context)
     {
-        using var context = _contextFactory.CreateDbContext();
         return context.Tournaments;
     }
 
     [UseProjection]
-    public Task<Tournament?> GetTournamentByIdAsync(int id)
+    public async Task<Tournament?> GetTournamentByIdAsync(int id, [Service] ApplicationDbContext context)
     {
-        using var context = _contextFactory.CreateDbContext();
-
-        return context.Tournaments
+        return await context.Tournaments
             .FirstOrDefaultAsync(t => t.Id == id);
     }
 
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Match> GetMatchesForRound(int tournamentId, int roundNumber)
+    public IQueryable<Match> GetMatchesForRound(int tournamentId, int roundNumber, [Service] ApplicationDbContext context)
     {
-        using var context = _contextFactory.CreateDbContext();
-
         return context.Tournaments
             .Where(t => t.Id == tournamentId && t.Bracket != null)
             .SelectMany(t => t.Bracket!.Matches)
             .Where(m => m.Round == roundNumber);
-}
+    }
 }
