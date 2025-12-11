@@ -64,7 +64,6 @@ builder.Services.AddAuthorizationBuilder()
 builder.Services
     .AddGraphQLServer()
     .AddAuthorization()
-    .AddHttpRequestInterceptor<HttpRequestInterceptor>()
     .RegisterDbContextFactory<ApplicationDbContext>()
     .AddQueryType<Query>()
     .AddMutationType<Mutation>()
@@ -78,7 +77,6 @@ builder.Services
     .AddSorting()
     .AddMaxExecutionDepthRule(5);
 
-builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddDataLoader<ParticipantsByTournamentIdDataLoader>();
 builder.Services.AddDataLoader<MatchesByBracketIdDataLoader>();
