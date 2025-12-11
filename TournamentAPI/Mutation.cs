@@ -1,3 +1,4 @@
+using HotChocolate.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -255,7 +256,7 @@ public class Mutation
         var random = new Random();
         participants = [.. participants.OrderBy(x => random.Next())];
 
-        for (int i = 0; i < participants.Count; i++)
+        for (int i = 0; i < participants.Count; i += 2)
         {
             Match match = new()
             {
