@@ -1,3 +1,4 @@
+using TournamentAPI.DataLoaders;
 using TournamentAPI.Models;
 
 namespace TournamentAPI.Types;
@@ -6,6 +7,8 @@ public class TournamentType : ObjectType<Tournament>
 {
     protected override void Configure(IObjectTypeDescriptor<Tournament> descriptor)
     {
+        descriptor.BindFieldsExplicitly();
+
         descriptor.Field(t => t.Id);
         descriptor.Field(t => t.Name);
         descriptor.Field(t => t.StartDate);
@@ -16,6 +19,16 @@ public class TournamentType : ObjectType<Tournament>
         descriptor.Field(t => t.Owner)
             .Type<ApplicationUserType>();
         descriptor.Field(t => t.Participants)
+            .ResolveWith<TournamentResolvers>(t => t.GetParticipantsAsync(default!, default!, default))
             .Type<ListType<TournamentParticipantType>>();
+    }
+
+    private class TournamentResolvers
+    {
+        public async Task<IEnumerable<TournamentParticipant>> GetParticipantsAsync(
+            [Parent] Tournament tournament,
+            ParticipantsByTournamentIdDataLoader dataLoader,
+            CancellationToken cancellationToken)
+            => (await dataLoader.LoadAsync(tournament.Id, cancellationToken))!;
     }
 }

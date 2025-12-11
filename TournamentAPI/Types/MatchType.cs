@@ -6,6 +6,8 @@ public class MatchType : ObjectType<Match>
 {
     protected override void Configure(IObjectTypeDescriptor<Match> descriptor)
     {
+        descriptor.BindFieldsExplicitly();
+
         descriptor.Field(m => m.Id);
         descriptor.Field(m => m.Round);
         descriptor.Field(m => m.BracketId);
