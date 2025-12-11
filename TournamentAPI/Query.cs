@@ -6,11 +6,14 @@ namespace TournamentAPI;
 
 public class Query
 {
-    private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
-
-    public Query(IDbContextFactory<ApplicationDbContext> contextFactory)
+    [Authorize]
+    public async Task<ApplicationUser> GetMe(ClaimsPrincipal claimsPrincipal, [Service] ApplicationDbContext context)
     {
-        _contextFactory = contextFactory;
+        var userIdClaim = (claimsPrincipal?.FindFirstValue(ClaimTypes.NameIdentifier))
+            ?? throw new GraphQLException("User is not authenticated.");
+        var userId = int.Parse(userIdClaim);
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        return user ?? throw new GraphQLException("User not found.");
     }
 
     [UsePaging(MaxPageSize = 100, IncludeTotalCount = true)]
