@@ -17,7 +17,8 @@ public class BracketMutations
     }
 
     [Authorize]
-    public async Task<Bracket> GenerateBracket(int tournamentId, ClaimsPrincipal userClaims)
+    public async Task<Bracket> GenerateBracket(
+        int tournamentId, ClaimsPrincipal userClaims, CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
@@ -30,7 +31,7 @@ public class BracketMutations
         var tournament = await context.Tournaments
             .Include(t => t.Participants)
             .Include(t => t.Bracket)
-            .FirstOrDefaultAsync(t => t.Id == tournamentId)
+            .FirstOrDefaultAsync(t => t.Id == tournamentId, token)
             ?? throw new GraphQLException("Tournament doesn't exist");
 
         if (tournament.OwnerId != userId)
@@ -71,13 +72,14 @@ public class BracketMutations
         context.Brackets.Add(bracket);
         tournament.Bracket = bracket;
 
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(token);
 
         return bracket;
     }
 
     [Authorize]
-    public async Task<Bracket> UpdateRound(int bracketId, int roundNumber, ClaimsPrincipal userClaims)
+    public async Task<Bracket> UpdateRound(
+        int bracketId, int roundNumber, ClaimsPrincipal userClaims, CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
@@ -90,7 +92,7 @@ public class BracketMutations
         var bracket = await context.Brackets
             .Include(b => b.Tournament)
             .Include(b => b.Matches)
-            .FirstOrDefaultAsync(b => b.Id == bracketId)
+            .FirstOrDefaultAsync(b => b.Id == bracketId, token)
             ?? throw new GraphQLException("Bracket doesn't exist");
 
         if (bracket.Tournament.OwnerId != userId)
@@ -117,7 +119,7 @@ public class BracketMutations
             bracket.Matches.Add(match);
         }
 
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(token);
 
         return bracket;
     }

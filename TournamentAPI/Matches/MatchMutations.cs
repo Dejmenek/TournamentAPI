@@ -17,7 +17,8 @@ public class MatchMutations
     }
 
     [Authorize]
-    public async Task<bool> Play(int matchId, int winnerId, ClaimsPrincipal userClaims)
+    public async Task<bool> Play(
+        int matchId, int winnerId, ClaimsPrincipal userClaims, CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
@@ -30,7 +31,7 @@ public class MatchMutations
         var match = await context.Matches
             .Include(m => m.Bracket)
                 .ThenInclude(b => b.Tournament)
-            .FirstOrDefaultAsync(m => m.Id == matchId)
+            .FirstOrDefaultAsync(m => m.Id == matchId, token)
             ?? throw new GraphQLException("Match doesn't exist");
 
         var tournament = match.Bracket.Tournament;
@@ -48,7 +49,7 @@ public class MatchMutations
             throw new GraphQLException("Winner must be one of the match participants.");
 
         match.WinnerId = winnerId;
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(token);
 
         return true;
     }

@@ -17,7 +17,8 @@ public class ParticipantMutations
     }
 
     [Authorize]
-    public async Task<Tournament> AddParticipant(AddParticipantInput input, ClaimsPrincipal userClaims)
+    public async Task<Tournament> AddParticipant(
+        AddParticipantInput input, ClaimsPrincipal userClaims, CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
@@ -29,7 +30,7 @@ public class ParticipantMutations
 
         var tournament = await context.Tournaments
         .Include(t => t.Participants)
-        .FirstOrDefaultAsync(t => t.Id == input.TournamentId)
+        .FirstOrDefaultAsync(t => t.Id == input.TournamentId, token)
         ?? throw new GraphQLException("Tournament doesn't exist");
 
         if (tournament.OwnerId != userId)
@@ -38,7 +39,7 @@ public class ParticipantMutations
         if (tournament.Status == TournamentStatus.Closed)
             throw new GraphQLException("Tournament is closed");
 
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == input.UserId)
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == input.UserId, token)
             ?? throw new GraphQLException("User doesn't exist");
 
         bool alreadyParticipates = tournament.Participants.Any(tp => tp.ParticipantId == input.UserId);
@@ -55,7 +56,7 @@ public class ParticipantMutations
 
         try
         {
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(token);
         }
         catch (DbUpdateException)
         {

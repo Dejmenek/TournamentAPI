@@ -17,10 +17,11 @@ public class TournamentQueries
     }
 
     [UseProjection]
-    public async Task<Tournament?> GetTournamentByIdAsync(int id, [Service] ApplicationDbContext context)
+    public async Task<Tournament?> GetTournamentByIdAsync(
+        int id, [Service] ApplicationDbContext context, CancellationToken token)
     {
         return await context.Tournaments
             .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == id);
+            .FirstOrDefaultAsync(t => t.Id == id, token);
     }
 }

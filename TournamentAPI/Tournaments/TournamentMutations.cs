@@ -17,7 +17,8 @@ public class TournamentMutations
     }
 
     [Authorize]
-    public async Task<bool> JoinTournament(int tournamentId, ClaimsPrincipal userClaims)
+    public async Task<bool> JoinTournament(
+        int tournamentId, ClaimsPrincipal userClaims, CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
@@ -29,7 +30,7 @@ public class TournamentMutations
 
         var tournament = await context.Tournaments
             .Include(t => t.Participants)
-            .FirstOrDefaultAsync(t => t.Id == tournamentId)
+            .FirstOrDefaultAsync(t => t.Id == tournamentId, token)
             ?? throw new GraphQLException("Tournament doesn't exist");
 
         if (tournament.Status == TournamentStatus.Closed)
@@ -48,7 +49,7 @@ public class TournamentMutations
         context.TournamentParticipants.Add(participant);
         try
         {
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(token);
         }
         catch (DbUpdateException)
         {
@@ -59,7 +60,8 @@ public class TournamentMutations
     }
 
     [Authorize]
-    public async Task<Tournament> CreateTournament(CreateTournamentInput input, ClaimsPrincipal userClaims)
+    public async Task<Tournament> CreateTournament(
+        CreateTournamentInput input, ClaimsPrincipal userClaims, CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
@@ -83,13 +85,14 @@ public class TournamentMutations
         using var context = _contextFactory.CreateDbContext();
 
         context.Tournaments.Add(tournament);
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(token);
 
         return tournament;
     }
 
     [Authorize]
-    public async Task<Tournament> UpdateTournament(UpdateTournamentInput input, ClaimsPrincipal userClaims)
+    public async Task<Tournament> UpdateTournament(
+        UpdateTournamentInput input, ClaimsPrincipal userClaims, CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
@@ -99,7 +102,8 @@ public class TournamentMutations
 
         using var context = _contextFactory.CreateDbContext();
 
-        var tournament = await context.Tournaments.FirstOrDefaultAsync(t => t.Id == input.TournamentId)
+        var tournament = await context.Tournaments
+            .FirstOrDefaultAsync(t => t.Id == input.TournamentId, token)
             ?? throw new GraphQLException("Tournament doesn't exist");
 
         if (tournament.OwnerId != userId)
@@ -118,13 +122,14 @@ public class TournamentMutations
         if (input.Status != null)
             tournament.Status = input.Status.Value;
 
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(token);
 
         return tournament;
     }
 
     [Authorize]
-    public async Task<bool> DeleteTournament(int tournamentId, ClaimsPrincipal userClaims)
+    public async Task<bool> DeleteTournament(
+        int tournamentId, ClaimsPrincipal userClaims, CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
@@ -138,7 +143,7 @@ public class TournamentMutations
         .Include(t => t.Bracket)
             .ThenInclude(b => b.Matches)
         .Include(t => t.Participants)
-        .FirstOrDefaultAsync(t => t.Id == tournamentId);
+        .FirstOrDefaultAsync(t => t.Id == tournamentId, token);
 
         if (tournament is null) return false;
 
@@ -161,7 +166,7 @@ public class TournamentMutations
             participant.IsDeleted = true;
         }
 
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(token);
 
         return true;
     }
