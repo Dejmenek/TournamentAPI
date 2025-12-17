@@ -22,6 +22,7 @@ public class MatchesByBracketIdDataLoader : BatchDataLoader<int, List<Match>>
     {
         using var context = _contextFactory.CreateDbContext();
         var matches = await context.Matches
+            .AsNoTracking()
             .Where(m => keys.Contains(m.BracketId))
             .Include(m => m.Player1)
             .Include(m => m.Player2)

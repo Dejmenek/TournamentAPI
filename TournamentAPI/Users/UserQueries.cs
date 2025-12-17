@@ -15,7 +15,7 @@ public class UserQueries
         var userIdClaim = (claimsPrincipal?.FindFirstValue(ClaimTypes.NameIdentifier))
             ?? throw new GraphQLException("User is not authenticated.");
         var userId = int.Parse(userIdClaim);
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        var user = await context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
         return user ?? throw new GraphQLException("User not found.");
     }
 }

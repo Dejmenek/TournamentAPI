@@ -13,13 +13,14 @@ public class TournamentQueries
     [UseSorting]
     public IQueryable<Tournament> GetTournaments([Service] ApplicationDbContext context)
     {
-        return context.Tournaments.Where(t => !t.IsDeleted);
+        return context.Tournaments.AsNoTracking().Where(t => !t.IsDeleted);
     }
 
     [UseProjection]
     public async Task<Tournament?> GetTournamentByIdAsync(int id, [Service] ApplicationDbContext context)
     {
         return await context.Tournaments
+            .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == id);
     }
 }

@@ -22,6 +22,7 @@ public class ParticipantsByTournamentIdDataLoader : BatchDataLoader<int, List<To
     {
         using var context = _contextFactory.CreateDbContext();
         var participants = await context.TournamentParticipants
+            .AsNoTracking()
             .Where(tp => keys.Contains(tp.TournamentId))
             .Include(tp => tp.Participant)
             .ToListAsync(cancellationToken);
