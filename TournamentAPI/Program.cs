@@ -4,14 +4,16 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using TournamentAPI;
+using TournamentAPI.Brackets;
 using TournamentAPI.Data;
-using TournamentAPI.DataLoaders;
-using TournamentAPI.Models;
-using TournamentAPI.Mutations;
-using TournamentAPI.Queries;
+using TournamentAPI.Data.Models;
+using TournamentAPI.Matches;
+using TournamentAPI.Participants;
 using TournamentAPI.Services;
-using TournamentAPI.Types;
-using MatchType = TournamentAPI.Types.MatchType;
+using TournamentAPI.Tournaments;
+using TournamentAPI.Users;
+using MatchType = TournamentAPI.Matches.MatchType;
 
 var builder = WebApplication.CreateBuilder(args);
 

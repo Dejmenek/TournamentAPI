@@ -1,0 +1,25 @@
+using Microsoft.EntityFrameworkCore;
+using TournamentAPI.Data;
+using TournamentAPI.Data.Models;
+
+namespace TournamentAPI.Tournaments;
+
+[ExtendObjectType(typeof(Query))]
+public class TournamentQueries
+{
+    [UsePaging(MaxPageSize = 100, IncludeTotalCount = true)]
+    [UseProjection]
+    [UseFiltering]
+    [UseSorting]
+    public IQueryable<Tournament> GetTournaments([Service] ApplicationDbContext context)
+    {
+        return context.Tournaments.Where(t => !t.IsDeleted);
+    }
+
+    [UseProjection]
+    public async Task<Tournament?> GetTournamentByIdAsync(int id, [Service] ApplicationDbContext context)
+    {
+        return await context.Tournaments
+            .FirstOrDefaultAsync(t => t.Id == id);
+    }
+}
