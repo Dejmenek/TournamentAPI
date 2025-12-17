@@ -4,10 +4,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using TournamentAPI;
 using TournamentAPI.Data;
 using TournamentAPI.DataLoaders;
 using TournamentAPI.Models;
+using TournamentAPI.Mutations;
+using TournamentAPI.Queries;
 using TournamentAPI.Services;
 using TournamentAPI.Types;
 using MatchType = TournamentAPI.Types.MatchType;
@@ -66,7 +67,15 @@ builder.Services
     .AddAuthorization()
     .RegisterDbContextFactory<ApplicationDbContext>()
     .AddQueryType<Query>()
+    .AddTypeExtension<TournamentQueries>()
+    .AddTypeExtension<UserQueries>()
+    .AddTypeExtension<MatchQueries>()
     .AddMutationType<Mutation>()
+    .AddTypeExtension<TournamentMutations>()
+    .AddTypeExtension<UserMutations>()
+    .AddTypeExtension<MatchMutations>()
+    .AddTypeExtension<BracketMutations>()
+    .AddTypeExtension<ParticipantMutations>()
     .AddType<TournamentType>()
     .AddType<BracketType>()
     .AddType<MatchType>()
