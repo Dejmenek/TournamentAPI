@@ -81,6 +81,8 @@ builder.Services
     .AddTypeExtension<MatchMutations>()
     .AddTypeExtension<BracketMutations>()
     .AddTypeExtension<ParticipantMutations>()
+    .AddMutationConventions()
+    .AddQueryConventions()
     .AddType<TournamentType>()
     .AddType<BracketType>()
     .AddType<MatchType>()
