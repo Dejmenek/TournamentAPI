@@ -16,9 +16,24 @@ public class TournamentQueries
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Tournament> GetTournaments(ApplicationDbContext context)
+    public IQueryable<Tournament> GetTournaments(
+        ISortingContext sorting, ApplicationDbContext context)
     {
-        return context.Tournaments.AsNoTracking().Where(t => !t.IsDeleted);
+        sorting.Handled(false);
+
+        sorting.OnAfterSortingApplied<IQueryable<Tournament>>(
+            static (sortingApplied, query) =>
+            {
+                if (sortingApplied && query is IOrderedQueryable<Tournament> ordered)
+                {
+                    return ordered.ThenBy(t => t.Id);
+                }
+
+                return query.OrderBy(t => t.Id);
+            }
+        );
+
+        return context.Tournaments.AsNoTracking();
     }
 
     [UseProjection]
