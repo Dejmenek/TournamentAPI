@@ -11,7 +11,7 @@ public class TournamentQueries
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Tournament> GetTournaments([Service] ApplicationDbContext context)
+    public IQueryable<Tournament> GetTournaments(ApplicationDbContext context)
     {
         return context.Tournaments.AsNoTracking().Where(t => !t.IsDeleted);
     }

@@ -10,7 +10,7 @@ public class MatchQueries
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Match> GetMatchesForRound(int tournamentId, int roundNumber, [Service] ApplicationDbContext context)
+    public IQueryable<Match> GetMatchesForRound(int tournamentId, int roundNumber, ApplicationDbContext context)
     {
         return context.Tournaments
             .AsNoTracking()

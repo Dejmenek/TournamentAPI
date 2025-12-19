@@ -11,7 +11,7 @@ public class UserQueries
 {
     [Authorize]
     public async Task<ApplicationUser> GetMe(
-        ClaimsPrincipal claimsPrincipal, [Service] ApplicationDbContext context, CancellationToken token)
+        ClaimsPrincipal claimsPrincipal, ApplicationDbContext context, CancellationToken token)
     {
         var userIdClaim = (claimsPrincipal?.FindFirstValue(ClaimTypes.NameIdentifier))
             ?? throw new GraphQLException("User is not authenticated.");
