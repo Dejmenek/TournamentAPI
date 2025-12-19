@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Services;
 
@@ -10,13 +8,6 @@ namespace TournamentAPI.Users;
 public class UserMutations
 {
     public async Task<bool> RegisterUser(RegisterUserInput input, UserManager<ApplicationUser> userManager)
-
-    public UserMutations(IDbContextFactory<ApplicationDbContext> contextFactory)
-    {
-        _contextFactory = contextFactory;
-    }
-
-    public async Task<bool> RegisterUser(RegisterUserInput input, [Service] UserManager<ApplicationUser> userManager)
     {
         var user = new ApplicationUser
         {
