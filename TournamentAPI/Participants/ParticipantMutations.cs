@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
+using TournamentAPI.Tournaments;
+using TournamentAPI.Users;
 
 namespace TournamentAPI.Participants;
 
@@ -16,6 +18,11 @@ public class ParticipantMutations
         _contextFactory = contextFactory;
     }
 
+    [Error<TournamentNotFoundException>]
+    [Error<TournamentNotOwnerException>]
+    [Error<TournamentClosedException>]
+    [Error<UserNotFoundException>]
+    [Error<UserAlreadyParticipantException>]
     [Authorize]
     public async Task<Tournament> AddParticipant(
         AddParticipantInput input, ClaimsPrincipal userClaims, CancellationToken token)
@@ -31,20 +38,20 @@ public class ParticipantMutations
         var tournament = await context.Tournaments
         .Include(t => t.Participants)
         .FirstOrDefaultAsync(t => t.Id == input.TournamentId, token)
-        ?? throw new GraphQLException("Tournament doesn't exist");
+        ?? throw new TournamentNotFoundException();
 
         if (tournament.OwnerId != userId)
-            throw new GraphQLException("Only the tournament owner can add participants.");
+            throw new TournamentNotOwnerException();
 
         if (tournament.Status == TournamentStatus.Closed)
-            throw new GraphQLException("Tournament is closed");
+            throw new TournamentClosedException();
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == input.UserId, token)
-            ?? throw new GraphQLException("User doesn't exist");
+            ?? throw new UserNotFoundException();
 
         bool alreadyParticipates = tournament.Participants.Any(tp => tp.ParticipantId == input.UserId);
         if (alreadyParticipates)
-            throw new GraphQLException("User already participates in the tournament");
+            throw new UserAlreadyParticipantException();
 
         var participant = new TournamentParticipant
         {
