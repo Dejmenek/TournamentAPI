@@ -1,4 +1,5 @@
 using GreenDonut.Data;
+using HotChocolate.Data.Sorting;
 using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
