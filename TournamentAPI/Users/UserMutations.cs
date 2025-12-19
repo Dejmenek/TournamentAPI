@@ -9,7 +9,7 @@ namespace TournamentAPI.Users;
 [ExtendObjectType(typeof(Mutation))]
 public class UserMutations
 {
-    private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
+    public async Task<bool> RegisterUser(RegisterUserInput input, UserManager<ApplicationUser> userManager)
 
     public UserMutations(IDbContextFactory<ApplicationDbContext> contextFactory)
     {
@@ -36,8 +36,8 @@ public class UserMutations
 
     public async Task<string> LoginUser(
         LoginUserInput input,
-        [Service] UserManager<ApplicationUser> userManager,
-        [Service] JwtService jwtService)
+        UserManager<ApplicationUser> userManager,
+        JwtService jwtService)
     {
         var user = await userManager.FindByEmailAsync(input.Email)
             ?? throw new GraphQLException("Invalid username or password.");
