@@ -16,6 +16,9 @@ public class TournamentMutations
         _contextFactory = contextFactory;
     }
 
+    [Error<TournamentNotFoundException>]
+    [Error<TournamentClosedException>]
+    [Error<TournamentJoinFailedException>]
     [Authorize]
     public async Task<bool> JoinTournament(
         int tournamentId, ClaimsPrincipal userClaims, CancellationToken token)
@@ -31,14 +34,14 @@ public class TournamentMutations
         var tournament = await context.Tournaments
             .Include(t => t.Participants)
             .FirstOrDefaultAsync(t => t.Id == tournamentId, token)
-            ?? throw new GraphQLException("Tournament doesn't exist");
+            ?? throw new TournamentNotFoundException();
 
         if (tournament.Status == TournamentStatus.Closed)
-            throw new GraphQLException("Tournament is closed");
+            throw new TournamentClosedException();
 
         bool alreadyParticipates = tournament.Participants.Any(tp => tp.ParticipantId == userId);
         if (alreadyParticipates)
-            throw new GraphQLException("User already participates in the tournament");
+            throw new TournamentJoinFailedException();
 
         var participant = new TournamentParticipant
         {
@@ -59,6 +62,7 @@ public class TournamentMutations
         return true;
     }
 
+    [Error<TournamentNameEmptyException>]
     [Authorize]
     public async Task<Tournament> CreateTournament(
         CreateTournamentInput input, ClaimsPrincipal userClaims, CancellationToken token)
@@ -71,7 +75,7 @@ public class TournamentMutations
 
         if (string.IsNullOrWhiteSpace(input.Name))
         {
-            throw new GraphQLException("Tournament name cannot be empty.");
+            throw new TournamentNameEmptyException();
         }
 
         var tournament = new Tournament
@@ -90,6 +94,9 @@ public class TournamentMutations
         return tournament;
     }
 
+    [Error<TournamentNotFoundException>]
+    [Error<TournamentNotOwnerException>]
+    [Error<TournamentNameEmptyException>]
     [Authorize]
     public async Task<Tournament> UpdateTournament(
         UpdateTournamentInput input, ClaimsPrincipal userClaims, CancellationToken token)
@@ -104,15 +111,15 @@ public class TournamentMutations
 
         var tournament = await context.Tournaments
             .FirstOrDefaultAsync(t => t.Id == input.TournamentId, token)
-            ?? throw new GraphQLException("Tournament doesn't exist");
+            ?? throw new TournamentNotFoundException();
 
         if (tournament.OwnerId != userId)
-            throw new GraphQLException("Only the tournament owner can update the tournament.");
+            throw new TournamentNotOwnerException();
 
         if (input.Name != null)
         {
             if (string.IsNullOrWhiteSpace(input.Name))
-                throw new GraphQLException("Tournament name cannot be empty.");
+                throw new TournamentNameEmptyException();
             tournament.Name = input.Name;
         }
 
@@ -127,6 +134,7 @@ public class TournamentMutations
         return tournament;
     }
 
+    [Error<TournamentNotFoundException>]
     [Authorize]
     public async Task<bool> DeleteTournament(
         int tournamentId, ClaimsPrincipal userClaims, CancellationToken token)
@@ -148,7 +156,7 @@ public class TournamentMutations
         if (tournament is null) return false;
 
         if (tournament.OwnerId != userId)
-            throw new GraphQLException("Only the tournament owner can delete the tournament.");
+            throw new TournamentNotOwnerException();
 
         tournament.IsDeleted = true;
 
