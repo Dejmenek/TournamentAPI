@@ -1,3 +1,4 @@
+using GreenDonut.Data;
 using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
@@ -7,7 +8,11 @@ namespace TournamentAPI.Tournaments;
 [ExtendObjectType(typeof(Query))]
 public class TournamentQueries
 {
-    [UsePaging(MaxPageSize = 100, IncludeTotalCount = true)]
+    [UsePaging(
+        MaxPageSize = 100,
+        IncludeTotalCount = true,
+        DefaultPageSize = 10,
+        RequirePagingBoundaries = true)]
     [UseProjection]
     [UseFiltering]
     [UseSorting]
