@@ -31,10 +31,10 @@ public class UserMutations
         JwtService jwtService)
     {
         var user = await userManager.FindByEmailAsync(input.Email)
-            ?? throw new GraphQLException("Invalid username or password.");
+            ?? throw new GraphQLException("Invalid email or password.");
 
         if (!await userManager.CheckPasswordAsync(user, input.Password))
-            throw new GraphQLException("Invalid username or password.");
+            throw new GraphQLException("Invalid email or password.");
 
         var token = jwtService.CreateToken(user);
         return token;
