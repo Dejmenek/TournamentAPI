@@ -22,7 +22,10 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>()
+builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>(opt =>
+{
+    opt.User.RequireUniqueEmail = true;
+})
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services
