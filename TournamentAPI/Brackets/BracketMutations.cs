@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
+using TournamentAPI.Tournaments;
 
 namespace TournamentAPI.Brackets;
 
@@ -16,6 +17,11 @@ public class BracketMutations
         _contextFactory = contextFactory;
     }
 
+    [Error<BracketAlreadyExistsException>]
+    [Error<NotEnoughParticipantsException>]
+    [Error<TournamentNotFoundException>]
+    [Error<TournamentNotOwnerException>]
+    [Error<BracketGenerationNotAllowedException>]
     [Authorize]
     public async Task<Bracket> GenerateBracket(
         int tournamentId, ClaimsPrincipal userClaims, CancellationToken token)
@@ -32,19 +38,19 @@ public class BracketMutations
             .Include(t => t.Participants)
             .Include(t => t.Bracket)
             .FirstOrDefaultAsync(t => t.Id == tournamentId, token)
-            ?? throw new GraphQLException("Tournament doesn't exist");
+            ?? throw new TournamentNotFoundException();
 
         if (tournament.OwnerId != userId)
-            throw new GraphQLException("Only the tournament owner can generate the bracket.");
+            throw new TournamentNotOwnerException();
 
         if (tournament.Status != TournamentStatus.Closed)
-            throw new GraphQLException("Bracket can only be generated when the tournament is closed.");
+            throw new BracketGenerationNotAllowedException();
 
         if (tournament.Bracket != null)
-            throw new GraphQLException("Bracket already exists for this tournament.");
+            throw new BracketAlreadyExistsException();
 
         if (tournament.Participants.Count < 2)
-            throw new GraphQLException("Not enough participants to create a bracket");
+            throw new NotEnoughParticipantsException();
 
         var bracket = new Bracket
         {
@@ -77,6 +83,10 @@ public class BracketMutations
         return bracket;
     }
 
+    [Error<BracketNotFoundException>]
+    [Error<TournamentNotOwnerException>]
+    [Error<NoMatchesInRoundException>]
+    [Error<NotAllMatchesPlayedException>]
     [Authorize]
     public async Task<Bracket> UpdateRound(
         int bracketId, int roundNumber, ClaimsPrincipal userClaims, CancellationToken token)
@@ -93,18 +103,18 @@ public class BracketMutations
             .Include(b => b.Tournament)
             .Include(b => b.Matches)
             .FirstOrDefaultAsync(b => b.Id == bracketId, token)
-            ?? throw new GraphQLException("Bracket doesn't exist");
+            ?? throw new BracketNotFoundException();
 
         if (bracket.Tournament.OwnerId != userId)
-            throw new GraphQLException("Only the tournament owner can update the bracket.");
+            throw new TournamentNotOwnerException();
 
         var matchesInRound = bracket.Matches.Where(m => m.Round == roundNumber).ToList();
 
         if (matchesInRound.Count == 0)
-            throw new GraphQLException("No matches found in the specified round.");
+            throw new NoMatchesInRoundException();
 
         if (matchesInRound.Any(m => m.WinnerId == null))
-            throw new GraphQLException("Not all matches in the current round have been played.");
+            throw new NotAllMatchesPlayedException();
 
         var winners = matchesInRound.Select(m => m.Winner!).ToList();
         for (int i = 0; i < winners.Count; i += 2)
