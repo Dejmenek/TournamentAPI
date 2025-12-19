@@ -38,7 +38,9 @@ public class TournamentQueries
 
     [UseProjection]
     public async Task<Tournament?> GetTournamentByIdAsync(
-        int id, TournamentByIdDataLoader tournamentById, CancellationToken token)
+        int id,
+        TournamentByIdDataLoader tournamentById,
+        CancellationToken token)
     {
         return await tournamentById.LoadAsync(id, token);
     }
