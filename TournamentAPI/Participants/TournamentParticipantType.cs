@@ -17,6 +17,8 @@ public class TournamentParticipantType : ObjectType<TournamentParticipant>
             .UseFiltering<UserFilterInputType>()
             .UseSorting<UserSortInputType>();
         descriptor.Field(tp => tp.Tournament)
-            .Type<TournamentType>();
+            .Type<TournamentType>()
+            .UseFiltering<TournamentFilterInputType>()
+            .UseSorting<TournamentSortInputType>();
     }
 }
