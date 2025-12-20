@@ -15,8 +15,17 @@ public class MatchType : ObjectType<Match>
         descriptor.Field(m => m.Player1Id);
         descriptor.Field(m => m.Player2Id);
         descriptor.Field(m => m.WinnerId);
-        descriptor.Field(m => m.Player1).Type<ApplicationUserType>();
-        descriptor.Field(m => m.Player2).Type<ApplicationUserType>();
-        descriptor.Field(m => m.Winner).Type<ApplicationUserType>();
+        descriptor.Field(m => m.Player1)
+            .Type<ApplicationUserType>()
+            .UseFiltering<UserFilterInputType>()
+            .UseSorting<UserSortInputType>();
+        descriptor.Field(m => m.Player2)
+            .Type<ApplicationUserType>()
+            .UseFiltering<UserFilterInputType>()
+            .UseSorting<UserSortInputType>();
+        descriptor.Field(m => m.Winner)
+            .Type<ApplicationUserType>()
+            .UseFiltering<UserFilterInputType>()
+            .UseSorting<UserSortInputType>();
     }
 }

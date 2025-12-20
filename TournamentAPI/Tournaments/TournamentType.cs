@@ -21,7 +21,9 @@ public class TournamentType : ObjectType<Tournament>
         descriptor.Field(t => t.Bracket)
             .Type<BracketType>();
         descriptor.Field(t => t.Owner)
-            .Type<ApplicationUserType>();
+            .Type<ApplicationUserType>()
+            .UseFiltering<UserFilterInputType>()
+            .UseSorting<UserSortInputType>();
         descriptor.Field(t => t.Participants)
             .ResolveWith<TournamentResolvers>(t => t.GetParticipantsAsync(default!, default!, default!, default))
             .Type<ListType<TournamentParticipantType>>();

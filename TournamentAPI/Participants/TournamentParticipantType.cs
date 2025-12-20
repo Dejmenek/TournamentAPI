@@ -13,7 +13,9 @@ public class TournamentParticipantType : ObjectType<TournamentParticipant>
         descriptor.Field(tp => tp.TournamentId);
         descriptor.Field(tp => tp.ParticipantId);
         descriptor.Field(tp => tp.Participant)
-            .Type<ApplicationUserType>();
+            .Type<ApplicationUserType>()
+            .UseFiltering<UserFilterInputType>()
+            .UseSorting<UserSortInputType>();
         descriptor.Field(tp => tp.Tournament)
             .Type<TournamentType>();
     }
