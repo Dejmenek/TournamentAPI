@@ -91,6 +91,7 @@ builder.Services
     .AddDataLoader<TournamentByIdDataLoader>()
     .AddDataLoader<ParticipantsByTournamentIdDataLoader>()
     .AddDataLoader<MatchesByBracketIdDataLoader>()
+    .AddDataLoader<OwnerByTournamentIdDataLoader>()
     .AddProjections()
     .AddFiltering()
     .AddSorting()
