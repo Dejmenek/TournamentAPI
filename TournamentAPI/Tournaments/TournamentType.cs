@@ -22,6 +22,7 @@ public class TournamentType : ObjectType<Tournament>
             .Type<BracketType>();
         descriptor.Field(t => t.Owner)
             .Type<ApplicationUserType>()
+            .ResolveWith<TournamentResolvers>(t => t.GetOwnerAsync(default!, default!, default))
             .UseFiltering<UserFilterInputType>()
             .UseSorting<UserSortInputType>();
         descriptor.Field(t => t.Participants)
@@ -39,5 +40,17 @@ public class TournamentType : ObjectType<Tournament>
             => await participantsByTournamentId
                 .Select(projectionSelection)
                 .LoadAsync(tournament.Id, cancellationToken) ?? [];
+
+        public async Task<ApplicationUser?> GetOwnerAsync(
+            [Parent] Tournament tournament,
+            OwnerByTournamentIdDataLoader ownerById,
+            CancellationToken cancellationToken)
+        {
+            if (tournament.Owner != null)
+                return tournament.Owner;
+
+            return await ownerById
+                .LoadAsync(tournament.OwnerId, cancellationToken);
+        }
     }
 }
