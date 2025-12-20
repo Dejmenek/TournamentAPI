@@ -148,12 +148,13 @@ public class TournamentMutations
         using var context = _contextFactory.CreateDbContext();
 
         var tournament = await context.Tournaments
+        .Include(t => t.Owner)
         .Include(t => t.Bracket)
             .ThenInclude(b => b.Matches)
         .Include(t => t.Participants)
         .FirstOrDefaultAsync(t => t.Id == tournamentId, token);
 
-        if (tournament is null) return false;
+        if (tournament is null) throw new TournamentNotFoundException();
 
         if (tournament.OwnerId != userId)
             throw new TournamentNotOwnerException();
