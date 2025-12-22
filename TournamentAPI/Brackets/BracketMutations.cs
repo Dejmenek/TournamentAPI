@@ -10,29 +10,24 @@ namespace TournamentAPI.Brackets;
 [ExtendObjectType(typeof(Mutation))]
 public class BracketMutations
 {
-    private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
-
-    public BracketMutations(IDbContextFactory<ApplicationDbContext> contextFactory)
-    {
-        _contextFactory = contextFactory;
-    }
-
     [Error<BracketAlreadyExistsException>]
     [Error<NotEnoughParticipantsException>]
     [Error<TournamentNotFoundException>]
     [Error<TournamentNotOwnerException>]
     [Error<BracketGenerationNotAllowedException>]
+    [UseProjection]
     [Authorize]
-    public async Task<Bracket> GenerateBracket(
-        int tournamentId, ClaimsPrincipal userClaims, CancellationToken token)
+    public async Task<IQueryable<Bracket>> GenerateBracket(
+        int tournamentId,
+        ClaimsPrincipal userClaims,
+        ApplicationDbContext context,
+        CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
 
         if (!int.TryParse(userIdClaim.Value, out int userId))
             throw new GraphQLException("Invalid user ID.");
-
-        using var context = _contextFactory.CreateDbContext();
 
         var tournament = await context.Tournaments
             .Include(t => t.Participants)
@@ -80,24 +75,27 @@ public class BracketMutations
 
         await context.SaveChangesAsync(token);
 
-        return bracket;
+        return context.Brackets.Where(b => b.Id == bracket.Id);
     }
 
     [Error<BracketNotFoundException>]
     [Error<TournamentNotOwnerException>]
     [Error<NoMatchesInRoundException>]
     [Error<NotAllMatchesPlayedException>]
+    [UseProjection]
     [Authorize]
-    public async Task<Bracket> UpdateRound(
-        int bracketId, int roundNumber, ClaimsPrincipal userClaims, CancellationToken token)
+    public async Task<IQueryable<Bracket>> UpdateRound(
+        int bracketId,
+        int roundNumber,
+        ClaimsPrincipal userClaims,
+        ApplicationDbContext context,
+        CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
 
         if (!int.TryParse(userIdClaim.Value, out int userId))
             throw new GraphQLException("Invalid user ID.");
-
-        using var context = _contextFactory.CreateDbContext();
 
         var bracket = await context.Brackets
             .Include(b => b.Tournament)
@@ -131,6 +129,6 @@ public class BracketMutations
 
         await context.SaveChangesAsync(token);
 
-        return bracket;
+        return context.Brackets.Where(b => b.Id == bracket.Id);
     }
 }

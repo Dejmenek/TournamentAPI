@@ -9,27 +9,21 @@ namespace TournamentAPI.Tournaments;
 [ExtendObjectType(typeof(Mutation))]
 public class TournamentMutations
 {
-    private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
-
-    public TournamentMutations(IDbContextFactory<ApplicationDbContext> contextFactory)
-    {
-        _contextFactory = contextFactory;
-    }
-
     [Error<TournamentNotFoundException>]
     [Error<TournamentClosedException>]
     [Error<TournamentJoinFailedException>]
     [Authorize]
     public async Task<bool> JoinTournament(
-        int tournamentId, ClaimsPrincipal userClaims, CancellationToken token)
+        int tournamentId,
+        ClaimsPrincipal userClaims,
+        ApplicationDbContext context,
+        CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
 
         if (!int.TryParse(userIdClaim.Value, out int userId))
             throw new GraphQLException("Invalid user ID.");
-
-        using var context = _contextFactory.CreateDbContext();
 
         var tournament = await context.Tournaments
             .Include(t => t.Participants)
@@ -63,9 +57,13 @@ public class TournamentMutations
     }
 
     [Error<TournamentNameEmptyException>]
+    [UseProjection]
     [Authorize]
-    public async Task<Tournament> CreateTournament(
-        CreateTournamentInput input, ClaimsPrincipal userClaims, CancellationToken token)
+    public async Task<IQueryable<Tournament>> CreateTournament(
+        CreateTournamentInput input,
+        ClaimsPrincipal userClaims,
+        ApplicationDbContext context,
+        CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
@@ -86,28 +84,28 @@ public class TournamentMutations
             OwnerId = userId
         };
 
-        using var context = _contextFactory.CreateDbContext();
-
         context.Tournaments.Add(tournament);
         await context.SaveChangesAsync(token);
 
-        return tournament;
+        return context.Tournaments.Where(t => t.Id == tournament.Id);
     }
 
     [Error<TournamentNotFoundException>]
     [Error<TournamentNotOwnerException>]
     [Error<TournamentNameEmptyException>]
+    [UseProjection]
     [Authorize]
-    public async Task<Tournament> UpdateTournament(
-        UpdateTournamentInput input, ClaimsPrincipal userClaims, CancellationToken token)
+    public async Task<IQueryable<Tournament>> UpdateTournament(
+        UpdateTournamentInput input,
+        ClaimsPrincipal userClaims,
+        ApplicationDbContext context,
+        CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
 
         if (!int.TryParse(userIdClaim.Value, out int userId))
             throw new GraphQLException("Invalid user ID.");
-
-        using var context = _contextFactory.CreateDbContext();
 
         var tournament = await context.Tournaments
             .FirstOrDefaultAsync(t => t.Id == input.TournamentId, token)
@@ -131,21 +129,22 @@ public class TournamentMutations
 
         await context.SaveChangesAsync(token);
 
-        return tournament;
+        return context.Tournaments.Where(t => t.Id == tournament.Id);
     }
 
     [Error<TournamentNotFoundException>]
     [Authorize]
     public async Task<bool> DeleteTournament(
-        int tournamentId, ClaimsPrincipal userClaims, CancellationToken token)
+        int tournamentId,
+        ClaimsPrincipal userClaims,
+        ApplicationDbContext context,
+        CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
 
         if (!int.TryParse(userIdClaim.Value, out int userId))
             throw new GraphQLException("Invalid user ID.");
-
-        using var context = _contextFactory.CreateDbContext();
 
         var tournament = await context.Tournaments
         .Include(t => t.Owner)

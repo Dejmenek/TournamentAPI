@@ -10,13 +10,6 @@ namespace TournamentAPI.Matches;
 [ExtendObjectType(typeof(Mutation))]
 public class MatchMutations
 {
-    private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
-
-    public MatchMutations(IDbContextFactory<ApplicationDbContext> contextFactory)
-    {
-        _contextFactory = contextFactory;
-    }
-
     [Error<MatchNotFoundException>]
     [Error<TournamentNotOwnerException>]
     [Error<TournamentNotClosedException>]
@@ -24,15 +17,17 @@ public class MatchMutations
     [Error<InvalidMatchWinnerException>]
     [Authorize]
     public async Task<bool> Play(
-        int matchId, int winnerId, ClaimsPrincipal userClaims, CancellationToken token)
+        int matchId,
+        int winnerId,
+        ClaimsPrincipal userClaims,
+        ApplicationDbContext context,
+        CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
             ?? throw new GraphQLException("User is not authenticated.");
 
         if (!int.TryParse(userIdClaim.Value, out int userId))
             throw new GraphQLException("Invalid user ID.");
-
-        using var context = _contextFactory.CreateDbContext();
 
         var match = await context.Matches
             .Include(m => m.Bracket)

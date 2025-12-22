@@ -40,9 +40,11 @@ public class TournamentQueries
     [UseProjection]
     public async Task<Tournament?> GetTournamentByIdAsync(
         int id,
-        TournamentByIdDataLoader tournamentById,
-        CancellationToken token)
+        ApplicationDbContext context,
+        CancellationToken cancellationToken = default)
     {
-        return await tournamentById.LoadAsync(id, token);
+        return await context.Tournaments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
     }
 }
