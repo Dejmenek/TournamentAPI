@@ -36,19 +36,6 @@ builder.Services
     })
     .AddJwtBearer(options =>
     {
-        options.Events = new JwtBearerEvents
-        {
-            OnAuthenticationFailed = ctx =>
-            {
-                Console.WriteLine("AUTH FAILED: " + ctx.Exception.Message);
-                return Task.CompletedTask;
-            },
-            OnTokenValidated = ctx =>
-            {
-                Console.WriteLine("AUTH SUCCESS: User authenticated - Claims: " + string.Join(", ", ctx.Principal?.Claims.Select(c => $"{c.Type}={c.Value}") ?? Array.Empty<string>()));
-                return Task.CompletedTask;
-            }
-        };
         options.TokenValidationParameters = new()
         {
             ValidateIssuer = true,
