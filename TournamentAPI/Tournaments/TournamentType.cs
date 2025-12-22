@@ -1,5 +1,3 @@
-using GreenDonut.Data;
-using HotChocolate.Data.Projections;
 using TournamentAPI.Brackets;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Participants;
@@ -26,7 +24,7 @@ public class TournamentType : ObjectType<Tournament>
             .UseFiltering<UserFilterInputType>()
             .UseSorting<UserSortInputType>();
         descriptor.Field(t => t.Participants)
-            .ResolveWith<TournamentResolvers>(t => t.GetParticipantsAsync(default!, default!, default!, default))
+            .ResolveWith<TournamentResolvers>(t => t.GetParticipantsAsync(default!, default!, default))
             .Type<ListType<TournamentParticipantType>>();
     }
 
@@ -34,12 +32,15 @@ public class TournamentType : ObjectType<Tournament>
     {
         public async Task<IEnumerable<TournamentParticipant>> GetParticipantsAsync(
             [Parent] Tournament tournament,
-            IProjectionSelection projectionSelection,
             ParticipantsByTournamentIdDataLoader participantsByTournamentId,
             CancellationToken cancellationToken)
-            => await participantsByTournamentId
-                .Select(projectionSelection)
+        {
+            if (tournament.Participants != null)
+                return tournament.Participants;
+
+            return await participantsByTournamentId
                 .LoadAsync(tournament.Id, cancellationToken) ?? [];
+        }
 
         public async Task<ApplicationUser?> GetOwnerAsync(
             [Parent] Tournament tournament,
