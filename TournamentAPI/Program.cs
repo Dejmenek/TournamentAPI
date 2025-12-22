@@ -88,9 +88,6 @@ builder.Services
     .AddType<MatchType>()
     .AddType<TournamentParticipantType>()
     .AddType<ApplicationUserType>()
-    .AddDataLoader<TournamentByIdDataLoader>()
-    .AddDataLoader<ParticipantsByTournamentIdDataLoader>()
-    .AddDataLoader<MatchesByBracketIdDataLoader>()
     .AddDataLoader<OwnerByTournamentIdDataLoader>()
     .AddProjections()
     .AddFiltering()
@@ -98,8 +95,6 @@ builder.Services
     .AddMaxExecutionDepthRule(5);
 
 builder.Services.AddScoped<JwtService>();
-builder.Services.AddDataLoader<ParticipantsByTournamentIdDataLoader>();
-builder.Services.AddDataLoader<MatchesByBracketIdDataLoader>();
 
 var app = builder.Build();
 

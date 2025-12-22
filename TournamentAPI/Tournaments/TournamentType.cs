@@ -20,38 +20,9 @@ public class TournamentType : ObjectType<Tournament>
             .Type<BracketType>();
         descriptor.Field(t => t.Owner)
             .Type<ApplicationUserType>()
-            .ResolveWith<TournamentResolvers>(t => t.GetOwnerAsync(default!, default!, default))
             .UseFiltering<UserFilterInputType>()
             .UseSorting<UserSortInputType>();
         descriptor.Field(t => t.Participants)
-            .ResolveWith<TournamentResolvers>(t => t.GetParticipantsAsync(default!, default!, default))
             .Type<ListType<TournamentParticipantType>>();
-    }
-
-    private class TournamentResolvers
-    {
-        public async Task<IEnumerable<TournamentParticipant>> GetParticipantsAsync(
-            [Parent] Tournament tournament,
-            ParticipantsByTournamentIdDataLoader participantsByTournamentId,
-            CancellationToken cancellationToken)
-        {
-            if (tournament.Participants != null)
-                return tournament.Participants;
-
-            return await participantsByTournamentId
-                .LoadAsync(tournament.Id, cancellationToken) ?? [];
-        }
-
-        public async Task<ApplicationUser?> GetOwnerAsync(
-            [Parent] Tournament tournament,
-            OwnerByTournamentIdDataLoader ownerById,
-            CancellationToken cancellationToken)
-        {
-            if (tournament.Owner != null)
-                return tournament.Owner;
-
-            return await ownerById
-                .LoadAsync(tournament.OwnerId, cancellationToken);
-        }
     }
 }
