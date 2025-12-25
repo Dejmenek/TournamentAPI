@@ -135,12 +135,22 @@ public class MatchesForRoundResponse
 
 public class LoginResponse
 {
-    public string? LoginUser { get; set; }
+    public LoginUserResult? LoginUser { get; set; }
+}
+
+public class LoginUserResult
+{
+    public string? String { get; set; }
 }
 
 public class RegisterResponse
 {
-    public bool RegisterUser { get; set; }
+    public RegisterUserResult? RegisterUser { get; set; }
+}
+
+public class RegisterUserResult
+{
+    public bool Boolean { get; set; }
 }
 
 public class MeResponse
@@ -151,7 +161,6 @@ public class MeResponse
 public class UserNode
 {
     public int Id { get; set; }
-    public string UserName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
