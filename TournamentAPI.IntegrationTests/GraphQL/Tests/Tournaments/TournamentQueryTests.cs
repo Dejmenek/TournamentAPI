@@ -166,4 +166,150 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
         var sortedNames = tournamentNames?.OrderByDescending(n => n).ToList();
         Assert.Equal(sortedNames, tournamentNames);
     }
+
+    [Fact]
+    public async Task GetTournaments_ExcludesSoftDeletedTournaments()
+    {
+        // Act
+        var response = await _fixture.Client.ExecuteQueryAsync<TournamentsResponse>(
+            QueryExamples.Queries.Tournaments.GetAllWithTotalCount);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data?.Tournaments?.Edges);
+
+        Assert.Equal(5, response.Data.Tournaments.TotalCount);
+        Assert.Equal(5, response.Data.Tournaments.Edges.Count);
+
+        var tournamentNames = response.Data.Tournaments.Nodes?.Select(t => t.Name).ToList();
+
+        Assert.DoesNotContain("Cancelled Spring Event", tournamentNames);
+        Assert.DoesNotContain("Cancelled Championship", tournamentNames);
+        Assert.DoesNotContain("Partially Cancelled Event", tournamentNames);
+
+        Assert.Contains("Spring Invitational", tournamentNames);
+        Assert.Contains("Summer Cup", tournamentNames);
+        Assert.Contains("Winter Championship 2024", tournamentNames);
+        Assert.Contains("Autumn Battle", tournamentNames);
+        Assert.Contains("Quick Fire Tournament", tournamentNames);
+    }
+
+    [Fact]
+    public async Task GetTournamentById_ReturnsCorrectTournament()
+    {
+        // Arrange
+        var tournamentId = 1;
+
+        // Act
+        var response = await _fixture.Client.ExecuteQueryAsync<TournamentByIdResponse>(
+            QueryExamples.Queries.Tournaments.GetById,
+            new { id = tournamentId });
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data?.TournamentById);
+        Assert.Equal("Spring Invitational", response.Data.TournamentById.Name);
+        Assert.Equal(tournamentId, response.Data.TournamentById.Id);
+    }
+
+    [Fact]
+    public async Task GetTournamentById_ReturnsNullForNonExistentId()
+    {
+        // Arrange
+        var tournamentId = 999;
+
+        // Act
+        var response = await _fixture.Client.ExecuteQueryAsync<TournamentByIdResponse>(
+            QueryExamples.Queries.Tournaments.GetById,
+            new { id = tournamentId });
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.Null(response.Data?.TournamentById);
+    }
+
+    [Fact]
+    public async Task GetTournamentById_ReturnsNullForSoftDeleted()
+    {
+        // Arrange
+        var tournamentId = 6;
+
+        // Act
+        var response = await _fixture.Client.ExecuteQueryAsync<TournamentByIdResponse>(
+            QueryExamples.Queries.Tournaments.GetById,
+            new { id = tournamentId });
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.Null(response.Data?.TournamentById);
+    }
+
+    [Fact]
+    public async Task GetTournamentById_WithOwner_ReturnsTournamentWithOwnerDetails()
+    {
+        // Arrange
+        var tournamentId = 1;
+
+        // Act
+        var response = await _fixture.Client.ExecuteQueryAsync<TournamentByIdResponse>(
+            QueryExamples.Queries.Tournaments.GetByIdWithOwner,
+            new { id = tournamentId });
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data?.TournamentById);
+        Assert.Equal("Spring Invitational", response.Data.TournamentById.Name);
+        Assert.Equal(tournamentId, response.Data.TournamentById.Id);
+
+        var owner = response.Data.TournamentById.Owner;
+        Assert.NotNull(owner);
+        Assert.NotEmpty(owner.FirstName);
+        Assert.NotEmpty(owner.LastName);
+        Assert.NotEmpty(owner.Email);
+    }
+
+    [Fact]
+    public async Task GetTournamentById_WithBracketAndMatches_ReturnsTournamentWithBracketAndMatches()
+    {
+        // Arrange
+        var tournamentId = 3;
+
+        // Act
+        var response = await _fixture.Client.ExecuteQueryAsync<TournamentByIdResponse>(
+            QueryExamples.Queries.Tournaments.GetByIdWithBracketAndMatches,
+            new { id = tournamentId });
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data?.TournamentById);
+        Assert.Equal("Winter Championship 2024", response.Data.TournamentById.Name);
+        Assert.Equal(tournamentId, response.Data.TournamentById.Id);
+
+        var bracket = response.Data.TournamentById.Bracket;
+        Assert.NotNull(bracket);
+        Assert.NotNull(bracket.Matches);
+        Assert.Equal(7, bracket.Matches.Count);
+    }
+
+    [Fact]
+    public async Task GetTournamentById_WithParticipants_ReturnsTournamentWithParticipants()
+    {
+        // Arrange
+        var tournamentId = 1;
+
+        // Act
+        var response = await _fixture.Client.ExecuteQueryAsync<TournamentByIdResponse>(
+            QueryExamples.Queries.Tournaments.GetByIdWithParticipants,
+            new { id = tournamentId });
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data?.TournamentById);
+        Assert.Equal("Spring Invitational", response.Data.TournamentById.Name);
+        Assert.Equal(tournamentId, response.Data.TournamentById.Id);
+
+        var participants = response.Data.TournamentById.Participants;
+        Assert.NotNull(participants);
+        Assert.Equal(2, participants.Count);
+    }
 }

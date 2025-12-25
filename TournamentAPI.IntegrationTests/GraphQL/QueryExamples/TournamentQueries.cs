@@ -186,5 +186,81 @@ public static partial class Queries
               }
             }
             """;
+
+        public const string GetById = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            id
+            name
+            ownerId
+            startDate
+            status
+          }
+        }
+        """;
+
+        public const string GetByIdWithOwner = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            id
+            name
+            ownerId
+            startDate
+            status
+            owner {
+              email
+              firstName
+              id
+              lastName
+            }
+          }
+        }
+        """;
+
+        public const string GetByIdWithParticipants = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            id
+            name
+            ownerId
+            startDate
+            status
+            participants {
+              participantId
+              tournamentId
+              participant {
+                email
+                firstName
+                id
+                lastName
+              }
+            }
+          }
+        }
+        """;
+
+        public const string GetByIdWithBracketAndMatches = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            id
+            name
+            ownerId
+            startDate
+            status
+            bracket {
+              id
+              tournamentId
+              matches {
+                bracketId
+                id
+                player1Id
+                player2Id
+                round
+                winnerId
+              }
+            }
+          }
+        }
+        """;
     }
 }
