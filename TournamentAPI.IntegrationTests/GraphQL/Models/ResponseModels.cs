@@ -1,3 +1,5 @@
+using TournamentAPI.IntegrationTests.GraphQL.Helpers;
+
 namespace TournamentAPI.IntegrationTests.GraphQL.Models;
 
 public class TournamentsResponse
@@ -90,17 +92,35 @@ public class PageInfo
 
 public class CreateTournamentResponse
 {
-    public TournamentNode? CreateTournament { get; set; }
+    public CreateTournamentResult? CreateTournament { get; set; }
+}
+
+public class CreateTournamentResult
+{
+    public TournamentNode? Tournament { get; set; }
+    public List<GraphQLError>? Errors { get; set; }
 }
 
 public class UpdateTournamentResponse
 {
-    public TournamentNode? UpdateTournament { get; set; }
+    public UpdateTournamentResult? UpdateTournament { get; set; }
+}
+
+public class UpdateTournamentResult
+{
+    public TournamentNode? Tournament { get; set; }
+    public List<GraphQLError>? Errors { get; set; }
 }
 
 public class DeleteTournamentResponse
 {
-    public bool DeleteTournament { get; set; }
+    public DeleteTournamentResult? DeleteTournament { get; set; }
+}
+
+public class DeleteTournamentResult
+{
+    public bool Boolean { get; set; }
+    public List<GraphQLError>? Errors { get; set; }
 }
 
 public class AddParticipantResponse
