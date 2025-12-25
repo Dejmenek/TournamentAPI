@@ -1,5 +1,5 @@
 namespace TournamentAPI.IntegrationTests.GraphQL.MutationExamples;
-public static partial class TournamentMutations
+public static partial class Mutations
 {
     public static class Tournaments
     {

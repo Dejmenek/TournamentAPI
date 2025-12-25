@@ -24,8 +24,4 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="GraphQL\Tests\Mutations\" />
-  </ItemGroup>
-
 </Project>
