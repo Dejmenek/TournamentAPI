@@ -57,6 +57,7 @@ public class TournamentMutations
     }
 
     [Error<TournamentNameEmptyException>]
+    [UseFirstOrDefault]
     [UseProjection]
     [Authorize]
     public async Task<IQueryable<Tournament>> CreateTournament(
@@ -93,6 +94,7 @@ public class TournamentMutations
     [Error<TournamentNotFoundException>]
     [Error<TournamentNotOwnerException>]
     [Error<TournamentNameEmptyException>]
+    [UseFirstOrDefault]
     [UseProjection]
     [Authorize]
     public async Task<IQueryable<Tournament>> UpdateTournament(
