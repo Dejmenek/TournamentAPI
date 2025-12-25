@@ -37,14 +37,14 @@ public class TournamentQueries
         return context.Tournaments.AsNoTracking();
     }
 
+    [UseFirstOrDefault]
     [UseProjection]
-    public async Task<Tournament?> GetTournamentByIdAsync(
+    public IQueryable<Tournament>? GetTournamentById(
         int id,
-        ApplicationDbContext context,
-        CancellationToken cancellationToken = default)
+        ApplicationDbContext context)
     {
-        return await context.Tournaments
+        return context.Tournaments
             .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+            .Where(t => t.Id == id);
     }
 }
