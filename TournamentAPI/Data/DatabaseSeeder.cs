@@ -51,6 +51,7 @@ public static class DatabaseSeeder
 
         if (!context.Tournaments.Any())
         {
+            // Tournament 1: Open tournament without bracket
             var tournament1 = new Tournament
             {
                 Name = "Spring Invitational",
@@ -64,6 +65,7 @@ public static class DatabaseSeeder
             tournament1.Participants.Add(new TournamentParticipant { Tournament = tournament1, Participant = user1 });
             tournament1.Participants.Add(new TournamentParticipant { Tournament = tournament1, Participant = user2 });
 
+            // Tournament 2: Open tournament with more participants
             var tournament2 = new Tournament
             {
                 Name = "Summer Cup",
@@ -179,7 +181,70 @@ public static class DatabaseSeeder
             tournament5.Bracket.Matches.Add(match11);
             tournament5.Bracket.Matches.Add(match12);
 
-            context.Tournaments.AddRange(tournament1, tournament2, tournament3, tournament4, tournament5);
+            // Tournament 6: Soft-deleted open tournament without bracket
+            var tournament6 = new Tournament
+            {
+                Name = "Cancelled Spring Event",
+                StartDate = DateTime.UtcNow.AddDays(14),
+                Status = TournamentStatus.Open,
+                OwnerId = user2.Id,
+                Owner = user2,
+                IsDeleted = true,
+                Participants = new List<TournamentParticipant>()
+            };
+
+            tournament6.Participants.Add(new TournamentParticipant { Tournament = tournament6, Participant = user2, IsDeleted = true });
+            tournament6.Participants.Add(new TournamentParticipant { Tournament = tournament6, Participant = user4, IsDeleted = true });
+            tournament6.Participants.Add(new TournamentParticipant { Tournament = tournament6, Participant = user6, IsDeleted = true });
+
+            // Tournament 7: Soft-deleted closed tournament with bracket and matches
+            var tournament7 = new Tournament
+            {
+                Name = "Cancelled Championship",
+                StartDate = DateTime.UtcNow.AddDays(-15),
+                Status = TournamentStatus.Closed,
+                OwnerId = user3.Id,
+                Owner = user3,
+                IsDeleted = true,
+                Participants = new List<TournamentParticipant>(),
+                Bracket = new Bracket
+                {
+                    IsDeleted = true,
+                    Matches = new List<Match>()
+                }
+            };
+
+            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user1, IsDeleted = true });
+            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user2, IsDeleted = true });
+            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user7, IsDeleted = true });
+            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user8, IsDeleted = true });
+
+            // Soft-deleted matches in deleted bracket
+            var match13 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user2.Id, WinnerId = user1.Id, Bracket = tournament7.Bracket, IsDeleted = true };
+            var match14 = new Match { Round = 1, Player1Id = user7.Id, Player2Id = user8.Id, WinnerId = user7.Id, Bracket = tournament7.Bracket, IsDeleted = true };
+            var match15 = new Match { Round = 2, Player1Id = user1.Id, Player2Id = user7.Id, WinnerId = null, Bracket = tournament7.Bracket, IsDeleted = true };
+
+            tournament7.Bracket.Matches.Add(match13);
+            tournament7.Bracket.Matches.Add(match14);
+            tournament7.Bracket.Matches.Add(match15);
+
+            // Tournament 8: Soft-deleted tournament with some soft-deleted participants (mixed state)
+            var tournament8 = new Tournament
+            {
+                Name = "Partially Cancelled Event",
+                StartDate = DateTime.UtcNow.AddDays(20),
+                Status = TournamentStatus.Open,
+                OwnerId = user1.Id,
+                Owner = user1,
+                IsDeleted = true,
+                Participants = new List<TournamentParticipant>()
+            };
+
+            tournament8.Participants.Add(new TournamentParticipant { Tournament = tournament8, Participant = user3, IsDeleted = true });
+            tournament8.Participants.Add(new TournamentParticipant { Tournament = tournament8, Participant = user5, IsDeleted = false }); // Not deleted participant in deleted tournament
+            tournament8.Participants.Add(new TournamentParticipant { Tournament = tournament8, Participant = user7, IsDeleted = true });
+
+            context.Tournaments.AddRange(tournament1, tournament2, tournament3, tournament4, tournament5, tournament6, tournament7, tournament8);
             await context.SaveChangesAsync();
         }
     }
