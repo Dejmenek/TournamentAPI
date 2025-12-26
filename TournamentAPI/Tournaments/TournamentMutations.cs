@@ -135,6 +135,7 @@ public class TournamentMutations
     }
 
     [Error<TournamentNotFoundException>]
+    [Error<TournamentNotOwnerException>]
     [Authorize]
     public async Task<bool> DeleteTournament(
         int tournamentId,
