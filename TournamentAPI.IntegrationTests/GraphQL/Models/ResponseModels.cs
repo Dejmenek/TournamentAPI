@@ -130,7 +130,13 @@ public class AddParticipantResponse
 
 public class JoinTournamentResponse
 {
-    public bool JoinTournament { get; set; }
+    public JoinTournamentResult? JoinTournament { get; set; }
+}
+
+public class JoinTournamentResult
+{
+    public bool? Boolean { get; set; }
+    public List<GraphQLError>? Errors { get; set; }
 }
 
 public class GenerateBracketResponse
