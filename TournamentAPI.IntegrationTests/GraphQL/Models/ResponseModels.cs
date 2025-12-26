@@ -141,7 +141,13 @@ public class JoinTournamentResult
 
 public class GenerateBracketResponse
 {
-    public BracketNode? GenerateBracket { get; set; }
+    public GenerateBracketResult? GenerateBracket { get; set; }
+}
+
+public class GenerateBracketResult
+{
+    public BracketNode? Bracket { get; set; }
+    public List<GraphQLError>? Errors { get; set; }
 }
 
 public class PlayMatchResponse
