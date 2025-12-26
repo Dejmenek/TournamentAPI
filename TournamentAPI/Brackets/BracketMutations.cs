@@ -15,6 +15,7 @@ public class BracketMutations
     [Error<TournamentNotFoundException>]
     [Error<TournamentNotOwnerException>]
     [Error<BracketGenerationNotAllowedException>]
+    [UseFirstOrDefault]
     [UseProjection]
     [Authorize]
     public async Task<IQueryable<Bracket>> GenerateBracket(
