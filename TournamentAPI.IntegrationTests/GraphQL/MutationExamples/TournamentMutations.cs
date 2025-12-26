@@ -130,6 +130,14 @@ public static partial class Mutations
             mutation DeleteTournament($input: DeleteTournamentInput!) {
               deleteTournament(input: $input) {
                 boolean
+                errors {
+                        ... on TournamentNotFoundError {
+                        message
+                    }
+                        ... on TournamentNotOwnerError {
+                        message
+                    }
+                }
               }
             }
             """;
