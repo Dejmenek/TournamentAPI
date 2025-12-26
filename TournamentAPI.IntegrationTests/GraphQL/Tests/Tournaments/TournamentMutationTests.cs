@@ -549,4 +549,191 @@ public class TournamentMutationTests : IClassFixture<TestFixture>, IAsyncLifetim
         Assert.NotNull(response.Data.UpdateTournament.Tournament.Owner);
         Assert.Equal(updatedTournamentName, response.Data.UpdateTournament.Tournament.Name);
     }
+
+    [Fact]
+    public async Task JoinTournament_ReturnsTournamentNotFoundError_WhenTournamentDoesNotExist()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToJoinId = 999;
+        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+            MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToJoinId,
+            }
+        };
+
+        // Act
+        var response = await _fixture.Client.ExecuteMutationAsync<JoinTournamentResponse>(
+            MutationExamples.Mutations.Tournaments.JoinTournament,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.JoinTournament);
+        Assert.Null(response.Data.JoinTournament.Boolean);
+        Assert.NotNull(response.Data.JoinTournament.Errors);
+
+        var errorMessage = response.Data.JoinTournament.Errors.First().Message;
+        Assert.Contains("Tournament doesn't exist", errorMessage);
+    }
+
+    [Fact]
+    public async Task JoinTournament_ReturnsClosedError_WhenTournamentIsClosed()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToJoinId = 4;
+        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+            MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToJoinId,
+            }
+        };
+
+        // Act
+        var response = await _fixture.Client.ExecuteMutationAsync<JoinTournamentResponse>(
+            MutationExamples.Mutations.Tournaments.JoinTournament,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.JoinTournament);
+        Assert.Null(response.Data.JoinTournament.Boolean);
+        Assert.NotNull(response.Data.JoinTournament.Errors);
+
+        var errorMessage = response.Data.JoinTournament.Errors.First().Message;
+        Assert.Contains("Tournament is closed", errorMessage);
+
+        using var dbContext = _fixture.CreateDbContext();
+        var participantInDb = await dbContext.TournamentParticipants
+            .FirstOrDefaultAsync(tp => tp.TournamentId == tournamentToJoinId && tp.Participant.Email == email);
+
+        Assert.Null(participantInDb);
+    }
+
+    [Fact]
+    public async Task JoinTournament_ReturnsJoinFailedError_WhenUserAlreadyParticipates()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToJoinId = 1;
+        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+            MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToJoinId,
+            }
+        };
+
+        // Act
+        var response = await _fixture.Client.ExecuteMutationAsync<JoinTournamentResponse>(
+            MutationExamples.Mutations.Tournaments.JoinTournament,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.JoinTournament);
+        Assert.Null(response.Data.JoinTournament.Boolean);
+        Assert.NotNull(response.Data.JoinTournament.Errors);
+
+        var errorMessage = response.Data.JoinTournament.Errors.First().Message;
+        Assert.Contains("User already participates in the tournament", errorMessage);
+
+        using var dbContext = _fixture.CreateDbContext();
+        var participantInDb = await dbContext.TournamentParticipants
+            .FirstOrDefaultAsync(tp => tp.TournamentId == tournamentToJoinId && tp.Participant.Email == email);
+
+        Assert.NotNull(participantInDb);
+    }
+
+    [Fact]
+    public async Task JoinTournament_JoinsTournamentSuccessfully()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToJoinId = 2;
+        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+            MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToJoinId,
+            }
+        };
+
+        // Act
+        var response = await _fixture.Client.ExecuteMutationAsync<JoinTournamentResponse>(
+            MutationExamples.Mutations.Tournaments.JoinTournament,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.JoinTournament);
+        Assert.True(response.Data.JoinTournament.Boolean);
+        Assert.Null(response.Data.JoinTournament.Errors);
+
+        using var dbContext = _fixture.CreateDbContext();
+        var participantInDb = await dbContext.TournamentParticipants
+            .FirstOrDefaultAsync(tp => tp.TournamentId == tournamentToJoinId && tp.Participant.Email == email);
+
+        Assert.NotNull(participantInDb);
+    }
 }
