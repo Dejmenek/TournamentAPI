@@ -150,4 +150,94 @@ public class TournamentMutationTests : IClassFixture<TestFixture>
 
         Assert.Null(tournamentInDb);
     }
+
+    [Fact]
+    public async Task DeleteTournament_ReturnsNotFoundError_WhenTournamentDoesNotExist()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToDeleteId = 999;
+        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+            MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToDeleteId
+            }
+        };
+
+        // Act
+        var response = await _fixture.Client.ExecuteMutationAsync<DeleteTournamentResponse>(
+            MutationExamples.Mutations.Tournaments.DeleteTournament,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.DeleteTournament);
+        Assert.NotNull(response.Data.DeleteTournament.Errors);
+
+        var errorMessage = response.Data.DeleteTournament.Errors.First().Message;
+        Assert.Contains("Tournament doesn't exist", errorMessage);
+    }
+
+    [Fact]
+    public async Task DeleteTournament_ReturnsNotOwnerError_WhenUserIsNotOwner()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToDeleteId = 2;
+        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+            MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToDeleteId
+            }
+        };
+
+        // Act
+        var response = await _fixture.Client.ExecuteMutationAsync<DeleteTournamentResponse>(
+            MutationExamples.Mutations.Tournaments.DeleteTournament,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.DeleteTournament);
+        Assert.NotNull(response.Data.DeleteTournament.Errors);
+
+        var errorMessage = response.Data.DeleteTournament.Errors.First().Message;
+        Assert.Contains("User is not the owner of the tournament", errorMessage);
+
+        using var dbContext = _fixture.CreateDbContext();
+        var tournamentInDb = await dbContext.Tournaments
+            .FirstOrDefaultAsync(t => t.Id == tournamentToDeleteId);
+
+        Assert.NotNull(tournamentInDb);
+    }
 }
