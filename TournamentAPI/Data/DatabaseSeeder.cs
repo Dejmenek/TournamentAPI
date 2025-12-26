@@ -228,23 +228,46 @@ public static class DatabaseSeeder
             tournament7.Bracket.Matches.Add(match14);
             tournament7.Bracket.Matches.Add(match15);
 
-            // Tournament 8: Soft-deleted tournament with some soft-deleted participants (mixed state)
+            // Tournament 8: Closed Tournament with even number of participants
             var tournament8 = new Tournament
             {
-                Name = "Partially Cancelled Event",
+                Name = "Event",
                 StartDate = DateTime.UtcNow.AddDays(20),
-                Status = TournamentStatus.Open,
-                OwnerId = user1.Id,
-                Owner = user1,
-                IsDeleted = true,
+                Status = TournamentStatus.Closed,
+                OwnerId = user2.Id,
+                Owner = user2,
                 Participants = new List<TournamentParticipant>()
             };
 
-            tournament8.Participants.Add(new TournamentParticipant { Tournament = tournament8, Participant = user3, IsDeleted = true });
-            tournament8.Participants.Add(new TournamentParticipant { Tournament = tournament8, Participant = user5, IsDeleted = false }); // Not deleted participant in deleted tournament
-            tournament8.Participants.Add(new TournamentParticipant { Tournament = tournament8, Participant = user7, IsDeleted = true });
+            tournament8.Participants.Add(new TournamentParticipant { Tournament = tournament8, Participant = user3 });
+            tournament8.Participants.Add(new TournamentParticipant { Tournament = tournament8, Participant = user5 });
 
-            context.Tournaments.AddRange(tournament1, tournament2, tournament3, tournament4, tournament5, tournament6, tournament7, tournament8);
+            // Tournament 9: Closed tournament with no participants
+            var tournament9 = new Tournament
+            {
+                Name = "Empty Tournament",
+                StartDate = DateTime.UtcNow.AddDays(10),
+                Status = TournamentStatus.Closed,
+                OwnerId = user2.Id,
+                Owner = user2,
+                Participants = new List<TournamentParticipant>()
+            };
+
+            // Tournament 10: Closed tournament with odd number of participants (3 players)
+            var tournament10 = new Tournament
+            {
+                Name = "Trio Tournament",
+                StartDate = DateTime.UtcNow.AddDays(12),
+                Status = TournamentStatus.Closed,
+                OwnerId = user2.Id,
+                Owner = user2,
+                Participants = new List<TournamentParticipant>()
+            };
+            tournament10.Participants.Add(new TournamentParticipant { Tournament = tournament10, Participant = user2 });
+            tournament10.Participants.Add(new TournamentParticipant { Tournament = tournament10, Participant = user4 });
+            tournament10.Participants.Add(new TournamentParticipant { Tournament = tournament10, Participant = user6 });
+
+            context.Tournaments.AddRange(tournament1, tournament2, tournament3, tournament4, tournament5, tournament6, tournament7, tournament8, tournament9, tournament10);
             await context.SaveChangesAsync();
         }
     }
