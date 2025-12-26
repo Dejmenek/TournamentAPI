@@ -3,7 +3,7 @@ using TournamentAPI.Data.Models;
 using TournamentAPI.IntegrationTests.GraphQL.Models;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Tournaments;
-public class TournamentMutationTests : IClassFixture<TestFixture>
+public class TournamentMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
 {
     private readonly TestFixture _fixture;
 
@@ -11,6 +11,13 @@ public class TournamentMutationTests : IClassFixture<TestFixture>
     {
         _fixture = fixture;
     }
+
+    public async Task InitializeAsync()
+    {
+        await _fixture.ResetDatabaseAsync();
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task CreateTournament_WithOwnerReturn_ReturnsOwnerDetails()

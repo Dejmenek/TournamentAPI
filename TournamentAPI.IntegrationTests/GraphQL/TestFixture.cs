@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using TournamentAPI.Data;
+using TournamentAPI.Data.Models;
 using TournamentAPI.IntegrationTests.GraphQL.Helpers;
 
 namespace TournamentAPI.IntegrationTests.GraphQL;
@@ -32,6 +34,18 @@ public class TestFixture : IAsyncLifetime
         Client = new TestClient(httpClient);
 
         await Task.CompletedTask;
+    }
+
+    public async Task ResetDatabaseAsync()
+    {
+        using var scope = _factory!.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        await context.Database.EnsureDeletedAsync();
+        await DatabaseSeeder.SeedAsync(context, userManager, recreateDatabase: false);
+
+        Client.ClearAuthToken();
     }
 
     public ApplicationDbContext CreateDbContext()
