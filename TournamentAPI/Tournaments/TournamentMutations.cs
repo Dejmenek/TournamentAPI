@@ -11,7 +11,7 @@ public class TournamentMutations
 {
     [Error<TournamentNotFoundException>]
     [Error<TournamentClosedException>]
-    [Error<TournamentJoinFailedException>]
+    [Error<UserAlreadyParticipantException>]
     [Authorize]
     public async Task<bool> JoinTournament(
         int tournamentId,
@@ -35,7 +35,7 @@ public class TournamentMutations
 
         bool alreadyParticipates = tournament.Participants.Any(tp => tp.ParticipantId == userId);
         if (alreadyParticipates)
-            throw new TournamentJoinFailedException();
+            throw new UserAlreadyParticipantException();
 
         var participant = new TournamentParticipant
         {

@@ -11,7 +11,7 @@ public static partial class Mutations
                   ... on TournamentClosedError {
                     message
                   }
-                  ... on TournamentJoinFailedError {
+                  ... on UserAlreadyParticipantError {
                     message
                   }
                   ... on TournamentNotFoundError {
