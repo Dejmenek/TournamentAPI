@@ -506,4 +506,47 @@ public class TournamentMutationTests : IClassFixture<TestFixture>, IAsyncLifetim
         Assert.NotNull(tournamentInDb);
         Assert.Equal(updatedTournamentName, tournamentInDb.Name);
     }
+
+    [Fact]
+    public async Task UpdateTournament_WithOwnerReturn_ReturnsOwnerDetails()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToUpdateId = 1;
+        var updatedTournamentName = "Updated Tournament Name";
+        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+            MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToUpdateId,
+                name = updatedTournamentName
+            }
+        };
+
+        // Act
+        var response = await _fixture.Client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            MutationExamples.Mutations.Tournaments.UpdateTournamentWithOwnerReturn,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.UpdateTournament);
+        Assert.NotNull(response.Data.UpdateTournament.Tournament);
+        Assert.NotNull(response.Data.UpdateTournament.Tournament.Owner);
+        Assert.Equal(updatedTournamentName, response.Data.UpdateTournament.Tournament.Name);
+    }
 }
