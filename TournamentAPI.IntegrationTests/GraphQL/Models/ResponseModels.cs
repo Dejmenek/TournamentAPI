@@ -119,7 +119,7 @@ public class DeleteTournamentResponse
 
 public class DeleteTournamentResult
 {
-    public bool Boolean { get; set; }
+    public bool? Boolean { get; set; }
     public List<GraphQLError>? Errors { get; set; }
 }
 
