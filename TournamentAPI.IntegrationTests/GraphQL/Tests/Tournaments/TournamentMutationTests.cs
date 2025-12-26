@@ -247,4 +247,263 @@ public class TournamentMutationTests : IClassFixture<TestFixture>, IAsyncLifetim
 
         Assert.NotNull(tournamentInDb);
     }
+
+    [Fact]
+    public async Task UpdateTournament_ReturnsNotFoundError_WhenTournamentDoesNotExist()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToUpdateId = 999;
+        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+            MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToUpdateId,
+                name = "Updated Tournament Name",
+                status = TournamentStatus.Closed.ToString().ToUpper(),
+                startDate = DateTime.UtcNow.AddDays(10).ToString("o")
+            }
+        };
+
+        // Act
+        var response = await _fixture.Client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.UpdateTournament);
+        Assert.Null(response.Data.UpdateTournament.Tournament);
+        Assert.NotNull(response.Data.UpdateTournament.Errors);
+
+        var errorMessage = response.Data.UpdateTournament.Errors.First().Message;
+        Assert.Contains("Tournament doesn't exist", errorMessage);
+    }
+
+    [Fact]
+    public async Task UpdateTournament_ReturnsNotOwnerError_WhenUserIsNotOwner()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToUpdateId = 2;
+        var updatedTournamentName = "Updated Tournament Name";
+        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+            MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToUpdateId,
+                name = updatedTournamentName,
+                status = TournamentStatus.Closed.ToString().ToUpper(),
+                startDate = DateTime.UtcNow.AddDays(10).ToString("o")
+            }
+        };
+
+        // Act
+        var response = await _fixture.Client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.UpdateTournament);
+        Assert.Null(response.Data.UpdateTournament.Tournament);
+        Assert.NotNull(response.Data.UpdateTournament.Errors);
+
+        var errorMessage = response.Data.UpdateTournament.Errors.First().Message;
+        Assert.Contains("User is not the owner of the tournament", errorMessage);
+
+        using var dbContext = _fixture.CreateDbContext();
+        var tournamentInDb = await dbContext.Tournaments
+            .FirstOrDefaultAsync(t => t.Id == tournamentToUpdateId);
+
+        Assert.NotNull(tournamentInDb);
+        Assert.NotEqual(updatedTournamentName, tournamentInDb.Name);
+    }
+
+    [Fact]
+    public async Task UpdateTournament_ReturnsNameEmptyError_WhenNameIsEmpty()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToUpdateId = 1;
+        var updatedTournamentName = " ";
+        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+            MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToUpdateId,
+                name = updatedTournamentName,
+                status = TournamentStatus.Closed.ToString().ToUpper(),
+                startDate = DateTime.UtcNow.AddDays(10).ToString("o")
+            }
+        };
+
+        // Act
+        var response = await _fixture.Client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.UpdateTournament);
+        Assert.Null(response.Data.UpdateTournament.Tournament);
+        Assert.NotNull(response.Data.UpdateTournament.Errors);
+
+        var errorMessage = response.Data.UpdateTournament.Errors.First().Message;
+        Assert.Contains("Tournament name cannot be empty", errorMessage);
+
+        using var dbContext = _fixture.CreateDbContext();
+        var tournamentInDb = await dbContext.Tournaments
+            .FirstOrDefaultAsync(t => t.Id == tournamentToUpdateId);
+
+        Assert.NotNull(tournamentInDb);
+        Assert.NotEqual(updatedTournamentName, tournamentInDb.Name);
+    }
+
+    [Fact]
+    public async Task UpdateTournament_UpdatesTournamentSuccessfully()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToUpdateId = 1;
+        var updatedTournamentName = "Updated Tournament Name";
+        var updatedDate = DateTime.UtcNow.AddDays(10);
+        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+            MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToUpdateId,
+                name = updatedTournamentName,
+                status = TournamentStatus.Closed.ToString().ToUpper(),
+                startDate = updatedDate.ToString("o")
+            }
+        };
+
+        // Act
+        var response = await _fixture.Client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.UpdateTournament);
+        Assert.NotNull(response.Data.UpdateTournament.Tournament);
+        Assert.Equal(updatedTournamentName, response.Data.UpdateTournament.Tournament.Name);
+        Assert.Equal(TournamentStatus.Closed.ToString().ToUpper(), response.Data.UpdateTournament.Tournament.Status);
+        Assert.Null(response.Data.UpdateTournament.Errors);
+
+        using var dbContext = _fixture.CreateDbContext();
+        var tournamentInDb = await dbContext.Tournaments
+            .FirstOrDefaultAsync(t => t.Id == tournamentToUpdateId);
+
+        Assert.NotNull(tournamentInDb);
+        Assert.Equal(updatedTournamentName, tournamentInDb.Name);
+        Assert.Equal(TournamentStatus.Closed, tournamentInDb.Status);
+    }
+
+    [Fact]
+    public async Task UpdateTournament_PartiallyUpdatesTournamentSuccessfully()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToUpdateId = 1;
+        var updatedTournamentName = "Updated Tournament Name";
+        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+            MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToUpdateId,
+                name = updatedTournamentName
+            }
+        };
+
+        // Act
+        var response = await _fixture.Client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.UpdateTournament);
+        Assert.NotNull(response.Data.UpdateTournament.Tournament);
+        Assert.Equal(updatedTournamentName, response.Data.UpdateTournament.Tournament.Name);
+        Assert.Null(response.Data.UpdateTournament.Errors);
+
+        using var dbContext = _fixture.CreateDbContext();
+        var tournamentInDb = await dbContext.Tournaments
+            .FirstOrDefaultAsync(t => t.Id == tournamentToUpdateId);
+
+        Assert.NotNull(tournamentInDb);
+        Assert.Equal(updatedTournamentName, tournamentInDb.Name);
+    }
 }
