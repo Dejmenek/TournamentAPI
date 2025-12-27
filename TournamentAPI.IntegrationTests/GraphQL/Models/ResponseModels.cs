@@ -157,7 +157,13 @@ public class PlayMatchResponse
 
 public class UpdateRoundResponse
 {
-    public BracketNode? UpdateRound { get; set; }
+    public UpdateRoundResult? UpdateRound { get; set; }
+}
+
+public class UpdateRoundResult
+{
+    public BracketNode? Bracket { get; set; }
+    public List<GraphQLError>? Errors { get; set; }
 }
 
 public class MatchesForRoundResponse
