@@ -16,6 +16,7 @@ public class ParticipantMutations
     [Error<TournamentClosedException>]
     [Error<UserNotFoundException>]
     [Error<UserAlreadyParticipantException>]
+    [UseFirstOrDefault]
     [UseProjection]
     [Authorize]
     public async Task<IQueryable<Tournament>> AddParticipant(
