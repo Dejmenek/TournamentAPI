@@ -20,8 +20,8 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
         // Assert
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
-        Assert.Equal(8, response.Data.Tournaments.TotalCount);
-        Assert.Equal(8, response.Data.Tournaments.Edges.Count);
+        Assert.Equal(9, response.Data.Tournaments.TotalCount);
+        Assert.Equal(9, response.Data.Tournaments.Edges.Count);
 
         var tournamentNames = response.Data.Tournaments.Nodes?.Select(t => t.Name).ToList();
         Assert.Contains("Spring Invitational", tournamentNames);
@@ -85,8 +85,8 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
         // Assert
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
-        Assert.Equal(8, response.Data.Tournaments.TotalCount);
-        Assert.Equal(8, response.Data.Tournaments.Edges.Count);
+        Assert.Equal(9, response.Data.Tournaments.TotalCount);
+        Assert.Equal(9, response.Data.Tournaments.Edges.Count);
 
         var springTournament = response.Data.Tournaments.Nodes?.FirstOrDefault(t => t.Name == "Spring Invitational");
         Assert.NotNull(springTournament);
@@ -109,8 +109,8 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
         // Assert
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
-        Assert.Equal(8, response.Data.Tournaments.TotalCount);
-        Assert.Equal(8, response.Data.Tournaments.Edges.Count);
+        Assert.Equal(9, response.Data.Tournaments.TotalCount);
+        Assert.Equal(9, response.Data.Tournaments.Edges.Count);
 
         var springTournament = response.Data.Tournaments.Nodes?.FirstOrDefault(t => t.Name == "Spring Invitational");
         Assert.NotNull(springTournament);
@@ -137,8 +137,8 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
         // Assert
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
-        Assert.Equal(8, response.Data.Tournaments.TotalCount);
-        Assert.Equal(8, response.Data.Tournaments.Edges.Count);
+        Assert.Equal(9, response.Data.Tournaments.TotalCount);
+        Assert.Equal(9, response.Data.Tournaments.Edges.Count);
 
         foreach (var tournament in response.Data.Tournaments.Nodes!)
         {
@@ -159,8 +159,8 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
         // Assert
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
-        Assert.Equal(8, response.Data.Tournaments.TotalCount);
-        Assert.Equal(8, response.Data.Tournaments.Edges.Count);
+        Assert.Equal(9, response.Data.Tournaments.TotalCount);
+        Assert.Equal(9, response.Data.Tournaments.Edges.Count);
 
         var tournamentNames = response.Data.Tournaments.Nodes?.Select(t => t.Name).ToList();
         var sortedNames = tournamentNames?.OrderByDescending(n => n).ToList();
@@ -178,8 +178,8 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
 
-        Assert.Equal(8, response.Data.Tournaments.TotalCount);
-        Assert.Equal(8, response.Data.Tournaments.Edges.Count);
+        Assert.Equal(9, response.Data.Tournaments.TotalCount);
+        Assert.Equal(9, response.Data.Tournaments.Edges.Count);
 
         var tournamentNames = response.Data.Tournaments.Nodes?.Select(t => t.Name).ToList();
 

@@ -197,36 +197,31 @@ public static class DatabaseSeeder
             tournament6.Participants.Add(new TournamentParticipant { Tournament = tournament6, Participant = user4, IsDeleted = true });
             tournament6.Participants.Add(new TournamentParticipant { Tournament = tournament6, Participant = user6, IsDeleted = true });
 
-            // Tournament 7: Soft-deleted closed tournament with bracket and matches
+            // Tournament 7
             var tournament7 = new Tournament
             {
-                Name = "Cancelled Championship",
+                Name = "Championship",
                 StartDate = DateTime.UtcNow.AddDays(-15),
                 Status = TournamentStatus.Closed,
                 OwnerId = user3.Id,
                 Owner = user3,
-                IsDeleted = true,
                 Participants = new List<TournamentParticipant>(),
                 Bracket = new Bracket
                 {
-                    IsDeleted = true,
                     Matches = new List<Match>()
                 }
             };
 
-            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user1, IsDeleted = true });
-            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user2, IsDeleted = true });
-            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user7, IsDeleted = true });
-            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user8, IsDeleted = true });
+            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user1 });
+            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user2 });
+            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user7 });
+            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user8 });
 
-            // Soft-deleted matches in deleted bracket
-            var match13 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user2.Id, WinnerId = user1.Id, Bracket = tournament7.Bracket, IsDeleted = true };
-            var match14 = new Match { Round = 1, Player1Id = user7.Id, Player2Id = user8.Id, WinnerId = user7.Id, Bracket = tournament7.Bracket, IsDeleted = true };
-            var match15 = new Match { Round = 2, Player1Id = user1.Id, Player2Id = user7.Id, WinnerId = null, Bracket = tournament7.Bracket, IsDeleted = true };
+            var match13 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user2.Id, WinnerId = user1.Id, Bracket = tournament7.Bracket };
+            var match14 = new Match { Round = 1, Player1Id = user7.Id, Player2Id = user8.Id, WinnerId = user7.Id, Bracket = tournament7.Bracket };
 
             tournament7.Bracket.Matches.Add(match13);
             tournament7.Bracket.Matches.Add(match14);
-            tournament7.Bracket.Matches.Add(match15);
 
             // Tournament 8: Closed Tournament with even number of participants
             var tournament8 = new Tournament
