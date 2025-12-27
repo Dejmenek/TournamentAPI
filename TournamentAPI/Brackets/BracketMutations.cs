@@ -54,17 +54,17 @@ public class BracketMutations
             Matches = new List<Match>()
         };
 
-        var participants = tournament.Participants.ToList();
+        var participantIds = tournament.Participants.Select(p => p.ParticipantId).ToList();
         var random = new Random();
-        participants = [.. participants.OrderBy(x => random.Next())];
+        participantIds = [.. participantIds.OrderBy(x => random.Next())];
 
-        for (int i = 0; i < participants.Count; i += 2)
+        for (int i = 0; i < participantIds.Count; i += 2)
         {
             Match match = new()
             {
                 Round = 1,
-                Player1Id = participants[i].ParticipantId,
-                Player2Id = i + 1 < participants.Count ? participants[i + 1].ParticipantId : null,
+                Player1Id = participantIds[i],
+                Player2Id = i + 1 < participantIds.Count ? participantIds[i + 1] : null,
                 Bracket = bracket,
             };
 
@@ -132,8 +132,8 @@ public class BracketMutations
             Match match = new()
             {
                 Round = roundNumber + 1,
-                Player1Id = winners[i].Id,
-                Player2Id = i + 1 < winners.Count ? winners[i + 1].Id : null,
+                Player1Id = (int)winners[i]!,
+                Player2Id = i + 1 < winners.Count ? winners[i + 1] : null,
                 BracketId = bracket.Id,
             };
             bracket.Matches.Add(match);
