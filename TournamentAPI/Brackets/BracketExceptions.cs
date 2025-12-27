@@ -6,3 +6,5 @@ public sealed class BracketNotFoundException() : Exception("Bracket doesn't exis
 public sealed class NoMatchesInRoundException() : Exception("No matches found in the specified round.");
 public sealed class NotAllMatchesPlayedException() : Exception("Not all matches in the current round have been played.");
 public sealed class BracketGenerationNotAllowedException() : Exception("Bracket can only be generated when the tournament is closed.");
+public sealed class BracketAlreadyHasWinnerException() : Exception("Bracket already has a winner.");
+public sealed class NextRoundAlreadyGeneratedException() : Exception("Next round has already been generated.");

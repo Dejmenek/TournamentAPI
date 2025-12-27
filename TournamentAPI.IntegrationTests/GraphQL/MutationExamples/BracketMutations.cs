@@ -88,6 +88,12 @@ public static partial class Mutations
                   ... on TournamentNotOwnerError {
                     message
                   }
+                  ... on BracketAlreadyHasWinnerError {
+                    message
+                  }
+                  ... on NextRoundAlreadyGeneratedError {
+                    message
+                  }
                 }
               }
             }

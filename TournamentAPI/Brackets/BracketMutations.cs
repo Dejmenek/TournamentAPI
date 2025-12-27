@@ -83,6 +83,9 @@ public class BracketMutations
     [Error<TournamentNotOwnerException>]
     [Error<NoMatchesInRoundException>]
     [Error<NotAllMatchesPlayedException>]
+    [Error<BracketAlreadyHasWinnerException>]
+    [Error<NextRoundAlreadyGeneratedException>]
+    [UseFirstOrDefault]
     [UseProjection]
     [Authorize]
     public async Task<IQueryable<Bracket>> UpdateRound(
@@ -107,6 +110,11 @@ public class BracketMutations
         if (bracket.Tournament.OwnerId != userId)
             throw new TournamentNotOwnerException();
 
+        var nextRoundExists = bracket.Matches.Any(m => m.Round == roundNumber + 1);
+
+        if (nextRoundExists)
+            throw new NextRoundAlreadyGeneratedException();
+
         var matchesInRound = bracket.Matches.Where(m => m.Round == roundNumber).ToList();
 
         if (matchesInRound.Count == 0)
@@ -115,7 +123,10 @@ public class BracketMutations
         if (matchesInRound.Any(m => m.WinnerId == null))
             throw new NotAllMatchesPlayedException();
 
-        var winners = matchesInRound.Select(m => m.Winner!).ToList();
+        var winners = matchesInRound.Select(m => m.WinnerId).ToList();
+
+        if (winners.Count < 2) throw new BracketAlreadyHasWinnerException();
+
         for (int i = 0; i < winners.Count; i += 2)
         {
             Match match = new()
