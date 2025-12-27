@@ -152,7 +152,13 @@ public class GenerateBracketResult
 
 public class PlayMatchResponse
 {
-    public bool Play { get; set; }
+    public PlayMatchResult? Play { get; set; }
+}
+
+public class PlayMatchResult
+{
+    public bool? Boolean { get; set; }
+    public List<GraphQLError>? Errors { get; set; }
 }
 
 public class UpdateRoundResponse
