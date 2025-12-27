@@ -125,7 +125,13 @@ public class DeleteTournamentResult
 
 public class AddParticipantResponse
 {
-    public TournamentNode? AddParticipant { get; set; }
+    public AddParticipantResult? AddParticipant { get; set; }
+}
+
+public class AddParticipantResult
+{
+    public TournamentNode? Tournament { get; set; }
+    public List<GraphQLError>? Errors { get; set; }
 }
 
 public class JoinTournamentResponse
