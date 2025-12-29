@@ -1,21 +1,12 @@
+using Microsoft.EntityFrameworkCore;
 using TournamentAPI.IntegrationTests.GraphQL.Models;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Matches;
-public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
+public class MatchMutationTests : BaseIntegrationTest
 {
-    private readonly TestFixture _fixture;
-
-    public MatchMutationTests(TestFixture fixture)
+    public MatchMutationTests(IntegrationTestWebAppFactory factory) : base(factory)
     {
-        _fixture = fixture;
     }
-
-    public async Task InitializeAsync()
-    {
-        await _fixture.ResetDatabaseAsync();
-    }
-
-    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task Play_ReturnsMatchNotFoundError_WhenMatchDoesNotExist()
@@ -24,7 +15,9 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
         var email = "alice@example.com";
         var password = "Password123!";
         var matchId = 999;
-        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
             MutationExamples.Mutations.Users.LoginUser,
             new
             {
@@ -34,7 +27,7 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
                     password = password
                 }
             });
-        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
 
         var variables = new
         {
@@ -46,7 +39,7 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
         };
 
         // Act
-        var response = await _fixture.Client.ExecuteMutationAsync<PlayMatchResponse>(
+        var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
             MutationExamples.Mutations.Match.Play,
             variables);
 
@@ -69,7 +62,9 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
         var password = "Password123!";
         var matchId = 9;
         var winnerId = 5;
-        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
             MutationExamples.Mutations.Users.LoginUser,
             new
             {
@@ -79,7 +74,7 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
                     password = password
                 }
             });
-        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
 
         var variables = new
         {
@@ -91,7 +86,7 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
         };
 
         // Act
-        var response = await _fixture.Client.ExecuteMutationAsync<PlayMatchResponse>(
+        var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
             MutationExamples.Mutations.Match.Play,
             variables);
 
@@ -105,8 +100,7 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
         var errorMessage = response.Data.Play.Errors.First().Message;
         Assert.Contains("User is not the owner of the tournament", errorMessage);
 
-        using var context = _fixture.CreateDbContext();
-        var match = await context.Matches.FindAsync(matchId);
+        var match = await DbContext.Matches.AsNoTracking().FirstOrDefaultAsync(m => m.Id == matchId);
 
         Assert.NotNull(match);
         Assert.Null(match.WinnerId);
@@ -120,7 +114,9 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
         var password = "Password123!";
         var matchId = 8;
         var winnerId = 2;
-        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
             MutationExamples.Mutations.Users.LoginUser,
             new
             {
@@ -130,7 +126,7 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
                     password = password
                 }
             });
-        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
 
         var variables = new
         {
@@ -142,7 +138,7 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
         };
 
         // Act
-        var response = await _fixture.Client.ExecuteMutationAsync<PlayMatchResponse>(
+        var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
             MutationExamples.Mutations.Match.Play,
             variables);
 
@@ -163,9 +159,11 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
         // Arrange
         var email = "carol@example.com";
         var password = "Password123!";
-        var matchId = 9;
+        var matchId = 10;
         var winnerId = 2;
-        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
             MutationExamples.Mutations.Users.LoginUser,
             new
             {
@@ -175,7 +173,7 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
                     password = password
                 }
             });
-        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
 
         var variables = new
         {
@@ -187,7 +185,7 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
         };
 
         // Act
-        var response = await _fixture.Client.ExecuteMutationAsync<PlayMatchResponse>(
+        var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
             MutationExamples.Mutations.Match.Play,
             variables);
 
@@ -201,8 +199,7 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
         var errorMessage = response.Data.Play.Errors.First().Message;
         Assert.Contains("Winner must be one of the match participants", errorMessage);
 
-        using var context = _fixture.CreateDbContext();
-        var match = await context.Matches.FindAsync(matchId);
+        var match = await DbContext.Matches.AsNoTracking().FirstOrDefaultAsync(m => m.Id == matchId);
 
         Assert.NotNull(match);
         Assert.Null(match.WinnerId);
@@ -216,7 +213,9 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
         var password = "Password123!";
         var matchId = 9;
         var winnerId = 5;
-        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
             MutationExamples.Mutations.Users.LoginUser,
             new
             {
@@ -226,7 +225,7 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
                     password = password
                 }
             });
-        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
 
         var variables = new
         {
@@ -238,7 +237,7 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
         };
 
         // Act
-        var response = await _fixture.Client.ExecuteMutationAsync<PlayMatchResponse>(
+        var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
             MutationExamples.Mutations.Match.Play,
             variables);
 
@@ -249,8 +248,7 @@ public class MatchMutationTests : IClassFixture<TestFixture>, IAsyncLifetime
         Assert.True(response.Data.Play.Boolean);
         Assert.Null(response.Data.Play.Errors);
 
-        using var context = _fixture.CreateDbContext();
-        var match = await context.Matches.FindAsync(matchId);
+        var match = await DbContext.Matches.AsNoTracking().FirstOrDefaultAsync(m => m.Id == matchId);
 
         Assert.NotNull(match);
         Assert.Equal(winnerId, match.WinnerId);

@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Helpers;
-public class TestClient
+public class TestClient : IDisposable
 {
     private readonly HttpClient _client;
 
@@ -51,6 +51,11 @@ public class TestClient
         CancellationToken cancellationToken = default)
     {
         return await ExecuteQueryAsync<T>(mutation, variables, cancellationToken);
+    }
+
+    public void Dispose()
+    {
+        _client?.Dispose();
     }
 }
 

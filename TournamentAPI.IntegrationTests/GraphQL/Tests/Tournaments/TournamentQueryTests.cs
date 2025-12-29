@@ -1,20 +1,19 @@
 using TournamentAPI.IntegrationTests.GraphQL.Models;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Tournaments;
-public class TournamentQueryTests : IClassFixture<TestFixture>
+public class TournamentQueryTests : BaseIntegrationTest
 {
-    private readonly TestFixture _fixture;
-
-    public TournamentQueryTests(TestFixture fixture)
+    public TournamentQueryTests(IntegrationTestWebAppFactory factory) : base(factory)
     {
-        _fixture = fixture;
     }
 
     [Fact]
     public async Task GetTournaments_ReturnsAllTournamentsWithTotalCount()
     {
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<TournamentsResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentsResponse>(
             QueryExamples.Queries.Tournaments.GetAllWithTotalCount);
 
         // Assert
@@ -32,7 +31,9 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
     public async Task GetTournaments_WithFilterByName_ReturnsMatchingTournaments()
     {
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<TournamentsResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentsResponse>(
             QueryExamples.Queries.Tournaments.GetAllWithNameFilter,
             new { nameFilter = "Spring" });
 
@@ -50,7 +51,9 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
     public async Task GetTournaments_WithExcessivePageSize_ReturnsMaxAllowedItemsError()
     {
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<TournamentsResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentsResponse>(
             QueryExamples.Queries.Tournaments.GetAllWithExcessivePageSize);
 
         // Assert
@@ -65,7 +68,9 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
     public async Task GetTournaments_WithoutPaging_ReturnsError()
     {
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<TournamentsResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentsResponse>(
             QueryExamples.Queries.Tournaments.GetWithoutPaging);
 
         // Assert
@@ -79,7 +84,9 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
     public async Task GetTournaments_WithParticipants_ReturnsTournamentsWithParticipants()
     {
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<TournamentsResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentsResponse>(
             QueryExamples.Queries.Tournaments.GetAllWithParticipants);
 
         // Assert
@@ -103,7 +110,9 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
     public async Task GetTournaments_WithBracketAndMatches_ReturnsTournamentsWithBracketsAndMatches()
     {
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<TournamentsResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentsResponse>(
             QueryExamples.Queries.Tournaments.GetAllWithBracketAndMatches);
 
         // Assert
@@ -131,7 +140,9 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
     public async Task GetTournaments_WithOwner_ReturnsTournamentsWithOwnerDetails()
     {
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<TournamentsResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentsResponse>(
             QueryExamples.Queries.Tournaments.GetAllWithOwner);
 
         // Assert
@@ -153,7 +164,9 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
     public async Task GetTournaments_WithDescendingNameSorting_ReturnsTournamentsInDescendingOrder()
     {
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<TournamentsResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentsResponse>(
             QueryExamples.Queries.Tournaments.GetAllWithSorting);
 
         // Assert
@@ -171,7 +184,9 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
     public async Task GetTournaments_ExcludesSoftDeletedTournaments()
     {
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<TournamentsResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentsResponse>(
             QueryExamples.Queries.Tournaments.GetAllWithTotalCount);
 
         // Assert
@@ -201,7 +216,9 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
         var tournamentId = 1;
 
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<TournamentByIdResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
             QueryExamples.Queries.Tournaments.GetById,
             new { id = tournamentId });
 
@@ -219,7 +236,9 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
         var tournamentId = 999;
 
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<TournamentByIdResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
             QueryExamples.Queries.Tournaments.GetById,
             new { id = tournamentId });
 
@@ -235,7 +254,9 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
         var tournamentId = 6;
 
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<TournamentByIdResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
             QueryExamples.Queries.Tournaments.GetById,
             new { id = tournamentId });
 
@@ -251,7 +272,9 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
         var tournamentId = 1;
 
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<TournamentByIdResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
             QueryExamples.Queries.Tournaments.GetByIdWithOwner,
             new { id = tournamentId });
 
@@ -275,7 +298,9 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
         var tournamentId = 3;
 
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<TournamentByIdResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
             QueryExamples.Queries.Tournaments.GetByIdWithBracketAndMatches,
             new { id = tournamentId });
 
@@ -298,7 +323,9 @@ public class TournamentQueryTests : IClassFixture<TestFixture>
         var tournamentId = 1;
 
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<TournamentByIdResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
             QueryExamples.Queries.Tournaments.GetByIdWithParticipants,
             new { id = tournamentId });
 
