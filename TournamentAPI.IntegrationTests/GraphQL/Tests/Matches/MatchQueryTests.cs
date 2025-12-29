@@ -1,20 +1,19 @@
 using TournamentAPI.IntegrationTests.GraphQL.Models;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Matches;
-public class MatchQueryTests : IClassFixture<TestFixture>
+public class MatchQueryTests : BaseIntegrationTest
 {
-    private readonly TestFixture _fixture;
-
-    public MatchQueryTests(TestFixture fixture)
+    public MatchQueryTests(IntegrationTestWebAppFactory factory) : base(factory)
     {
-        _fixture = fixture;
     }
 
     [Fact]
     public async Task GetMatchesForRound_WithBasicFields_ReturnsMatches()
     {
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<MatchesForRoundResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<MatchesForRoundResponse>(
             QueryExamples.Queries.Match.GetMatchesForRoundWithBasicFields,
             new
             {
@@ -32,7 +31,9 @@ public class MatchQueryTests : IClassFixture<TestFixture>
     public async Task GetMatchesForRound_WithPlayerDetails_ReturnsMatchesWithPlayers()
     {
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<MatchesForRoundResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<MatchesForRoundResponse>(
             QueryExamples.Queries.Match.GetMatchesForRoundWithPlayerDetails,
             new
             {

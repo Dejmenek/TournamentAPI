@@ -2,13 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using TournamentAPI.IntegrationTests.GraphQL.Models;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Users;
-public class UserMutationTests : IClassFixture<TestFixture>
+public class UserMutationTests : BaseIntegrationTest
 {
-    private readonly TestFixture _fixture;
-
-    public UserMutationTests(TestFixture fixture)
+    public UserMutationTests(IntegrationTestWebAppFactory factory) : base(factory)
     {
-        _fixture = fixture;
     }
 
     [Fact]
@@ -20,7 +17,9 @@ public class UserMutationTests : IClassFixture<TestFixture>
         var password = "Password123!";
 
         // Act
-        var response = await _fixture.Client.ExecuteMutationAsync<RegisterResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteMutationAsync<RegisterResponse>(
             MutationExamples.Mutations.Users.RegisterUser,
             new
             {
@@ -36,8 +35,8 @@ public class UserMutationTests : IClassFixture<TestFixture>
         Assert.NotNull(response.Data);
         Assert.True(response.Data.RegisterUser.Boolean);
 
-        using var dbContext = _fixture.CreateDbContext();
-        var user = await dbContext.Users
+        var user = await DbContext.Users
+            .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Email == email);
         Assert.NotNull(user);
         Assert.Equal(userName, user.UserName);
@@ -52,7 +51,9 @@ public class UserMutationTests : IClassFixture<TestFixture>
         var password = "Password123!";
 
         // Act
-        var emailAlreadyExistsResponse = await _fixture.Client.ExecuteMutationAsync<RegisterResponse>(
+        using var client = CreateClient();
+
+        var emailAlreadyExistsResponse = await client.ExecuteMutationAsync<RegisterResponse>(
             MutationExamples.Mutations.Users.RegisterUser,
             new
             {
@@ -80,7 +81,9 @@ public class UserMutationTests : IClassFixture<TestFixture>
         var password = "weak";
 
         // Act
-        var weakPasswordResponse = await _fixture.Client.ExecuteMutationAsync<RegisterResponse>(
+        using var client = CreateClient();
+
+        var weakPasswordResponse = await client.ExecuteMutationAsync<RegisterResponse>(
             MutationExamples.Mutations.Users.RegisterUser,
             new
             {
@@ -107,7 +110,9 @@ public class UserMutationTests : IClassFixture<TestFixture>
         var password = "Password123!";
 
         // Act
-        var response = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteMutationAsync<LoginResponse>(
             MutationExamples.Mutations.Users.LoginUser,
             new
             {
@@ -132,7 +137,9 @@ public class UserMutationTests : IClassFixture<TestFixture>
         var password = "WrongPassword!";
 
         // Act
-        var response = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+        using var client = CreateClient();
+
+        var response = await client.ExecuteMutationAsync<LoginResponse>(
             MutationExamples.Mutations.Users.LoginUser,
             new
             {

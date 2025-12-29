@@ -8,18 +8,10 @@ public static class DatabaseSeeder
 {
     public static async Task SeedAsync(
         ApplicationDbContext context,
-        UserManager<ApplicationUser> userManager,
-        bool recreateDatabase = false)
+        UserManager<ApplicationUser> userManager)
     {
-        if (recreateDatabase)
-        {
-            await context.Database.EnsureDeletedAsync();
-            await context.Database.EnsureCreatedAsync();
-        }
-        else
-        {
-            await context.Database.EnsureCreatedAsync();
-        }
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
 
         // Create users
         var user1 = new ApplicationUser { UserName = "alice", Email = "alice@example.com", FirstName = "Alice", LastName = "Smith" };
@@ -143,13 +135,17 @@ public static class DatabaseSeeder
             tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user3 });
             tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user5 });
             tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user6 });
+            tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user7 });
+            tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user8 });
 
             // Round 1 - Semi Finals (2 matches, one completed, one in progress)
             var match8 = new Match { Round = 1, Player1Id = user2.Id, Player2Id = user3.Id, WinnerId = user3.Id, Bracket = tournament4.Bracket };
             var match9 = new Match { Round = 1, Player1Id = user5.Id, Player2Id = user6.Id, WinnerId = null, Bracket = tournament4.Bracket };
+            var match10 = new Match { Round = 1, Player1Id = user7.Id, Player2Id = user8.Id, WinnerId = null, Bracket = tournament4.Bracket };
 
             tournament4.Bracket.Matches.Add(match8);
             tournament4.Bracket.Matches.Add(match9);
+            tournament4.Bracket.Matches.Add(match10);
 
             // Tournament 5: Closed tournament with odd number of participants (5 players)
             var tournament5 = new Tournament
@@ -173,13 +169,13 @@ public static class DatabaseSeeder
             tournament5.Participants.Add(new TournamentParticipant { Tournament = tournament5, Participant = user8 });
 
             // Round 1 - First round with bye (3 matches, one player gets bye)
-            var match10 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user3.Id, WinnerId = user1.Id, Bracket = tournament5.Bracket };
-            var match11 = new Match { Round = 1, Player1Id = user4.Id, Player2Id = user6.Id, WinnerId = user6.Id, Bracket = tournament5.Bracket };
-            var match12 = new Match { Round = 1, Player1Id = user8.Id, Player2Id = null, WinnerId = user8.Id, Bracket = tournament5.Bracket }; // Bye
+            var match11 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user3.Id, WinnerId = user1.Id, Bracket = tournament5.Bracket };
+            var match12 = new Match { Round = 1, Player1Id = user4.Id, Player2Id = user6.Id, WinnerId = user6.Id, Bracket = tournament5.Bracket };
+            var match13 = new Match { Round = 1, Player1Id = user8.Id, Player2Id = null, WinnerId = user8.Id, Bracket = tournament5.Bracket }; // Bye
 
-            tournament5.Bracket.Matches.Add(match10);
             tournament5.Bracket.Matches.Add(match11);
             tournament5.Bracket.Matches.Add(match12);
+            tournament5.Bracket.Matches.Add(match13);
 
             // Tournament 6: Soft-deleted open tournament without bracket
             var tournament6 = new Tournament
@@ -217,11 +213,11 @@ public static class DatabaseSeeder
             tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user7 });
             tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user8 });
 
-            var match13 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user2.Id, WinnerId = user1.Id, Bracket = tournament7.Bracket };
-            var match14 = new Match { Round = 1, Player1Id = user7.Id, Player2Id = user8.Id, WinnerId = user7.Id, Bracket = tournament7.Bracket };
+            var match14 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user2.Id, WinnerId = user1.Id, Bracket = tournament7.Bracket };
+            var match15 = new Match { Round = 1, Player1Id = user7.Id, Player2Id = user8.Id, WinnerId = user7.Id, Bracket = tournament7.Bracket };
 
-            tournament7.Bracket.Matches.Add(match13);
             tournament7.Bracket.Matches.Add(match14);
+            tournament7.Bracket.Matches.Add(match15);
 
             // Tournament 8: Closed Tournament with even number of participants
             var tournament8 = new Tournament

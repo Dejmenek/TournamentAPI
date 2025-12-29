@@ -1,13 +1,11 @@
+using Microsoft.EntityFrameworkCore;
 using TournamentAPI.IntegrationTests.GraphQL.Models;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Participants;
-public class ParticipantMutationTests : IClassFixture<TestFixture>
+public class ParticipantMutationTests : BaseIntegrationTest
 {
-    private readonly TestFixture _fixture;
-
-    public ParticipantMutationTests(TestFixture fixture)
+    public ParticipantMutationTests(IntegrationTestWebAppFactory factory) : base(factory)
     {
-        _fixture = fixture;
     }
 
     [Fact]
@@ -18,7 +16,9 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         var password = "Password123!";
         var tournamentId = 999;
         var participantId = 1;
-        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
             MutationExamples.Mutations.Users.LoginUser,
             new
             {
@@ -28,7 +28,7 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
                     password = password
                 }
             });
-        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
 
         var variables = new
         {
@@ -40,7 +40,7 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         };
 
         // Act
-        var response = await _fixture.Client.ExecuteMutationAsync<AddParticipantResponse>(
+        var response = await client.ExecuteMutationAsync<AddParticipantResponse>(
             MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
             variables);
 
@@ -63,7 +63,9 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         var password = "Password123!";
         var tournamentId = 2;
         var participantId = 1;
-        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
             MutationExamples.Mutations.Users.LoginUser,
             new
             {
@@ -73,7 +75,7 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
                     password = password
                 }
             });
-        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
 
         var variables = new
         {
@@ -85,7 +87,7 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         };
 
         // Act
-        var response = await _fixture.Client.ExecuteMutationAsync<AddParticipantResponse>(
+        var response = await client.ExecuteMutationAsync<AddParticipantResponse>(
             MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
             variables);
 
@@ -99,8 +101,8 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         var errorMessage = response.Data.AddParticipant.Errors.First().Message;
         Assert.Equal("User is not the owner of the tournament", errorMessage);
 
-        using var context = _fixture.CreateDbContext();
-        var tournamentParticipants = context.TournamentParticipants
+        var tournamentParticipants = DbContext.TournamentParticipants
+            .AsNoTracking()
             .Where(tp => tp.TournamentId == tournamentId && tp.ParticipantId == participantId);
 
         Assert.Empty(tournamentParticipants);
@@ -114,7 +116,9 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         var password = "Password123!";
         var tournamentId = 4;
         var participantId = 1;
-        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
             MutationExamples.Mutations.Users.LoginUser,
             new
             {
@@ -124,7 +128,7 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
                     password = password
                 }
             });
-        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
 
         var variables = new
         {
@@ -136,7 +140,7 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         };
 
         // Act
-        var response = await _fixture.Client.ExecuteMutationAsync<AddParticipantResponse>(
+        var response = await client.ExecuteMutationAsync<AddParticipantResponse>(
             MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
             variables);
 
@@ -159,7 +163,9 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         var password = "Password123!";
         var tournamentId = 1;
         var participantId = 999;
-        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
             MutationExamples.Mutations.Users.LoginUser,
             new
             {
@@ -169,7 +175,7 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
                     password = password
                 }
             });
-        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
 
         var variables = new
         {
@@ -181,7 +187,7 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         };
 
         // Act
-        var response = await _fixture.Client.ExecuteMutationAsync<AddParticipantResponse>(
+        var response = await client.ExecuteMutationAsync<AddParticipantResponse>(
             MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
             variables);
 
@@ -195,8 +201,8 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         var errorMessage = response.Data.AddParticipant.Errors.First().Message;
         Assert.Contains("The specified user was not found", errorMessage);
 
-        using var context = _fixture.CreateDbContext();
-        var tournamentParticipants = context.TournamentParticipants
+        var tournamentParticipants = DbContext.TournamentParticipants
+            .AsNoTracking()
             .Where(tp => tp.TournamentId == tournamentId && tp.ParticipantId == participantId);
 
         Assert.Empty(tournamentParticipants);
@@ -210,7 +216,9 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         var password = "Password123!";
         var tournamentId = 1;
         var participantId = 1;
-        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
             MutationExamples.Mutations.Users.LoginUser,
             new
             {
@@ -220,7 +228,7 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
                     password = password
                 }
             });
-        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
 
         var variables = new
         {
@@ -232,7 +240,7 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         };
 
         // Act
-        var response = await _fixture.Client.ExecuteMutationAsync<AddParticipantResponse>(
+        var response = await client.ExecuteMutationAsync<AddParticipantResponse>(
             MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
             variables);
 
@@ -246,8 +254,8 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         var errorMessage = response.Data.AddParticipant.Errors.First().Message;
         Assert.Equal("User already participates in the tournament", errorMessage);
 
-        using var context = _fixture.CreateDbContext();
-        var tournamentParticipants = context.TournamentParticipants
+        var tournamentParticipants = DbContext.TournamentParticipants
+            .AsNoTracking()
             .Where(tp => tp.TournamentId == tournamentId && tp.ParticipantId == participantId);
 
         Assert.Single(tournamentParticipants);
@@ -261,7 +269,9 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         var password = "Password123!";
         var tournamentId = 1;
         var participantId = 3;
-        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
             MutationExamples.Mutations.Users.LoginUser,
             new
             {
@@ -271,7 +281,7 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
                     password = password
                 }
             });
-        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
 
         var variables = new
         {
@@ -283,7 +293,7 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         };
 
         // Act
-        var response = await _fixture.Client.ExecuteMutationAsync<AddParticipantResponse>(
+        var response = await client.ExecuteMutationAsync<AddParticipantResponse>(
             MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
             variables);
 
@@ -303,7 +313,9 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         var password = "Password123!";
         var tournamentId = 1;
         var participantId = 4;
-        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
             MutationExamples.Mutations.Users.LoginUser,
             new
             {
@@ -313,7 +325,7 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
                     password = password
                 }
             });
-        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
 
         var variables = new
         {
@@ -325,7 +337,7 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         };
 
         // Act
-        var response = await _fixture.Client.ExecuteMutationAsync<AddParticipantResponse>(
+        var response = await client.ExecuteMutationAsync<AddParticipantResponse>(
             MutationExamples.Mutations.Participant.AddParticipantWithOwnerDetailsReturn,
             variables);
 
@@ -346,7 +358,9 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         var password = "Password123!";
         var tournamentId = 1;
         var participantId = 5;
-        var tokenResponse = await _fixture.Client.ExecuteMutationAsync<LoginResponse>(
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
             MutationExamples.Mutations.Users.LoginUser,
             new
             {
@@ -356,7 +370,7 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
                     password = password
                 }
             });
-        _fixture.Client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
 
         var variables = new
         {
@@ -368,7 +382,7 @@ public class ParticipantMutationTests : IClassFixture<TestFixture>
         };
 
         // Act
-        var response = await _fixture.Client.ExecuteMutationAsync<AddParticipantResponse>(
+        var response = await client.ExecuteMutationAsync<AddParticipantResponse>(
             MutationExamples.Mutations.Participant.AddPartiipantWithParticipantsReturn,
             variables);
 

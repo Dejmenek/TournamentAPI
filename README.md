@@ -29,6 +29,7 @@
 - **JWT Authentication** (`Microsoft.AspNetCore.Authentication.JwtBearer`)
 - **ASP.NET Core Identity**
 - **GraphQL Filtering, Sorting, Paging**
+- **TestContainers**
 - **XUnit**
 
 ---

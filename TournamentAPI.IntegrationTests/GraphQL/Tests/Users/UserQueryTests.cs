@@ -1,13 +1,10 @@
 using TournamentAPI.IntegrationTests.GraphQL.Models;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Users;
-public class UserQueryTests : IClassFixture<TestFixture>
+public class UserQueryTests : BaseIntegrationTest
 {
-    private readonly TestFixture _fixture;
-
-    public UserQueryTests(TestFixture fixture)
+    public UserQueryTests(IntegrationTestWebAppFactory factory) : base(factory)
     {
-        _fixture = fixture;
     }
 
     [Fact]
@@ -15,7 +12,9 @@ public class UserQueryTests : IClassFixture<TestFixture>
     {
         // Arrange
         var email = "alice@example.com";
-        var token = await _fixture.Client.ExecuteQueryAsync<LoginResponse>(
+        using var client = CreateClient();
+
+        var token = await client.ExecuteQueryAsync<LoginResponse>(
             MutationExamples.Mutations.Users.LoginUser,
             new
             {
@@ -25,10 +24,10 @@ public class UserQueryTests : IClassFixture<TestFixture>
                     password = "Password123!"
                 }
             });
-        _fixture.Client.SetAuthToken(token.Data.LoginUser.String);
+        client.SetAuthToken(token.Data.LoginUser.String);
 
         // Act
-        var response = await _fixture.Client.ExecuteQueryAsync<MeResponse>(
+        var response = await client.ExecuteQueryAsync<MeResponse>(
             QueryExamples.Queries.Users.GetMe);
 
         // Assert

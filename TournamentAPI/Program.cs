@@ -85,13 +85,14 @@ builder.Services.AddScoped<JwtService>();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+if (app.Environment.IsDevelopment())
 {
+    using var scope = app.Services.CreateScope();
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<ApplicationDbContext>();
     var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
 
-    await DatabaseSeeder.SeedAsync(context, userManager, recreateDatabase: true);
+    await DatabaseSeeder.SeedAsync(context, userManager);
 }
 
 app.UseRouting();
