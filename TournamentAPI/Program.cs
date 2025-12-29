@@ -26,7 +26,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>(opt =>
 {
     opt.User.RequireUniqueEmail = true;
 })
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+.AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services
     .AddAuthentication(options =>
@@ -79,7 +79,7 @@ builder.Services
     .AddProjections()
     .AddFiltering()
     .AddSorting()
-    .AddMaxExecutionDepthRule(5);
+    .AddMaxExecutionDepthRule(8);
 
 builder.Services.AddScoped<JwtService>();
 
