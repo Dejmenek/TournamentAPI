@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
-using TournamentAPI.IntegrationTests.GraphQL.Helpers;
+using TournamentAPI.Shared.Helpers;
 
 namespace TournamentAPI.IntegrationTests;
 
