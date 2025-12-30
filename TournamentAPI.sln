@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TournamentAPI", "Tournament
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TournamentAPI.IntegrationTests", "TournamentAPI.IntegrationTests\TournamentAPI.IntegrationTests.csproj", "{AD17B4DB-FD94-447F-B80E-C1C7A920320E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TournamentAPI.Benchmarks", "TournamentAPI.Benchmarks\TournamentAPI.Benchmarks.csproj", "{C39A3268-625D-4194-B087-22CD31ACC6CA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TournamentAPI.Shared", "TournamentAPI.Shared\TournamentAPI.Shared.csproj", "{BDEBB3B0-18BF-45DA-85D2-CB9D437783CF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{AD17B4DB-FD94-447F-B80E-C1C7A920320E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AD17B4DB-FD94-447F-B80E-C1C7A920320E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AD17B4DB-FD94-447F-B80E-C1C7A920320E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C39A3268-625D-4194-B087-22CD31ACC6CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C39A3268-625D-4194-B087-22CD31ACC6CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C39A3268-625D-4194-B087-22CD31ACC6CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C39A3268-625D-4194-B087-22CD31ACC6CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BDEBB3B0-18BF-45DA-85D2-CB9D437783CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDEBB3B0-18BF-45DA-85D2-CB9D437783CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDEBB3B0-18BF-45DA-85D2-CB9D437783CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDEBB3B0-18BF-45DA-85D2-CB9D437783CF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
