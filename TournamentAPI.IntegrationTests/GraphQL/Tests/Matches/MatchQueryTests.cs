@@ -1,4 +1,4 @@
-using TournamentAPI.IntegrationTests.GraphQL.Models;
+using TournamentAPI.Shared.Models;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Matches;
 public class MatchQueryTests : BaseIntegrationTest

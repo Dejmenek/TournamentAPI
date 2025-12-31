@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Data.Models;
-using TournamentAPI.IntegrationTests.GraphQL.Models;
+using TournamentAPI.Shared.Models;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Tournaments;
 public class TournamentMutationTests : BaseIntegrationTest

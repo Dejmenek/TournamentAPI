@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using TournamentAPI.IntegrationTests.GraphQL.Models;
+using TournamentAPI.Shared.Models;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Users;
 public class UserMutationTests : BaseIntegrationTest

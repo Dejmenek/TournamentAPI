@@ -1,6 +1,6 @@
-using TournamentAPI.IntegrationTests.GraphQL.Helpers;
+using TournamentAPI.Shared.Helpers;
 
-namespace TournamentAPI.IntegrationTests.GraphQL.Models;
+namespace TournamentAPI.Shared.Models;
 
 public class TournamentsResponse
 {

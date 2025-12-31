@@ -2,7 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 
-namespace TournamentAPI.IntegrationTests.GraphQL.Helpers;
+namespace TournamentAPI.Shared.Helpers;
 public class TestClient : IDisposable
 {
     private readonly HttpClient _client;

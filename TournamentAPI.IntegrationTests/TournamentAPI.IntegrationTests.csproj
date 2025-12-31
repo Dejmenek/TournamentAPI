@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\TournamentAPI.Shared\TournamentAPI.Shared.csproj" />
     <ProjectReference Include="..\TournamentAPI\TournamentAPI.csproj" />
   </ItemGroup>
 
