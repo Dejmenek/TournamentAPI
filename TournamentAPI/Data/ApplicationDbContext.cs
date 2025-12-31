@@ -46,6 +46,18 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
 
         builder.Entity<Tournament>().HasQueryFilter(t => !t.IsDeleted);
 
+        builder.Entity<Tournament>()
+            .HasIndex(t => t.Name)
+            .HasFilter("IsDeleted = 0");
+
+        builder.Entity<Tournament>()
+            .HasIndex(t => t.StartDate)
+            .HasFilter("IsDeleted = 0");
+
+        builder.Entity<Tournament>()
+            .HasIndex(t => t.Status)
+            .HasFilter("IsDeleted = 0");
+
         builder.Entity<TournamentParticipant>()
             .HasKey(tp => new { tp.TournamentId, tp.ParticipantId });
 
