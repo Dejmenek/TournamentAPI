@@ -5,6 +5,6 @@ internal class Program
 {
     private static void Main(string[] args)
     {
-        BenchmarkRunner.Run<ApiBenchmarks>();
+        BenchmarkSwitcher.FromTypes([typeof(ApiBenchmarks), typeof(SqlBenchmarks)]).Run(args);
     }
 }
