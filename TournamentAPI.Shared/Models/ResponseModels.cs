@@ -1,5 +1,3 @@
-using TournamentAPI.Shared.Helpers;
-
 namespace TournamentAPI.Shared.Models;
 
 public class TournamentsResponse
@@ -98,7 +96,6 @@ public class CreateTournamentResponse
 public class CreateTournamentResult
 {
     public TournamentNode? Tournament { get; set; }
-    public List<GraphQLError>? Errors { get; set; }
 }
 
 public class UpdateTournamentResponse
@@ -109,7 +106,6 @@ public class UpdateTournamentResponse
 public class UpdateTournamentResult
 {
     public TournamentNode? Tournament { get; set; }
-    public List<GraphQLError>? Errors { get; set; }
 }
 
 public class DeleteTournamentResponse
@@ -120,7 +116,6 @@ public class DeleteTournamentResponse
 public class DeleteTournamentResult
 {
     public bool? Boolean { get; set; }
-    public List<GraphQLError>? Errors { get; set; }
 }
 
 public class AddParticipantResponse
@@ -131,7 +126,6 @@ public class AddParticipantResponse
 public class AddParticipantResult
 {
     public TournamentNode? Tournament { get; set; }
-    public List<GraphQLError>? Errors { get; set; }
 }
 
 public class JoinTournamentResponse
@@ -142,7 +136,6 @@ public class JoinTournamentResponse
 public class JoinTournamentResult
 {
     public bool? Boolean { get; set; }
-    public List<GraphQLError>? Errors { get; set; }
 }
 
 public class GenerateBracketResponse
@@ -153,7 +146,6 @@ public class GenerateBracketResponse
 public class GenerateBracketResult
 {
     public BracketNode? Bracket { get; set; }
-    public List<GraphQLError>? Errors { get; set; }
 }
 
 public class PlayMatchResponse
@@ -164,7 +156,6 @@ public class PlayMatchResponse
 public class PlayMatchResult
 {
     public bool? Boolean { get; set; }
-    public List<GraphQLError>? Errors { get; set; }
 }
 
 public class UpdateRoundResponse
@@ -175,7 +166,6 @@ public class UpdateRoundResponse
 public class UpdateRoundResult
 {
     public BracketNode? Bracket { get; set; }
-    public List<GraphQLError>? Errors { get; set; }
 }
 
 public class MatchesForRoundResponse
@@ -200,7 +190,7 @@ public class RegisterResponse
 
 public class RegisterUserResult
 {
-    public bool Boolean { get; set; }
+    public bool? Boolean { get; set; }
 }
 
 public class MeResponse
