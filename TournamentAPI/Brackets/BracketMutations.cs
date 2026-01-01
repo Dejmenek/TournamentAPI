@@ -1,4 +1,5 @@
 using HotChocolate.Authorization;
+using HotChocolate.Resolvers;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using TournamentAPI.Data;
@@ -10,18 +11,14 @@ namespace TournamentAPI.Brackets;
 [ExtendObjectType(typeof(Mutation))]
 public class BracketMutations
 {
-    [Error<BracketAlreadyExistsException>]
-    [Error<NotEnoughParticipantsException>]
-    [Error<TournamentNotFoundException>]
-    [Error<TournamentNotOwnerException>]
-    [Error<BracketGenerationNotAllowedException>]
     [UseFirstOrDefault]
     [UseProjection]
     [Authorize]
-    public async Task<IQueryable<Bracket>> GenerateBracket(
+    public async Task<IQueryable<Bracket>?> GenerateBracket(
         int tournamentId,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
+        IResolverContext resolverContext,
         CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
@@ -33,20 +30,37 @@ public class BracketMutations
         var tournament = await context.Tournaments
             .Include(t => t.Participants)
             .Include(t => t.Bracket)
-            .FirstOrDefaultAsync(t => t.Id == tournamentId, token)
-            ?? throw new TournamentNotFoundException();
+            .FirstOrDefaultAsync(t => t.Id == tournamentId, token);
+
+        if (tournament == null)
+        {
+            resolverContext.ReportError(TournamentErrors.TournamentNotFound(tournamentId));
+            return null;
+        }
 
         if (tournament.OwnerId != userId)
-            throw new TournamentNotOwnerException();
+        {
+            resolverContext.ReportError(TournamentErrors.TournamentNotOwner(userId, tournamentId));
+            return null;
+        }
 
         if (tournament.Status != TournamentStatus.Closed)
-            throw new BracketGenerationNotAllowedException();
+        {
+            resolverContext.ReportError(BracketErrors.BracketGenerationNotAllowed(tournamentId));
+            return null;
+        }
 
         if (tournament.Bracket != null)
-            throw new BracketAlreadyExistsException();
+        {
+            resolverContext.ReportError(BracketErrors.BracketAlreadyExists(tournament.Bracket.Id));
+            return null;
+        }
 
         if (tournament.Participants.Count < 2)
-            throw new NotEnoughParticipantsException();
+        {
+            resolverContext.ReportError(BracketErrors.NotEnoughParticipants(tournament.Participants.Count));
+            return null;
+        }
 
         var bracket = new Bracket
         {
@@ -79,20 +93,15 @@ public class BracketMutations
         return context.Brackets.Where(b => b.Id == bracket.Id);
     }
 
-    [Error<BracketNotFoundException>]
-    [Error<TournamentNotOwnerException>]
-    [Error<NoMatchesInRoundException>]
-    [Error<NotAllMatchesPlayedException>]
-    [Error<BracketAlreadyHasWinnerException>]
-    [Error<NextRoundAlreadyGeneratedException>]
     [UseFirstOrDefault]
     [UseProjection]
     [Authorize]
-    public async Task<IQueryable<Bracket>> UpdateRound(
+    public async Task<IQueryable<Bracket>?> UpdateRound(
         int bracketId,
         int roundNumber,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
+        IResolverContext resolverContext,
         CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
@@ -104,28 +113,49 @@ public class BracketMutations
         var bracket = await context.Brackets
             .Include(b => b.Tournament)
             .Include(b => b.Matches)
-            .FirstOrDefaultAsync(b => b.Id == bracketId, token)
-            ?? throw new BracketNotFoundException();
+            .FirstOrDefaultAsync(b => b.Id == bracketId, token);
+
+        if (bracket == null)
+        {
+            resolverContext.ReportError(BracketErrors.BracketNotFound(bracketId));
+            return null;
+        }
 
         if (bracket.Tournament.OwnerId != userId)
-            throw new TournamentNotOwnerException();
+        {
+            resolverContext.ReportError(TournamentErrors.TournamentNotOwner(userId, bracket.TournamentId));
+            return null;
+        }
 
         var nextRoundExists = bracket.Matches.Any(m => m.Round == roundNumber + 1);
 
         if (nextRoundExists)
-            throw new NextRoundAlreadyGeneratedException();
+        {
+            resolverContext.ReportError(BracketErrors.NextRoundAlreadyGenerated(bracketId));
+            return null;
+        }
 
         var matchesInRound = bracket.Matches.Where(m => m.Round == roundNumber).ToList();
 
         if (matchesInRound.Count == 0)
-            throw new NoMatchesInRoundException();
+        {
+            resolverContext.ReportError(BracketErrors.NoMatchesInRound(roundNumber));
+            return null;
+        }
 
         if (matchesInRound.Any(m => m.WinnerId == null))
-            throw new NotAllMatchesPlayedException();
+        {
+            resolverContext.ReportError(BracketErrors.NotAllMatchesPlayed(roundNumber));
+            return null;
+        }
 
         var winners = matchesInRound.Select(m => m.WinnerId).ToList();
 
-        if (winners.Count < 2) throw new BracketAlreadyHasWinnerException();
+        if (winners.Count < 2)
+        {
+            resolverContext.ReportError(BracketErrors.BracketAlreadyHasWinner(bracketId));
+            return null;
+        }
 
         for (int i = 0; i < winners.Count; i += 2)
         {
