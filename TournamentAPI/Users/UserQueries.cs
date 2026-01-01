@@ -1,4 +1,5 @@
 using HotChocolate.Authorization;
+using HotChocolate.Resolvers;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using TournamentAPI.Data;
@@ -10,8 +11,11 @@ namespace TournamentAPI.Users;
 public class UserQueries
 {
     [Authorize]
-    public async Task<ApplicationUser> GetMe(
-        ClaimsPrincipal claimsPrincipal, ApplicationDbContext context, CancellationToken token)
+    public async Task<ApplicationUser?> GetMe(
+        ClaimsPrincipal claimsPrincipal,
+        ApplicationDbContext context,
+        IResolverContext resolverContext,
+        CancellationToken token)
     {
         var userIdClaim = (claimsPrincipal?.FindFirstValue(ClaimTypes.NameIdentifier))
             ?? throw new GraphQLException("User is not authenticated.");
@@ -21,6 +25,12 @@ public class UserQueries
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == userId, token);
 
-        return user ?? throw new GraphQLException("User not found.");
+        if (user == null)
+        {
+            resolverContext.ReportError(UserErrors.UserNotFound(userId));
+            return null;
+        }
+
+        return user;
     }
 }
