@@ -6,23 +6,6 @@ public static partial class Mutations
         public const string AddParticipantWithBasicFieldsReturn = """
             mutation AddParticipant($input: AddParticipantInput!) {
               addParticipant(input: $input) {
-                errors {
-                  ... on TournamentClosedError {
-                    message
-                  }
-                  ... on TournamentNotFoundError {
-                    message
-                  }
-                  ... on TournamentNotOwnerError {
-                    message
-                  }
-                  ... on UserAlreadyParticipantError {
-                    message
-                  }
-                  ... on UserNotFoundError {
-                    message
-                  }
-                }
                 tournament {
                   id
                   name
@@ -37,23 +20,6 @@ public static partial class Mutations
         public const string AddParticipantWithOwnerDetailsReturn = """
             mutation AddParticipant($input: AddParticipantInput!) {
               addParticipant(input: $input) {
-                errors {
-                  ... on TournamentClosedError {
-                    message
-                  }
-                  ... on TournamentNotFoundError {
-                    message
-                  }
-                  ... on TournamentNotOwnerError {
-                    message
-                  }
-                  ... on UserAlreadyParticipantError {
-                    message
-                  }
-                  ... on UserNotFoundError {
-                    message
-                  }
-                }
                 tournament {
                   id
                   name
@@ -74,23 +40,6 @@ public static partial class Mutations
         public const string AddPartiipantWithParticipantsReturn = """
             mutation AddParticipant($input: AddParticipantInput!) {
               addParticipant(input: $input) {
-                errors {
-                  ... on TournamentClosedError {
-                    message
-                  }
-                  ... on TournamentNotFoundError {
-                    message
-                  }
-                  ... on TournamentNotOwnerError {
-                    message
-                  }
-                  ... on UserAlreadyParticipantError {
-                    message
-                  }
-                  ... on UserNotFoundError {
-                    message
-                  }
-                }
                 tournament {
                   id
                   name
