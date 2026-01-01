@@ -1,4 +1,5 @@
 using HotChocolate.Authorization;
+using HotChocolate.Resolvers;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using TournamentAPI.Data;
@@ -9,14 +10,12 @@ namespace TournamentAPI.Tournaments;
 [ExtendObjectType(typeof(Mutation))]
 public class TournamentMutations
 {
-    [Error<TournamentNotFoundException>]
-    [Error<TournamentClosedException>]
-    [Error<UserAlreadyParticipantException>]
     [Authorize]
-    public async Task<bool> JoinTournament(
+    public async Task<bool?> JoinTournament(
         int tournamentId,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
+        IResolverContext resolverContext,
         CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
@@ -27,15 +26,29 @@ public class TournamentMutations
 
         var tournament = await context.Tournaments
             .Include(t => t.Participants)
-            .FirstOrDefaultAsync(t => t.Id == tournamentId, token)
-            ?? throw new TournamentNotFoundException();
+            .FirstOrDefaultAsync(t => t.Id == tournamentId, token);
+
+        if (tournament is null)
+        {
+            resolverContext.ReportError(
+                TournamentErrors.TournamentNotFound(tournamentId));
+            return null;
+        }
 
         if (tournament.Status == TournamentStatus.Closed)
-            throw new TournamentClosedException();
+        {
+            resolverContext.ReportError(
+                TournamentErrors.TournamentClosed(tournamentId));
+            return null;
+        }
 
         bool alreadyParticipates = tournament.Participants.Any(tp => tp.ParticipantId == userId);
         if (alreadyParticipates)
-            throw new UserAlreadyParticipantException();
+        {
+            resolverContext.ReportError(
+                TournamentErrors.UserAlreadyParticipant(userId, tournamentId));
+            return null;
+        }
 
         var participant = new TournamentParticipant
         {
@@ -56,14 +69,14 @@ public class TournamentMutations
         return true;
     }
 
-    [Error<TournamentNameEmptyException>]
     [UseFirstOrDefault]
     [UseProjection]
     [Authorize]
-    public async Task<IQueryable<Tournament>> CreateTournament(
+    public async Task<IQueryable<Tournament>?> CreateTournament(
         CreateTournamentInput input,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
+        IResolverContext resolverContext,
         CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
@@ -74,7 +87,9 @@ public class TournamentMutations
 
         if (string.IsNullOrWhiteSpace(input.Name))
         {
-            throw new TournamentNameEmptyException();
+            resolverContext.ReportError(
+                TournamentErrors.TournamentNameEmpty());
+            return null;
         }
 
         var tournament = new Tournament
@@ -91,16 +106,14 @@ public class TournamentMutations
         return context.Tournaments.Where(t => t.Id == tournament.Id);
     }
 
-    [Error<TournamentNotFoundException>]
-    [Error<TournamentNotOwnerException>]
-    [Error<TournamentNameEmptyException>]
     [UseFirstOrDefault]
     [UseProjection]
     [Authorize]
-    public async Task<IQueryable<Tournament>> UpdateTournament(
+    public async Task<IQueryable<Tournament>?> UpdateTournament(
         UpdateTournamentInput input,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
+        IResolverContext resolverContext,
         CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
@@ -110,18 +123,30 @@ public class TournamentMutations
             throw new GraphQLException("Invalid user ID.");
 
         var tournament = await context.Tournaments
-            .FirstOrDefaultAsync(t => t.Id == input.TournamentId, token)
-            ?? throw new TournamentNotFoundException();
+            .FirstOrDefaultAsync(t => t.Id == input.TournamentId, token);
+
+        if (tournament is null)
+        {
+            resolverContext.ReportError(
+                TournamentErrors.TournamentNotFound(input.TournamentId));
+            return null;
+        }
 
         if (tournament.OwnerId != userId)
-            throw new TournamentNotOwnerException();
-
-        if (input.Name != null)
         {
-            if (string.IsNullOrWhiteSpace(input.Name))
-                throw new TournamentNameEmptyException();
-            tournament.Name = input.Name;
+            resolverContext.ReportError(
+                TournamentErrors.TournamentNotOwner(userId, input.TournamentId));
+            return null;
         }
+
+        if (string.IsNullOrWhiteSpace(input.Name))
+        {
+            resolverContext.ReportError(
+                TournamentErrors.TournamentNameEmpty());
+            return null;
+        }
+        tournament.Name = input.Name;
+
 
         if (input.StartDate != null)
             tournament.StartDate = input.StartDate.Value;
@@ -134,13 +159,12 @@ public class TournamentMutations
         return context.Tournaments.Where(t => t.Id == tournament.Id);
     }
 
-    [Error<TournamentNotFoundException>]
-    [Error<TournamentNotOwnerException>]
     [Authorize]
-    public async Task<bool> DeleteTournament(
+    public async Task<bool?> DeleteTournament(
         int tournamentId,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
+        IResolverContext resolverContext,
         CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
@@ -156,10 +180,19 @@ public class TournamentMutations
         .Include(t => t.Participants)
         .FirstOrDefaultAsync(t => t.Id == tournamentId, token);
 
-        if (tournament is null) throw new TournamentNotFoundException();
+        if (tournament is null)
+        {
+            resolverContext.ReportError(
+                TournamentErrors.TournamentNotFound(tournamentId));
+            return null;
+        }
 
         if (tournament.OwnerId != userId)
-            throw new TournamentNotOwnerException();
+        {
+            resolverContext.ReportError(
+                TournamentErrors.TournamentNotOwner(userId, tournamentId));
+            return null;
+        }
 
         tournament.IsDeleted = true;
 
