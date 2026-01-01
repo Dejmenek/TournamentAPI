@@ -7,17 +7,6 @@ public static partial class Mutations
             mutation JoinTournament($input: JoinTournamentInput!) {
               joinTournament(input: $input) {
                 boolean
-                errors {
-                  ... on TournamentClosedError {
-                    message
-                  }
-                  ... on UserAlreadyParticipantError {
-                    message
-                  }
-                  ... on TournamentNotFoundError {
-                    message
-                  }
-                }
               }
             }
             """;
@@ -25,11 +14,6 @@ public static partial class Mutations
         public const string CreateTournamentWithBasicFieldsReturn = """
             mutation CreateTournament($input: CreateTournamentInput!) {
               createTournament(input: $input) {
-              errors {
-                ... on TournamentNameEmptyError {
-                  message
-                }
-              }
               tournament {
                 id
                 name
@@ -44,11 +28,6 @@ public static partial class Mutations
         public const string CreateTournamentWithOwnerReturn = """
             mutation CreateTournament($input: CreateTournamentInput!) {
               createTournament(input: $input) {
-                errors {
-                  ... on TournamentNameEmptyError {
-                    message
-                  }
-                }
                 tournament {
                   id
                   name
@@ -71,17 +50,6 @@ public static partial class Mutations
               updateTournament(
                 input: $input
               ) {
-                errors {
-                  ... on TournamentNameEmptyError {
-                    message
-                  }
-                  ... on TournamentNotFoundError {
-                    message
-                  }
-                  ... on TournamentNotOwnerError {
-                    message
-                  }
-                }
                 tournament {
                   id
                   name
@@ -98,17 +66,6 @@ public static partial class Mutations
               updateTournament(
                 input: $input
               ) {
-                errors {
-                  ... on TournamentNameEmptyError {
-                    message
-                  }
-                  ... on TournamentNotFoundError {
-                    message
-                  }
-                  ... on TournamentNotOwnerError {
-                    message
-                  }
-                }
                 tournament {
                   id
                   name
@@ -130,14 +87,6 @@ public static partial class Mutations
             mutation DeleteTournament($input: DeleteTournamentInput!) {
               deleteTournament(input: $input) {
                 boolean
-                errors {
-                        ... on TournamentNotFoundError {
-                        message
-                    }
-                        ... on TournamentNotOwnerError {
-                        message
-                    }
-                }
               }
             }
             """;

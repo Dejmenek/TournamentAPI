@@ -10,23 +10,6 @@ public static partial class Mutations
                   id
                   tournamentId
                 }
-                errors {
-                  ... on BracketAlreadyExistsError {
-                    message
-                  }
-                  ... on BracketGenerationNotAllowedError {
-                    message
-                  }
-                  ... on NotEnoughParticipantsError {
-                    message
-                  }
-                  ... on TournamentNotFoundError {
-                    message
-                  }
-                  ... on TournamentNotOwnerError {
-                    message
-                  }
-                }
               }
             }
             """;
@@ -47,23 +30,6 @@ public static partial class Mutations
                     winnerId
                   }
                 }
-                errors {
-                  ... on BracketAlreadyExistsError {
-                    message
-                  }
-                  ... on BracketGenerationNotAllowedError {
-                    message
-                  }
-                  ... on NotEnoughParticipantsError {
-                    message
-                  }
-                  ... on TournamentNotFoundError {
-                    message
-                  }
-                  ... on TournamentNotOwnerError {
-                    message
-                  }
-                }
               }
             }
             """;
@@ -74,26 +40,6 @@ public static partial class Mutations
                 bracket {
                   id
                   tournamentId
-                }
-                errors {
-                  ... on BracketNotFoundError {
-                    message
-                  }
-                  ... on NoMatchesInRoundError {
-                    message
-                  }
-                  ... on NotAllMatchesPlayedError {
-                    message
-                  }
-                  ... on TournamentNotOwnerError {
-                    message
-                  }
-                  ... on BracketAlreadyHasWinnerError {
-                    message
-                  }
-                  ... on NextRoundAlreadyGeneratedError {
-                    message
-                  }
                 }
               }
             }

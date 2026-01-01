@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using TournamentAPI.Brackets;
 using TournamentAPI.Shared.Models;
+using TournamentAPI.Tournaments;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Brackets;
 public class BracketMutationTests : BaseIntegrationTest
@@ -43,14 +45,22 @@ public class BracketMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.GenerateBracket);
         Assert.Null(response.Data.GenerateBracket.Bracket);
-        Assert.NotNull(response.Data.GenerateBracket.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.GenerateBracket.Errors.First().Message;
-        Assert.Contains("Tournament doesn't exist", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.TournamentNotFound(tournamentCreateBracketId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
     }
 
     [Fact]
@@ -88,14 +98,23 @@ public class BracketMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.GenerateBracket);
         Assert.Null(response.Data.GenerateBracket.Bracket);
-        Assert.NotNull(response.Data.GenerateBracket.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.GenerateBracket.Errors.First().Message;
-        Assert.Contains("User is not the owner of the tournament", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.TournamentNotOwner(1, tournamentCreateBracketId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
+        Assert.Equal(expectedError.Extensions!["UserId"]?.ToString(), error.Extensions["UserId"]?.ToString());
 
         var bracketInDb = await DbContext.Brackets
             .AsNoTracking()
@@ -139,14 +158,22 @@ public class BracketMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.GenerateBracket);
         Assert.Null(response.Data.GenerateBracket.Bracket);
-        Assert.NotNull(response.Data.GenerateBracket.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.GenerateBracket.Errors.First().Message;
-        Assert.Contains("Bracket can only be generated when the tournament is closed", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = BracketErrors.BracketGenerationNotAllowed(tournamentCreateBracketId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
 
         var bracketInDb = await DbContext.Brackets
             .AsNoTracking()
@@ -162,6 +189,7 @@ public class BracketMutationTests : BaseIntegrationTest
         var email = "alice@example.com";
         var password = "Password123!";
         var tournamentCreateBracketId = 3;
+        var bracketId = 1;
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
@@ -190,14 +218,22 @@ public class BracketMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.GenerateBracket);
         Assert.Null(response.Data.GenerateBracket.Bracket);
-        Assert.NotNull(response.Data.GenerateBracket.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.GenerateBracket.Errors.First().Message;
-        Assert.Contains("Bracket already exists for this tournament", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = BracketErrors.BracketAlreadyExists(bracketId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["BracketId"]?.ToString(), error.Extensions["BracketId"]?.ToString());
 
         var tournamentBrackets = await DbContext.Brackets
             .AsNoTracking()
@@ -214,6 +250,7 @@ public class BracketMutationTests : BaseIntegrationTest
         var email = "bob@example.com";
         var password = "Password123!";
         var tournamentCreateBracketId = 9;
+        var participantsCount = 0;
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
@@ -242,14 +279,22 @@ public class BracketMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.GenerateBracket);
         Assert.Null(response.Data.GenerateBracket.Bracket);
-        Assert.NotNull(response.Data.GenerateBracket.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.GenerateBracket.Errors.First().Message;
-        Assert.Contains("Not enough participants to create a bracket", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = BracketErrors.NotEnoughParticipants(participantsCount);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["ParticipantCount"]?.ToString(), error.Extensions["ParticipantCount"]?.ToString());
 
         var bracketInDb = await DbContext.Brackets
             .AsNoTracking()
@@ -297,7 +342,6 @@ public class BracketMutationTests : BaseIntegrationTest
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.GenerateBracket);
         Assert.NotNull(response.Data.GenerateBracket.Bracket);
-        Assert.Null(response.Data.GenerateBracket.Errors);
 
         var bracketInDb = await DbContext.Brackets
             .Include(b => b.Matches)
@@ -348,7 +392,6 @@ public class BracketMutationTests : BaseIntegrationTest
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.GenerateBracket);
         Assert.NotNull(response.Data.GenerateBracket.Bracket);
-        Assert.Null(response.Data.GenerateBracket.Errors);
 
         var bracketInDb = await DbContext.Brackets
             .Include(b => b.Matches)
@@ -397,14 +440,22 @@ public class BracketMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.UpdateRound);
         Assert.Null(response.Data.UpdateRound.Bracket);
-        Assert.NotNull(response.Data.UpdateRound.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.UpdateRound.Errors.First().Message;
-        Assert.Contains("Bracket doesn't exist", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = BracketErrors.BracketNotFound(bracketId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["BracketId"]?.ToString(), error.Extensions["BracketId"]?.ToString());
     }
 
     [Fact]
@@ -414,6 +465,7 @@ public class BracketMutationTests : BaseIntegrationTest
         var email = "alice@example.com";
         var password = "Password123!";
         var bracketId = 2;
+        var tournamentId = 4;
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
@@ -443,14 +495,23 @@ public class BracketMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.UpdateRound);
         Assert.Null(response.Data.UpdateRound.Bracket);
-        Assert.NotNull(response.Data.UpdateRound.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.UpdateRound.Errors.First().Message;
-        Assert.Contains("User is not the owner of the tournament", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.TournamentNotOwner(1, tournamentId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
+        Assert.Equal(expectedError.Extensions!["UserId"]?.ToString(), error.Extensions["UserId"]?.ToString());
 
         var bracketInDb = await DbContext.Brackets
             .AsNoTracking()
@@ -466,6 +527,7 @@ public class BracketMutationTests : BaseIntegrationTest
         var email = "alice@example.com";
         var password = "Password123!";
         var bracketId = 1;
+        var roundNumber = 4;
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
@@ -485,7 +547,7 @@ public class BracketMutationTests : BaseIntegrationTest
             input = new
             {
                 bracketId = bracketId,
-                roundNumber = 4
+                roundNumber = roundNumber
             }
         };
 
@@ -495,14 +557,22 @@ public class BracketMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.UpdateRound);
         Assert.Null(response.Data.UpdateRound.Bracket);
-        Assert.NotNull(response.Data.UpdateRound.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.UpdateRound.Errors.First().Message;
-        Assert.Contains("No matches found in the specified round", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = BracketErrors.NoMatchesInRound(roundNumber);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["RoundNumber"]?.ToString(), error.Extensions["RoundNumber"]?.ToString());
     }
 
     [Fact]
@@ -512,6 +582,7 @@ public class BracketMutationTests : BaseIntegrationTest
         var email = "carol@example.com";
         var password = "Password123!";
         var bracketId = 2;
+        var roundNumber = 1;
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
@@ -531,7 +602,7 @@ public class BracketMutationTests : BaseIntegrationTest
             input = new
             {
                 bracketId = bracketId,
-                roundNumber = 1
+                roundNumber = roundNumber
             }
         };
 
@@ -541,14 +612,22 @@ public class BracketMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.UpdateRound);
         Assert.Null(response.Data.UpdateRound.Bracket);
-        Assert.NotNull(response.Data.UpdateRound.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.UpdateRound.Errors.First().Message;
-        Assert.Contains("Not all matches in the current round have been played", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = BracketErrors.NotAllMatchesPlayed(roundNumber);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["RoundNumber"]?.ToString(), error.Extensions["RoundNumber"]?.ToString());
     }
 
     [Fact]
@@ -591,7 +670,6 @@ public class BracketMutationTests : BaseIntegrationTest
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.UpdateRound);
         Assert.NotNull(response.Data.UpdateRound.Bracket);
-        Assert.Null(response.Data.UpdateRound.Errors);
 
         var matchesForNextRound = await DbContext.Matches
             .AsNoTracking()
@@ -643,7 +721,6 @@ public class BracketMutationTests : BaseIntegrationTest
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.UpdateRound);
         Assert.NotNull(response.Data.UpdateRound.Bracket);
-        Assert.Null(response.Data.UpdateRound.Errors);
 
         var matchesForNextRound = await DbContext.Matches
             .AsNoTracking()
@@ -691,14 +768,22 @@ public class BracketMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.UpdateRound);
         Assert.Null(response.Data.UpdateRound.Bracket);
-        Assert.NotNull(response.Data.UpdateRound.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.UpdateRound.Errors.First().Message;
-        Assert.Contains("Next round has already been generated", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = BracketErrors.NextRoundAlreadyGenerated(bracketId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["BracketId"]?.ToString(), error.Extensions["BracketId"]?.ToString());
 
         var matchesForNextRound = await DbContext.Matches
             .AsNoTracking()
@@ -745,14 +830,22 @@ public class BracketMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.UpdateRound);
         Assert.Null(response.Data.UpdateRound.Bracket);
-        Assert.NotNull(response.Data.UpdateRound.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.UpdateRound.Errors.First().Message;
-        Assert.Contains("Bracket already has a winner", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = BracketErrors.BracketAlreadyHasWinner(bracketId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["BracketId"]?.ToString(), error.Extensions["BracketId"]?.ToString());
 
         var matchesForNextRound = await DbContext.Matches
             .AsNoTracking()

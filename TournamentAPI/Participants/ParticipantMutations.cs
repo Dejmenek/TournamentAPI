@@ -1,4 +1,5 @@
 using HotChocolate.Authorization;
+using HotChocolate.Resolvers;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using TournamentAPI.Data;
@@ -11,18 +12,14 @@ namespace TournamentAPI.Participants;
 [ExtendObjectType(typeof(Mutation))]
 public class ParticipantMutations
 {
-    [Error<TournamentNotFoundException>]
-    [Error<TournamentNotOwnerException>]
-    [Error<TournamentClosedException>]
-    [Error<UserNotFoundException>]
-    [Error<UserAlreadyParticipantException>]
     [UseFirstOrDefault]
     [UseProjection]
     [Authorize]
-    public async Task<IQueryable<Tournament>> AddParticipant(
+    public async Task<IQueryable<Tournament>?> AddParticipant(
         AddParticipantInput input,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
+        IResolverContext resolverContext,
         CancellationToken token)
     {
         var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
@@ -33,21 +30,40 @@ public class ParticipantMutations
 
         var tournament = await context.Tournaments
         .Include(t => t.Participants)
-        .FirstOrDefaultAsync(t => t.Id == input.TournamentId, token)
-        ?? throw new TournamentNotFoundException();
+        .FirstOrDefaultAsync(t => t.Id == input.TournamentId, token);
+
+        if (tournament == null)
+        {
+            resolverContext.ReportError(TournamentErrors.TournamentNotFound(input.TournamentId));
+            return null;
+        }
 
         if (tournament.OwnerId != userId)
-            throw new TournamentNotOwnerException();
+        {
+            resolverContext.ReportError(TournamentErrors.TournamentNotOwner(userId, input.TournamentId));
+            return null;
+        }
 
         if (tournament.Status == TournamentStatus.Closed)
-            throw new TournamentClosedException();
+        {
+            resolverContext.ReportError(TournamentErrors.TournamentClosed(input.TournamentId));
+            return null;
+        }
 
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == input.UserId, token)
-            ?? throw new UserNotFoundException();
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == input.UserId, token);
+
+        if (user == null)
+        {
+            resolverContext.ReportError(UserErrors.UserNotFound(input.UserId));
+            return null;
+        }
 
         bool alreadyParticipates = tournament.Participants.Any(tp => tp.ParticipantId == input.UserId);
         if (alreadyParticipates)
-            throw new UserAlreadyParticipantException();
+        {
+            resolverContext.ReportError(TournamentErrors.UserAlreadyParticipant(input.UserId, input.TournamentId));
+            return null;
+        }
 
         var participant = new TournamentParticipant
         {

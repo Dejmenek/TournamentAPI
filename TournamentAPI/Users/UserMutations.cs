@@ -1,3 +1,4 @@
+using HotChocolate.Resolvers;
 using Microsoft.AspNetCore.Identity;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Services;
@@ -7,7 +8,10 @@ namespace TournamentAPI.Users;
 [ExtendObjectType(typeof(Mutation))]
 public class UserMutations
 {
-    public async Task<bool> RegisterUser(RegisterUserInput input, UserManager<ApplicationUser> userManager)
+    public async Task<bool?> RegisterUser(
+        RegisterUserInput input,
+        UserManager<ApplicationUser> userManager,
+        IResolverContext resolverContext)
     {
         var user = new ApplicationUser
         {
@@ -18,23 +22,32 @@ public class UserMutations
         var result = await userManager.CreateAsync(user, input.Password);
         if (!result.Succeeded)
         {
-            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            throw new GraphQLException($"User registration failed: {errors}");
+            resolverContext.ReportError(UserErrors.RegistrationFailed(result.Errors.Select(e => e.Description).ToArray()));
+            return null;
         }
 
         return true;
     }
 
-    public async Task<string> LoginUser(
+    public async Task<string?> LoginUser(
         LoginUserInput input,
         UserManager<ApplicationUser> userManager,
+        IResolverContext resolverContext,
         JwtService jwtService)
     {
-        var user = await userManager.FindByEmailAsync(input.Email)
-            ?? throw new GraphQLException("Invalid email or password.");
+        var user = await userManager.FindByEmailAsync(input.Email);
+
+        if (user == null)
+        {
+            resolverContext.ReportError(UserErrors.InvalidCredentials());
+            return null;
+        }
 
         if (!await userManager.CheckPasswordAsync(user, input.Password))
-            throw new GraphQLException("Invalid email or password.");
+        {
+            resolverContext.ReportError(UserErrors.InvalidCredentials());
+            return null;
+        }
 
         var token = jwtService.CreateToken(user);
         return token;
