@@ -1,4 +1,5 @@
 using HotChocolate.Authorization;
+using HotChocolate.Resolvers;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using TournamentAPI.Data;
@@ -10,16 +11,12 @@ namespace TournamentAPI.Matches;
 [ExtendObjectType(typeof(Mutation))]
 public class MatchMutations
 {
-    [Error<MatchNotFoundException>]
-    [Error<TournamentNotOwnerException>]
-    [Error<TournamentNotClosedException>]
-    [Error<MatchAlreadyPlayedException>]
-    [Error<InvalidMatchWinnerException>]
     [Authorize]
-    public async Task<bool> Play(
+    public async Task<bool?> Play(
         int matchId,
         int winnerId,
         ClaimsPrincipal userClaims,
+        IResolverContext resolverContext,
         ApplicationDbContext context,
         CancellationToken token)
     {
@@ -32,22 +29,39 @@ public class MatchMutations
         var match = await context.Matches
             .Include(m => m.Bracket)
                 .ThenInclude(b => b.Tournament)
-            .FirstOrDefaultAsync(m => m.Id == matchId, token)
-            ?? throw new MatchNotFoundException();
+            .FirstOrDefaultAsync(m => m.Id == matchId, token);
+
+        if (match == null)
+        {
+            resolverContext.ReportError(MatchErrors.MatchNotFound(matchId));
+            return null;
+        }
 
         var tournament = match.Bracket.Tournament;
 
         if (tournament.OwnerId != userId)
-            throw new TournamentNotOwnerException();
+        {
+            resolverContext.ReportError(TournamentErrors.TournamentNotOwner(userId, tournament.Id));
+            return null;
+        }
 
         if (tournament.Status != TournamentStatus.Closed)
-            throw new TournamentNotClosedException();
+        {
+            resolverContext.ReportError(MatchErrors.TournamentNotClosed(tournament.Id));
+            return null;
+        }
 
         if (match.WinnerId != null)
-            throw new MatchAlreadyPlayedException();
+        {
+            resolverContext.ReportError(MatchErrors.MatchAlreadyPlayed(matchId));
+            return null;
+        }
 
         if (winnerId != match.Player1Id && winnerId != match.Player2Id)
-            throw new InvalidMatchWinnerException();
+        {
+            resolverContext.ReportError(MatchErrors.InvalidMatchWinner(matchId, winnerId));
+            return null;
+        }
 
         match.WinnerId = winnerId;
         await context.SaveChangesAsync(token);
