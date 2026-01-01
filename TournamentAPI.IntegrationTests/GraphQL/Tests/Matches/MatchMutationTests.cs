@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using TournamentAPI.Matches;
 using TournamentAPI.Shared.Models;
+using TournamentAPI.Tournaments;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Matches;
 public class MatchMutationTests : BaseIntegrationTest
@@ -44,14 +46,22 @@ public class MatchMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.Play);
         Assert.Null(response.Data.Play.Boolean);
-        Assert.NotNull(response.Data.Play.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.Play.Errors.First().Message;
-        Assert.Contains("Match was not found", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = MatchErrors.MatchNotFound(matchId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["MatchId"]?.ToString(), error.Extensions["MatchId"]?.ToString());
     }
 
     [Fact]
@@ -60,6 +70,7 @@ public class MatchMutationTests : BaseIntegrationTest
         // Arrange
         var email = "david@example.com";
         var password = "Password123!";
+        var tournamentId = 4;
         var matchId = 9;
         var winnerId = 5;
         using var client = CreateClient();
@@ -91,14 +102,23 @@ public class MatchMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.Play);
         Assert.Null(response.Data.Play.Boolean);
-        Assert.NotNull(response.Data.Play.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.Play.Errors.First().Message;
-        Assert.Contains("User is not the owner of the tournament", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.TournamentNotOwner(4, tournamentId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
+        Assert.Equal(expectedError.Extensions!["UserId"]?.ToString(), error.Extensions["UserId"]?.ToString());
 
         var match = await DbContext.Matches.AsNoTracking().FirstOrDefaultAsync(m => m.Id == matchId);
 
@@ -143,14 +163,22 @@ public class MatchMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.Play);
         Assert.Null(response.Data.Play.Boolean);
-        Assert.NotNull(response.Data.Play.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.Play.Errors.First().Message;
-        Assert.Contains("Match has already been played", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = MatchErrors.MatchAlreadyPlayed(matchId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["MatchId"]?.ToString(), error.Extensions["MatchId"]?.ToString());
     }
 
     [Fact]
@@ -190,14 +218,23 @@ public class MatchMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.Play);
         Assert.Null(response.Data.Play.Boolean);
-        Assert.NotNull(response.Data.Play.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.Play.Errors.First().Message;
-        Assert.Contains("Winner must be one of the match participants", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = MatchErrors.InvalidMatchWinner(matchId, winnerId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["MatchId"]?.ToString(), error.Extensions["MatchId"]?.ToString());
+        Assert.Equal(expectedError.Extensions!["WinnerId"]?.ToString(), error.Extensions["WinnerId"]?.ToString());
 
         var match = await DbContext.Matches.AsNoTracking().FirstOrDefaultAsync(m => m.Id == matchId);
 
@@ -246,7 +283,6 @@ public class MatchMutationTests : BaseIntegrationTest
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.Play);
         Assert.True(response.Data.Play.Boolean);
-        Assert.Null(response.Data.Play.Errors);
 
         var match = await DbContext.Matches.AsNoTracking().FirstOrDefaultAsync(m => m.Id == matchId);
 

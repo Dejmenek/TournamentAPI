@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Shared.Models;
+using TournamentAPI.Tournaments;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Tournaments;
 public class TournamentMutationTests : BaseIntegrationTest
@@ -97,14 +98,21 @@ public class TournamentMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.CreateTournament);
         Assert.Null(response.Data.CreateTournament.Tournament);
-        Assert.NotNull(response.Data.CreateTournament.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.CreateTournament.Errors.First().Message;
-        Assert.Contains("Tournament name cannot be empty", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.TournamentNameEmpty();
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
     }
 
     [Fact]
@@ -189,13 +197,22 @@ public class TournamentMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.DeleteTournament);
-        Assert.NotNull(response.Data.DeleteTournament.Errors);
+        Assert.Null(response.Data.DeleteTournament.Boolean);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.DeleteTournament.Errors.First().Message;
-        Assert.Contains("Tournament doesn't exist", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.TournamentNotFound(tournamentToDeleteId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
     }
 
     [Fact]
@@ -233,13 +250,23 @@ public class TournamentMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.DeleteTournament);
-        Assert.NotNull(response.Data.DeleteTournament.Errors);
+        Assert.Null(response.Data.DeleteTournament.Boolean);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.DeleteTournament.Errors.First().Message;
-        Assert.Contains("User is not the owner of the tournament", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.TournamentNotOwner(1, tournamentToDeleteId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
+        Assert.Equal(expectedError.Extensions!["UserId"]?.ToString(), error.Extensions["UserId"]?.ToString());
 
         var tournamentInDb = await DbContext.Tournaments
             .AsNoTracking()
@@ -286,14 +313,22 @@ public class TournamentMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.UpdateTournament);
         Assert.Null(response.Data.UpdateTournament.Tournament);
-        Assert.NotNull(response.Data.UpdateTournament.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.UpdateTournament.Errors.First().Message;
-        Assert.Contains("Tournament doesn't exist", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.TournamentNotFound(tournamentToUpdateId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
     }
 
     [Fact]
@@ -335,14 +370,23 @@ public class TournamentMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.UpdateTournament);
         Assert.Null(response.Data.UpdateTournament.Tournament);
-        Assert.NotNull(response.Data.UpdateTournament.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.UpdateTournament.Errors.First().Message;
-        Assert.Contains("User is not the owner of the tournament", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.TournamentNotOwner(1, tournamentToUpdateId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
+        Assert.Equal(expectedError.Extensions!["UserId"]?.ToString(), error.Extensions["UserId"]?.ToString());
 
         var tournamentInDb = await DbContext.Tournaments
             .AsNoTracking()
@@ -391,14 +435,21 @@ public class TournamentMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.UpdateTournament);
         Assert.Null(response.Data.UpdateTournament.Tournament);
-        Assert.NotNull(response.Data.UpdateTournament.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.UpdateTournament.Errors.First().Message;
-        Assert.Contains("Tournament name cannot be empty", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.TournamentNameEmpty();
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
 
         var tournamentInDb = await DbContext.Tournaments
             .AsNoTracking()
@@ -454,7 +505,6 @@ public class TournamentMutationTests : BaseIntegrationTest
         Assert.NotNull(response.Data.UpdateTournament.Tournament);
         Assert.Equal(updatedTournamentName, response.Data.UpdateTournament.Tournament.Name);
         Assert.Equal(TournamentStatus.Closed.ToString().ToUpper(), response.Data.UpdateTournament.Tournament.Status);
-        Assert.Null(response.Data.UpdateTournament.Errors);
 
         var tournamentInDb = await DbContext.Tournaments
             .AsNoTracking()
@@ -507,7 +557,6 @@ public class TournamentMutationTests : BaseIntegrationTest
         Assert.NotNull(response.Data.UpdateTournament);
         Assert.NotNull(response.Data.UpdateTournament.Tournament);
         Assert.Equal(updatedTournamentName, response.Data.UpdateTournament.Tournament.Name);
-        Assert.Null(response.Data.UpdateTournament.Errors);
 
         var tournamentInDb = await DbContext.Tournaments
             .AsNoTracking()
@@ -557,7 +606,6 @@ public class TournamentMutationTests : BaseIntegrationTest
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.UpdateTournament);
-        Assert.Null(response.Data.UpdateTournament.Errors);
         Assert.NotNull(response.Data.UpdateTournament.Tournament);
         Assert.NotNull(response.Data.UpdateTournament.Tournament.Owner);
         Assert.Equal(updatedTournamentName, response.Data.UpdateTournament.Tournament.Name);
@@ -598,14 +646,22 @@ public class TournamentMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.JoinTournament);
         Assert.Null(response.Data.JoinTournament.Boolean);
-        Assert.NotNull(response.Data.JoinTournament.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.JoinTournament.Errors.First().Message;
-        Assert.Contains("Tournament doesn't exist", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.TournamentNotFound(tournamentToJoinId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
     }
 
     [Fact]
@@ -643,14 +699,22 @@ public class TournamentMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.JoinTournament);
         Assert.Null(response.Data.JoinTournament.Boolean);
-        Assert.NotNull(response.Data.JoinTournament.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.JoinTournament.Errors.First().Message;
-        Assert.Contains("Tournament is closed", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.TournamentClosed(tournamentToJoinId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
 
         var participantInDb = await DbContext.TournamentParticipants
             .AsNoTracking()
@@ -694,14 +758,23 @@ public class TournamentMutationTests : BaseIntegrationTest
             variables);
 
         // Assert
-        Assert.False(response.HasErrors);
+        Assert.True(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.JoinTournament);
         Assert.Null(response.Data.JoinTournament.Boolean);
-        Assert.NotNull(response.Data.JoinTournament.Errors);
+        Assert.NotNull(response.Errors);
 
-        var errorMessage = response.Data.JoinTournament.Errors.First().Message;
-        Assert.Contains("User already participates in the tournament", errorMessage);
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.UserAlreadyParticipant(2, tournamentToJoinId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
+        Assert.Equal(expectedError.Extensions!["UserId"]?.ToString(), error.Extensions["UserId"]?.ToString());
 
         var participantInDb = await DbContext.TournamentParticipants
             .AsNoTracking()
@@ -749,7 +822,6 @@ public class TournamentMutationTests : BaseIntegrationTest
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.JoinTournament);
         Assert.True(response.Data.JoinTournament.Boolean);
-        Assert.Null(response.Data.JoinTournament.Errors);
 
         var participantInDb = await DbContext.TournamentParticipants
             .AsNoTracking()

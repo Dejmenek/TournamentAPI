@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using TournamentAPI.IntegrationTests.Extensions;
 using TournamentAPI.Shared.Models;
+using TournamentAPI.Users;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Users;
 public class UserMutationTests : BaseIntegrationTest
@@ -67,9 +69,24 @@ public class UserMutationTests : BaseIntegrationTest
 
         // Assert
         Assert.True(emailAlreadyExistsResponse.HasErrors);
-        Assert.Null(emailAlreadyExistsResponse.Data);
-        var errorMessage = emailAlreadyExistsResponse.Errors!.First().Message;
-        Assert.Contains("User registration failed: Email", errorMessage);
+        Assert.NotNull(emailAlreadyExistsResponse.Data);
+        Assert.NotNull(emailAlreadyExistsResponse.Data.RegisterUser);
+        Assert.Null(emailAlreadyExistsResponse.Data.RegisterUser.Boolean);
+        Assert.NotNull(emailAlreadyExistsResponse.Errors);
+
+        var error = emailAlreadyExistsResponse.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = UserErrors.RegistrationFailed(["Email 'alice@example.com' is already taken."]);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.NotNull(error.Extensions["Errors"]);
+
+        var errorsArray = error.GetErrorsArray();
+        Assert.Contains("Email 'alice@example.com' is already taken.", errorsArray);
     }
 
     [Fact]
@@ -97,9 +114,33 @@ public class UserMutationTests : BaseIntegrationTest
 
         // Assert
         Assert.True(weakPasswordResponse.HasErrors);
-        Assert.Null(weakPasswordResponse.Data);
-        var errorMessage = weakPasswordResponse.Errors!.First().Message;
-        Assert.Contains("User registration failed: Password", errorMessage);
+        Assert.NotNull(weakPasswordResponse.Data);
+        Assert.NotNull(weakPasswordResponse.Data.RegisterUser);
+        Assert.Null(weakPasswordResponse.Data.RegisterUser.Boolean);
+        Assert.NotNull(weakPasswordResponse.Errors);
+
+        var error = weakPasswordResponse.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = UserErrors.RegistrationFailed([
+            "Passwords must be at least 6 characters.",
+            "Passwords must have at least one non alphanumeric character.",
+            "Passwords must have at least one digit ('0'-'9').",
+            "Passwords must have at least one uppercase ('A'-'Z')."
+        ]);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.NotNull(error.Extensions["Errors"]);
+
+        var errorsArray = error.GetErrorsArray();
+        Assert.Contains("Passwords must be at least 6 characters.", errorsArray);
+        Assert.Contains("Passwords must have at least one non alphanumeric character.", errorsArray);
+        Assert.Contains("Passwords must have at least one digit ('0'-'9').", errorsArray);
+        Assert.Contains("Passwords must have at least one uppercase ('A'-'Z').", errorsArray);
+
     }
 
     [Fact]
@@ -152,8 +193,19 @@ public class UserMutationTests : BaseIntegrationTest
 
         // Assert
         Assert.True(response.HasErrors);
-        Assert.Null(response.Data);
-        var errorMessage = response.Errors!.First().Message;
-        Assert.Contains("Invalid email or password.", errorMessage);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.LoginUser);
+        Assert.Null(response.Data.LoginUser.String);
+        Assert.NotNull(response.Errors);
+
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = UserErrors.InvalidCredentials();
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
     }
 }
