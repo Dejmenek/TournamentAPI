@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Threading.RateLimiting;
 using TournamentAPI;
 using TournamentAPI.Brackets;
 using TournamentAPI.Data;
@@ -27,6 +28,40 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>(opt =>
     opt.User.RequireUniqueEmail = true;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.GlobalLimiter = PartitionedRateLimiter.CreateChained(
+        PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        {
+            var clientIp = httpContext.Connection.RemoteIpAddress!.ToString();
+            return RateLimitPartition.GetTokenBucketLimiter(
+                clientIp,
+                _ => new TokenBucketRateLimiterOptions
+                {
+                    TokenLimit = 100,
+                    TokensPerPeriod = 2,
+                    ReplenishmentPeriod = TimeSpan.FromSeconds(1),
+                    AutoReplenishment = true,
+                    QueueLimit = 0
+                }
+            );
+        }),
+        PartitionedRateLimiter.Create<HttpContext, string>(_ =>
+        {
+            return RateLimitPartition.GetConcurrencyLimiter(
+                "GlobalConcurrencyLimiter",
+                _ => new ConcurrencyLimiterOptions
+                {
+                    PermitLimit = 100,
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    QueueLimit = 0
+                }
+            );
+        })
+    );
+});
 
 builder.Services
     .AddAuthentication(options =>
@@ -95,12 +130,14 @@ if (app.Environment.IsDevelopment())
     await DatabaseSeeder.SeedAsync(context, userManager);
 }
 
+app.UseRateLimiter();
 app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapGraphQL();
+
 
 app.Run();
 
