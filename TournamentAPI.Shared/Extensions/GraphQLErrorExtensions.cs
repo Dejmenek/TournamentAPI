@@ -1,7 +1,7 @@
 using System.Text.Json;
 using TournamentAPI.Shared.Helpers;
 
-namespace TournamentAPI.IntegrationTests.Extensions;
+namespace TournamentAPI.Shared.Extensions;
 
 public static class GraphQLErrorExtensions
 {

@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using TournamentAPI.IntegrationTests.Extensions;
+using TournamentAPI.Shared.Extensions;
 using TournamentAPI.Shared.Models;
 using TournamentAPI.Users;
 
@@ -22,7 +22,7 @@ public class UserMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteMutationAsync<RegisterResponse>(
-            MutationExamples.Mutations.Users.RegisterUser,
+            Shared.MutationExamples.Mutations.Users.RegisterUser,
             new
             {
                 input = new
@@ -56,7 +56,7 @@ public class UserMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var emailAlreadyExistsResponse = await client.ExecuteMutationAsync<RegisterResponse>(
-            MutationExamples.Mutations.Users.RegisterUser,
+            Shared.MutationExamples.Mutations.Users.RegisterUser,
             new
             {
                 input = new
@@ -101,7 +101,7 @@ public class UserMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var weakPasswordResponse = await client.ExecuteMutationAsync<RegisterResponse>(
-            MutationExamples.Mutations.Users.RegisterUser,
+            Shared.MutationExamples.Mutations.Users.RegisterUser,
             new
             {
                 input = new
@@ -140,7 +140,6 @@ public class UserMutationTests : BaseIntegrationTest
         Assert.Contains("Passwords must have at least one non alphanumeric character.", errorsArray);
         Assert.Contains("Passwords must have at least one digit ('0'-'9').", errorsArray);
         Assert.Contains("Passwords must have at least one uppercase ('A'-'Z').", errorsArray);
-
     }
 
     [Fact]
@@ -154,7 +153,7 @@ public class UserMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -181,7 +180,7 @@ public class UserMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new

@@ -1,4 +1,4 @@
-namespace TournamentAPI.IntegrationTests.GraphQL.QueryExamples;
+namespace TournamentAPI.Shared.QueryExamples;
 public static partial class Queries
 {
     public static class Match

@@ -21,7 +21,7 @@ public class ParticipantMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -43,7 +43,7 @@ public class ParticipantMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<AddParticipantResponse>(
-            MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+            Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
             variables);
 
         // Assert
@@ -76,7 +76,7 @@ public class ParticipantMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -98,7 +98,7 @@ public class ParticipantMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<AddParticipantResponse>(
-            MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+            Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
             variables);
 
         // Assert
@@ -138,7 +138,7 @@ public class ParticipantMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -160,7 +160,7 @@ public class ParticipantMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<AddParticipantResponse>(
-            MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+            Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
             variables);
 
         // Assert
@@ -193,7 +193,7 @@ public class ParticipantMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -215,7 +215,7 @@ public class ParticipantMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<AddParticipantResponse>(
-            MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+            Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
             variables);
 
         // Assert
@@ -254,7 +254,7 @@ public class ParticipantMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -276,7 +276,7 @@ public class ParticipantMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<AddParticipantResponse>(
-            MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+            Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
             variables);
 
         // Assert
@@ -316,7 +316,7 @@ public class ParticipantMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -338,7 +338,7 @@ public class ParticipantMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<AddParticipantResponse>(
-            MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+            Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
             variables);
 
         // Assert
@@ -359,7 +359,7 @@ public class ParticipantMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -381,7 +381,7 @@ public class ParticipantMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<AddParticipantResponse>(
-            MutationExamples.Mutations.Participant.AddParticipantWithOwnerDetailsReturn,
+            Shared.MutationExamples.Mutations.Participant.AddParticipantWithOwnerDetailsReturn,
             variables);
 
         // Assert
@@ -403,7 +403,7 @@ public class ParticipantMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -425,7 +425,7 @@ public class ParticipantMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<AddParticipantResponse>(
-            MutationExamples.Mutations.Participant.AddPartiipantWithParticipantsReturn,
+            Shared.MutationExamples.Mutations.Participant.AddPartiipantWithParticipantsReturn,
             variables);
 
         // Assert

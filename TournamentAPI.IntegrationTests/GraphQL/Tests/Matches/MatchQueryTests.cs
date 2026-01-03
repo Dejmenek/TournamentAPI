@@ -14,7 +14,7 @@ public class MatchQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteQueryAsync<MatchesForRoundResponse>(
-            QueryExamples.Queries.Match.GetMatchesForRoundWithBasicFields,
+            Shared.QueryExamples.Queries.Match.GetMatchesForRoundWithBasicFields,
             new
             {
                 tournamentId = 3,
@@ -34,7 +34,7 @@ public class MatchQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteQueryAsync<MatchesForRoundResponse>(
-            QueryExamples.Queries.Match.GetMatchesForRoundWithPlayerDetails,
+            Shared.QueryExamples.Queries.Match.GetMatchesForRoundWithPlayerDetails,
             new
             {
                 tournamentId = 3,

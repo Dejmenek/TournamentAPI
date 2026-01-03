@@ -15,7 +15,7 @@ public class UserQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var token = await client.ExecuteQueryAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -28,7 +28,7 @@ public class UserQueryTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteQueryAsync<MeResponse>(
-            QueryExamples.Queries.Users.GetMe);
+            Shared.QueryExamples.Queries.Users.GetMe);
 
         // Assert
         Assert.False(response.HasErrors);

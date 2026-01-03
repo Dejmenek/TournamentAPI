@@ -14,7 +14,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteQueryAsync<TournamentsResponse>(
-            QueryExamples.Queries.Tournaments.GetAllWithTotalCount);
+            Shared.QueryExamples.Queries.Tournaments.GetAllWithTotalCount);
 
         // Assert
         Assert.False(response.HasErrors);
@@ -34,7 +34,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteQueryAsync<TournamentsResponse>(
-            QueryExamples.Queries.Tournaments.GetAllWithNameFilter,
+            Shared.QueryExamples.Queries.Tournaments.GetAllWithNameFilter,
             new { nameFilter = "Spring" });
 
         // Assert
@@ -54,7 +54,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteQueryAsync<TournamentsResponse>(
-            QueryExamples.Queries.Tournaments.GetAllWithExcessivePageSize);
+            Shared.QueryExamples.Queries.Tournaments.GetAllWithExcessivePageSize);
 
         // Assert
         Assert.True(response.HasErrors);
@@ -71,7 +71,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteQueryAsync<TournamentsResponse>(
-            QueryExamples.Queries.Tournaments.GetWithoutPaging);
+            Shared.QueryExamples.Queries.Tournaments.GetWithoutPaging);
 
         // Assert
         Assert.True(response.HasErrors);
@@ -87,7 +87,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteQueryAsync<TournamentsResponse>(
-            QueryExamples.Queries.Tournaments.GetAllWithParticipants);
+            Shared.QueryExamples.Queries.Tournaments.GetAllWithParticipants);
 
         // Assert
         Assert.False(response.HasErrors);
@@ -113,7 +113,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteQueryAsync<TournamentsResponse>(
-            QueryExamples.Queries.Tournaments.GetAllWithBracketAndMatches);
+            Shared.QueryExamples.Queries.Tournaments.GetAllWithBracketAndMatches);
 
         // Assert
         Assert.False(response.HasErrors);
@@ -143,7 +143,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteQueryAsync<TournamentsResponse>(
-            QueryExamples.Queries.Tournaments.GetAllWithOwner);
+            Shared.QueryExamples.Queries.Tournaments.GetAllWithOwner);
 
         // Assert
         Assert.False(response.HasErrors);
@@ -167,7 +167,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteQueryAsync<TournamentsResponse>(
-            QueryExamples.Queries.Tournaments.GetAllWithSorting);
+            Shared.QueryExamples.Queries.Tournaments.GetAllWithSorting);
 
         // Assert
         Assert.False(response.HasErrors);
@@ -187,7 +187,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteQueryAsync<TournamentsResponse>(
-            QueryExamples.Queries.Tournaments.GetAllWithTotalCount);
+            Shared.QueryExamples.Queries.Tournaments.GetAllWithTotalCount);
 
         // Assert
         Assert.False(response.HasErrors);
@@ -219,7 +219,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
-            QueryExamples.Queries.Tournaments.GetById,
+            Shared.QueryExamples.Queries.Tournaments.GetById,
             new { id = tournamentId });
 
         // Assert
@@ -239,7 +239,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
-            QueryExamples.Queries.Tournaments.GetById,
+            Shared.QueryExamples.Queries.Tournaments.GetById,
             new { id = tournamentId });
 
         // Assert
@@ -257,7 +257,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
-            QueryExamples.Queries.Tournaments.GetById,
+            Shared.QueryExamples.Queries.Tournaments.GetById,
             new { id = tournamentId });
 
         // Assert
@@ -275,7 +275,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
-            QueryExamples.Queries.Tournaments.GetByIdWithOwner,
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithOwner,
             new { id = tournamentId });
 
         // Assert
@@ -301,7 +301,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
-            QueryExamples.Queries.Tournaments.GetByIdWithBracketAndMatches,
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithBracketAndMatches,
             new { id = tournamentId });
 
         // Assert
@@ -326,7 +326,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
-            QueryExamples.Queries.Tournaments.GetByIdWithParticipants,
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithParticipants,
             new { id = tournamentId });
 
         // Assert
