@@ -33,21 +33,6 @@ builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.GlobalLimiter = PartitionedRateLimiter.CreateChained(
-        PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
-        {
-            var clientIp = httpContext.Connection.RemoteIpAddress!.ToString();
-            return RateLimitPartition.GetTokenBucketLimiter(
-                clientIp,
-                _ => new TokenBucketRateLimiterOptions
-                {
-                    TokenLimit = 100,
-                    TokensPerPeriod = 2,
-                    ReplenishmentPeriod = TimeSpan.FromSeconds(1),
-                    AutoReplenishment = true,
-                    QueueLimit = 0
-                }
-            );
-        }),
         PartitionedRateLimiter.Create<HttpContext, string>(_ =>
         {
             return RateLimitPartition.GetConcurrencyLimiter(
@@ -61,6 +46,22 @@ builder.Services.AddRateLimiter(options =>
             );
         })
     );
+    options.AddPolicy("IpBasedTokenBucket", httpContext =>
+    {
+        var clientIp = httpContext.Connection.RemoteIpAddress!.ToString();
+
+        return RateLimitPartition.GetTokenBucketLimiter(
+            clientIp,
+            _ => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = 100,
+                TokensPerPeriod = 50,
+                ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }
+        );
+});
 });
 
 builder.Services
@@ -136,8 +137,8 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGraphQL();
-
+app.MapGraphQL()
+    .RequireRateLimiting("IpBasedTokenBucket");
 
 app.Run();
 
