@@ -20,7 +20,7 @@ public class BracketMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -41,7 +41,7 @@ public class BracketMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<GenerateBracketResponse>(
-            MutationExamples.Mutations.Bracket.GenerateBracket,
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
             variables);
 
         // Assert
@@ -73,7 +73,7 @@ public class BracketMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -94,7 +94,7 @@ public class BracketMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<GenerateBracketResponse>(
-            MutationExamples.Mutations.Bracket.GenerateBracket,
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
             variables);
 
         // Assert
@@ -133,7 +133,7 @@ public class BracketMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -154,7 +154,7 @@ public class BracketMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<GenerateBracketResponse>(
-            MutationExamples.Mutations.Bracket.GenerateBracket,
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
             variables);
 
         // Assert
@@ -193,7 +193,7 @@ public class BracketMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -214,7 +214,7 @@ public class BracketMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<GenerateBracketResponse>(
-            MutationExamples.Mutations.Bracket.GenerateBracket,
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
             variables);
 
         // Assert
@@ -254,7 +254,7 @@ public class BracketMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -275,7 +275,7 @@ public class BracketMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<GenerateBracketResponse>(
-            MutationExamples.Mutations.Bracket.GenerateBracket,
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
             variables);
 
         // Assert
@@ -313,7 +313,7 @@ public class BracketMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -334,7 +334,7 @@ public class BracketMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<GenerateBracketResponse>(
-            MutationExamples.Mutations.Bracket.GenerateBracket,
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
             variables);
 
         // Assert
@@ -363,7 +363,7 @@ public class BracketMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -384,7 +384,7 @@ public class BracketMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<GenerateBracketResponse>(
-            MutationExamples.Mutations.Bracket.GenerateBracket,
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
             variables);
 
         // Assert
@@ -414,7 +414,7 @@ public class BracketMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -436,7 +436,7 @@ public class BracketMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<UpdateRoundResponse>(
-            MutationExamples.Mutations.Bracket.UpdateRound,
+            Shared.MutationExamples.Mutations.Bracket.UpdateRound,
             variables);
 
         // Assert
@@ -469,7 +469,7 @@ public class BracketMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -491,7 +491,7 @@ public class BracketMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<UpdateRoundResponse>(
-            MutationExamples.Mutations.Bracket.UpdateRound,
+            Shared.MutationExamples.Mutations.Bracket.UpdateRound,
             variables);
 
         // Assert
@@ -531,7 +531,7 @@ public class BracketMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -553,7 +553,7 @@ public class BracketMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<UpdateRoundResponse>(
-            MutationExamples.Mutations.Bracket.UpdateRound,
+            Shared.MutationExamples.Mutations.Bracket.UpdateRound,
             variables);
 
         // Assert
@@ -586,7 +586,7 @@ public class BracketMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -608,7 +608,7 @@ public class BracketMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<UpdateRoundResponse>(
-            MutationExamples.Mutations.Bracket.UpdateRound,
+            Shared.MutationExamples.Mutations.Bracket.UpdateRound,
             variables);
 
         // Assert
@@ -640,7 +640,7 @@ public class BracketMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -662,7 +662,7 @@ public class BracketMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<UpdateRoundResponse>(
-            MutationExamples.Mutations.Bracket.UpdateRound,
+            Shared.MutationExamples.Mutations.Bracket.UpdateRound,
             variables);
 
         // Assert
@@ -691,7 +691,7 @@ public class BracketMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -713,7 +713,7 @@ public class BracketMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<UpdateRoundResponse>(
-            MutationExamples.Mutations.Bracket.UpdateRound,
+            Shared.MutationExamples.Mutations.Bracket.UpdateRound,
             variables);
 
         // Assert
@@ -742,7 +742,7 @@ public class BracketMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -764,7 +764,7 @@ public class BracketMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<UpdateRoundResponse>(
-            MutationExamples.Mutations.Bracket.UpdateRound,
+            Shared.MutationExamples.Mutations.Bracket.UpdateRound,
             variables);
 
         // Assert
@@ -804,7 +804,7 @@ public class BracketMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -826,7 +826,7 @@ public class BracketMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<UpdateRoundResponse>(
-            MutationExamples.Mutations.Bracket.UpdateRound,
+            Shared.MutationExamples.Mutations.Bracket.UpdateRound,
             variables);
 
         // Assert

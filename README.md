@@ -31,6 +31,8 @@
 - **GraphQL Filtering, Sorting, Paging**
 - **TestContainers**
 - **XUnit**
+- **Bogus** (for test data generation)
+- **NBomber** (for load testing)
 
 ---
 
@@ -701,8 +703,11 @@
 - Working with nested data structures in GraphQL.
 - Error handling with typed errors in GraphQL mutations.
 - Implementing mutation conventions with HotChocolate.
+- Started learning about load and stress testing with NBomber. Right now I feel like I barely scratched the surface here. I am not sure how to pick the right scenarios and how to interpret the results properly.
 
 ## Used Resources
 - [HotChocolate Documentation](https://chillicream.com/docs/hotchocolate)
 - [GraphQL Official Site](https://graphql.org/)
 - [Postman Documentation](https://learning.postman.com/docs/getting-started/introduction/)
+- [NBomber Documentation](https://nbomber.com/docs/getting-started/overview/)
+- [Bogus Repository](https://github.com/bchavez/Bogus)

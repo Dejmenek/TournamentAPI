@@ -20,7 +20,7 @@ public class MatchMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -42,7 +42,7 @@ public class MatchMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
-            MutationExamples.Mutations.Match.Play,
+            Shared.MutationExamples.Mutations.Match.Play,
             variables);
 
         // Assert
@@ -76,7 +76,7 @@ public class MatchMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -98,7 +98,7 @@ public class MatchMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
-            MutationExamples.Mutations.Match.Play,
+            Shared.MutationExamples.Mutations.Match.Play,
             variables);
 
         // Assert
@@ -137,7 +137,7 @@ public class MatchMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -159,7 +159,7 @@ public class MatchMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
-            MutationExamples.Mutations.Match.Play,
+            Shared.MutationExamples.Mutations.Match.Play,
             variables);
 
         // Assert
@@ -192,7 +192,7 @@ public class MatchMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -214,7 +214,7 @@ public class MatchMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
-            MutationExamples.Mutations.Match.Play,
+            Shared.MutationExamples.Mutations.Match.Play,
             variables);
 
         // Assert
@@ -253,7 +253,7 @@ public class MatchMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -275,7 +275,7 @@ public class MatchMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
-            MutationExamples.Mutations.Match.Play,
+            Shared.MutationExamples.Mutations.Match.Play,
             variables);
 
         // Assert

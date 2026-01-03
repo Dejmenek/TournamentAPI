@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
-using TournamentAPI.IntegrationTests.GraphQL.QueryExamples;
 using TournamentAPI.Shared.Helpers;
 using TournamentAPI.Shared.Models;
 
@@ -51,35 +50,35 @@ public class ApiBenchmarks : IAsyncDisposable
     public async Task<GraphQLResponse<TournamentsResponse>> GetAllTournaments()
     {
         return await _client!.ExecuteQueryAsync<TournamentsResponse>(
-            Queries.Tournaments.GetAllWithTotalCount);
+            Shared.QueryExamples.Queries.Tournaments.GetAllWithTotalCount);
     }
 
     [Benchmark]
     public async Task<GraphQLResponse<TournamentsResponse>> GetAllTournamentsWithParticipants()
     {
         return await _client!.ExecuteQueryAsync<TournamentsResponse>(
-            Queries.Tournaments.GetAllWithParticipants);
+            Shared.QueryExamples.Queries.Tournaments.GetAllWithParticipants);
     }
 
     [Benchmark]
     public async Task<GraphQLResponse<TournamentsResponse>> GetAllTournamentsWithBracketAndMatches()
     {
         return await _client!.ExecuteQueryAsync<TournamentsResponse>(
-            Queries.Tournaments.GetAllWithBracketAndMatches);
+            Shared.QueryExamples.Queries.Tournaments.GetAllWithBracketAndMatches);
     }
 
     [Benchmark]
     public async Task<GraphQLResponse<TournamentsResponse>> GetAllTournamentsWithOwner()
     {
         return await _client!.ExecuteQueryAsync<TournamentsResponse>(
-            Queries.Tournaments.GetAllWithOwner);
+            Shared.QueryExamples.Queries.Tournaments.GetAllWithOwner);
     }
 
     [Benchmark]
     public async Task<GraphQLResponse<TournamentByIdResponse>> GetTournamentById()
     {
         return await _client!.ExecuteQueryAsync<TournamentByIdResponse>(
-            Queries.Tournaments.GetById,
+            Shared.QueryExamples.Queries.Tournaments.GetById,
             new { id = 1 });
     }
 
@@ -87,7 +86,7 @@ public class ApiBenchmarks : IAsyncDisposable
     public async Task<GraphQLResponse<TournamentByIdResponse>> GetTournamentByIdWithParticipants()
     {
         return await _client!.ExecuteQueryAsync<TournamentByIdResponse>(
-            Queries.Tournaments.GetByIdWithParticipants,
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithParticipants,
             new { id = 1 });
     }
 
@@ -95,7 +94,7 @@ public class ApiBenchmarks : IAsyncDisposable
     public async Task<GraphQLResponse<TournamentByIdResponse>> GetTournamentByIdWithBracketAndMatches()
     {
         return await _client!.ExecuteQueryAsync<TournamentByIdResponse>(
-            Queries.Tournaments.GetByIdWithBracketAndMatches,
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithBracketAndMatches,
             new { id = 1 });
     }
 

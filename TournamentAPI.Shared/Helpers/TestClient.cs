@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -6,6 +7,7 @@ namespace TournamentAPI.Shared.Helpers;
 public class TestClient : IDisposable
 {
     private readonly HttpClient _client;
+    public HttpClient HttpClient => _client;
 
     public TestClient(HttpClient client)
     {
@@ -35,6 +37,26 @@ public class TestClient : IDisposable
         };
 
         var response = await _client.PostAsJsonAsync("/graphql", request, cancellationToken);
+
+        if (response.StatusCode == HttpStatusCode.TooManyRequests)
+        {
+            return new GraphQLResponse<T>
+            {
+                Data = default,
+                Errors = new List<GraphQLError>
+                {
+                    new GraphQLError
+                    {
+                        Message = "Rate limit exceeded",
+                        Extensions = new Dictionary<string, object>
+                        {
+                            ["statusCode"] = 429
+                        }
+                    }
+                }
+            };
+        }
+
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
         var result = JsonSerializer.Deserialize<GraphQLResponse<T>>(content, new JsonSerializerOptions

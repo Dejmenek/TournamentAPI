@@ -19,7 +19,7 @@ public class TournamentMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -42,7 +42,7 @@ public class TournamentMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<CreateTournamentResponse>(
-            MutationExamples.Mutations.Tournaments.CreateTournamentWithOwnerReturn,
+            Shared.MutationExamples.Mutations.Tournaments.CreateTournamentWithOwnerReturn,
             variables);
 
         // Assert
@@ -71,7 +71,7 @@ public class TournamentMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -94,7 +94,7 @@ public class TournamentMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<CreateTournamentResponse>(
-            MutationExamples.Mutations.Tournaments.CreateTournamentWithBasicFieldsReturn,
+            Shared.MutationExamples.Mutations.Tournaments.CreateTournamentWithBasicFieldsReturn,
             variables);
 
         // Assert
@@ -125,7 +125,7 @@ public class TournamentMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -146,7 +146,7 @@ public class TournamentMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<DeleteTournamentResponse>(
-            MutationExamples.Mutations.Tournaments.DeleteTournament,
+            Shared.MutationExamples.Mutations.Tournaments.DeleteTournament,
             variables);
 
         // Assert
@@ -172,7 +172,7 @@ public class TournamentMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -193,7 +193,7 @@ public class TournamentMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<DeleteTournamentResponse>(
-            MutationExamples.Mutations.Tournaments.DeleteTournament,
+            Shared.MutationExamples.Mutations.Tournaments.DeleteTournament,
             variables);
 
         // Assert
@@ -225,7 +225,7 @@ public class TournamentMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -246,7 +246,7 @@ public class TournamentMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<DeleteTournamentResponse>(
-            MutationExamples.Mutations.Tournaments.DeleteTournament,
+            Shared.MutationExamples.Mutations.Tournaments.DeleteTournament,
             variables);
 
         // Assert
@@ -285,7 +285,7 @@ public class TournamentMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -309,7 +309,7 @@ public class TournamentMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<UpdateTournamentResponse>(
-            MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
             variables);
 
         // Assert
@@ -342,7 +342,7 @@ public class TournamentMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -366,7 +366,7 @@ public class TournamentMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<UpdateTournamentResponse>(
-            MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
             variables);
 
         // Assert
@@ -407,7 +407,7 @@ public class TournamentMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -431,7 +431,7 @@ public class TournamentMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<UpdateTournamentResponse>(
-            MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
             variables);
 
         // Assert
@@ -471,7 +471,7 @@ public class TournamentMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -495,7 +495,7 @@ public class TournamentMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<UpdateTournamentResponse>(
-            MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
             variables);
 
         // Assert
@@ -526,7 +526,7 @@ public class TournamentMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -548,7 +548,7 @@ public class TournamentMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<UpdateTournamentResponse>(
-            MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
             variables);
 
         // Assert
@@ -577,7 +577,7 @@ public class TournamentMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -599,7 +599,7 @@ public class TournamentMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<UpdateTournamentResponse>(
-            MutationExamples.Mutations.Tournaments.UpdateTournamentWithOwnerReturn,
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithOwnerReturn,
             variables);
 
         // Assert
@@ -621,7 +621,7 @@ public class TournamentMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -642,7 +642,7 @@ public class TournamentMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<JoinTournamentResponse>(
-            MutationExamples.Mutations.Tournaments.JoinTournament,
+            Shared.MutationExamples.Mutations.Tournaments.JoinTournament,
             variables);
 
         // Assert
@@ -674,7 +674,7 @@ public class TournamentMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -695,7 +695,7 @@ public class TournamentMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<JoinTournamentResponse>(
-            MutationExamples.Mutations.Tournaments.JoinTournament,
+            Shared.MutationExamples.Mutations.Tournaments.JoinTournament,
             variables);
 
         // Assert
@@ -733,7 +733,7 @@ public class TournamentMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -754,7 +754,7 @@ public class TournamentMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<JoinTournamentResponse>(
-            MutationExamples.Mutations.Tournaments.JoinTournament,
+            Shared.MutationExamples.Mutations.Tournaments.JoinTournament,
             variables);
 
         // Assert
@@ -793,7 +793,7 @@ public class TournamentMutationTests : BaseIntegrationTest
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
-            MutationExamples.Mutations.Users.LoginUser,
+            Shared.MutationExamples.Mutations.Users.LoginUser,
             new
             {
                 input = new
@@ -814,7 +814,7 @@ public class TournamentMutationTests : BaseIntegrationTest
 
         // Act
         var response = await client.ExecuteMutationAsync<JoinTournamentResponse>(
-            MutationExamples.Mutations.Tournaments.JoinTournament,
+            Shared.MutationExamples.Mutations.Tournaments.JoinTournament,
             variables);
 
         // Assert

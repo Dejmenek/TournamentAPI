@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Threading.RateLimiting;
 using TournamentAPI;
 using TournamentAPI.Brackets;
 using TournamentAPI.Data;
@@ -17,6 +19,17 @@ using MatchType = TournamentAPI.Matches.MatchType;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+        options.KnownNetworks.Clear();
+        options.KnownProxies.Clear();
+    });
+}
+
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
@@ -27,6 +40,41 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>(opt =>
     opt.User.RequireUniqueEmail = true;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.GlobalLimiter = PartitionedRateLimiter.CreateChained(
+        PartitionedRateLimiter.Create<HttpContext, string>(_ =>
+        {
+            return RateLimitPartition.GetConcurrencyLimiter(
+                "GlobalConcurrencyLimiter",
+                _ => new ConcurrencyLimiterOptions
+                {
+                    PermitLimit = 100,
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    QueueLimit = 0
+                }
+            );
+        })
+    );
+    options.AddPolicy("IpBasedTokenBucket", httpContext =>
+    {
+        var clientIp = httpContext.Connection.RemoteIpAddress!.ToString();
+
+        return RateLimitPartition.GetTokenBucketLimiter(
+            clientIp,
+            _ => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = 100,
+                TokensPerPeriod = 50,
+                ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }
+        );
+    });
+});
 
 builder.Services
     .AddAuthentication(options =>
@@ -87,6 +135,8 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
+    app.UseForwardedHeaders();
+
     using var scope = app.Services.CreateScope();
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<ApplicationDbContext>();
@@ -95,12 +145,14 @@ if (app.Environment.IsDevelopment())
     await DatabaseSeeder.SeedAsync(context, userManager);
 }
 
+app.UseRateLimiter();
 app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGraphQL();
+app.MapGraphQL()
+    .RequireRateLimiting("IpBasedTokenBucket");
 
 app.Run();
 
