@@ -10,6 +10,7 @@ using TournamentAPI;
 using TournamentAPI.Brackets;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
+using TournamentAPI.EventListeners;
 using TournamentAPI.Matches;
 using TournamentAPI.Participants;
 using TournamentAPI.Services;
@@ -104,6 +105,7 @@ builder.Services.AddAuthorizationBuilder()
 
 builder.Services
     .AddGraphQLServer()
+    .AddHttpRequestInterceptor<HttpRequestInterceptor>()
     .AddDiagnosticEventListener<ExecutionEventListener>()
     .AddAuthorization()
     .RegisterDbContextFactory<ApplicationDbContext>()
