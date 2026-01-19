@@ -104,6 +104,7 @@ builder.Services.AddAuthorizationBuilder()
 
 builder.Services
     .AddGraphQLServer()
+    .AddDiagnosticEventListener<ExecutionEventListener>()
     .AddAuthorization()
     .RegisterDbContextFactory<ApplicationDbContext>()
     .AddQueryType<Query>()
