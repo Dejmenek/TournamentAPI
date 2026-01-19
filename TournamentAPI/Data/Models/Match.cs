@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace TournamentAPI.Data.Models;
 
 public class Match
@@ -14,4 +16,7 @@ public class Match
     public ApplicationUser? Player2 { get; set; }
     public ApplicationUser? Winner { get; set; }
     public Bracket Bracket { get; set; } = null!;
+
+    [Timestamp]
+    public byte[] Version { get; set; } = null!;
 }

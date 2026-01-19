@@ -64,8 +64,17 @@ public class MatchMutations
         }
 
         match.WinnerId = winnerId;
-        await context.SaveChangesAsync(token);
 
-        return true;
+        try
+        {
+            await context.SaveChangesAsync(token);
+
+            return true;
+        }
+        catch (DbUpdateException)
+        {
+            resolverContext.ReportError(MatchErrors.MatchAlreadyPlayed(matchId));
+            return null;
+        }
     }
 }
