@@ -4,12 +4,14 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using System.Text;
 using System.Threading.RateLimiting;
 using TournamentAPI;
 using TournamentAPI.Brackets;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
+using TournamentAPI.EventListeners;
 using TournamentAPI.Matches;
 using TournamentAPI.Participants;
 using TournamentAPI.Services;
@@ -18,6 +20,10 @@ using TournamentAPI.Users;
 using MatchType = TournamentAPI.Matches.MatchType;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateLogger();
 
 if (builder.Environment.IsDevelopment())
 {
@@ -104,6 +110,8 @@ builder.Services.AddAuthorizationBuilder()
 
 builder.Services
     .AddGraphQLServer()
+    .AddHttpRequestInterceptor<HttpRequestInterceptor>()
+    .AddDiagnosticEventListener<ExecutionEventListener>()
     .AddAuthorization()
     .RegisterDbContextFactory<ApplicationDbContext>()
     .AddQueryType<Query>()
