@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using System.Text;
 using System.Threading.RateLimiting;
 using TournamentAPI;
@@ -19,6 +20,10 @@ using TournamentAPI.Users;
 using MatchType = TournamentAPI.Matches.MatchType;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateLogger();
 
 if (builder.Environment.IsDevelopment())
 {
