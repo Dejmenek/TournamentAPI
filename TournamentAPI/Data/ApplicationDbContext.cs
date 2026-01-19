@@ -89,5 +89,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .WithMany(b => b.Matches)
             .HasForeignKey(m => m.BracketId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Match>()
+            .HasIndex(m => new { m.BracketId, m.Round, m.Player1Id, m.Player2Id })
+            .IsUnique();
     }
 }
