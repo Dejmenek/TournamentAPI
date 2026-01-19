@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
+using TournamentAPI.Extensions;
 using TournamentAPI.Tournaments;
 
 namespace TournamentAPI.Brackets;
@@ -52,7 +53,7 @@ public class BracketMutations
 
         if (tournament.Bracket != null)
         {
-            resolverContext.ReportError(BracketErrors.BracketAlreadyExists(tournament.Bracket.Id));
+            resolverContext.ReportError(BracketErrors.BracketAlreadyExistsForTournament(tournamentId));
             return null;
         }
 
@@ -85,10 +86,16 @@ public class BracketMutations
             bracket.Matches.Add(match);
         }
 
+        try
+        {
         context.Brackets.Add(bracket);
-        tournament.Bracket = bracket;
-
         await context.SaveChangesAsync(token);
+        }
+        catch (DbUpdateException ex) when (ex.IsUniqueConstraintViolation())
+        {
+            resolverContext.ReportError(BracketErrors.BracketAlreadyExistsForTournament(tournament.Id));
+            return null;
+        }
 
         return context.Brackets.Where(b => b.Id == bracket.Id);
     }
