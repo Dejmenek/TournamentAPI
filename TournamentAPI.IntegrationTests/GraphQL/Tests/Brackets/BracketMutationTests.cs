@@ -230,10 +230,10 @@ public class BracketMutationTests : BaseIntegrationTest
         Assert.True(error.Extensions.ContainsKey("code"));
         Assert.NotNull(error.Message);
 
-        var expectedError = BracketErrors.BracketAlreadyExists(bracketId);
+        var expectedError = BracketErrors.BracketAlreadyExistsForTournament(tournamentCreateBracketId);
         Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
         Assert.Equal(expectedError.Message, error.Message);
-        Assert.Equal(expectedError.Extensions!["BracketId"]?.ToString(), error.Extensions["BracketId"]?.ToString());
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
 
         var tournamentBrackets = await DbContext.Brackets
             .AsNoTracking()
