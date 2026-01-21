@@ -153,6 +153,7 @@ public class TournamentMutationTests : BaseIntegrationTest
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data);
         Assert.NotNull(response.Data.DeleteTournament);
+        Assert.NotNull(response.Data.DeleteTournament.Boolean);
         Assert.True(response.Data.DeleteTournament.Boolean);
 
         var tournamentInDb = await DbContext.Tournaments
@@ -609,6 +610,75 @@ public class TournamentMutationTests : BaseIntegrationTest
         Assert.NotNull(response.Data.UpdateTournament.Tournament);
         Assert.NotNull(response.Data.UpdateTournament.Tournament.Owner);
         Assert.Equal(updatedTournamentName, response.Data.UpdateTournament.Tournament.Name);
+    }
+
+    [Fact]
+    public async Task JoinTournament_HandlesDbUpdateException_WhenRaceConditionOccurs()
+    {
+        // Arrange
+        var email = "grace@example.com";
+        var password = "Password123!";
+        var tournamentToJoinId = 1; // check
+        using var client = CreateClient();
+        using var client2 = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client2.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToJoinId,
+            }
+        };
+
+        // Act
+        var task1 = client.ExecuteMutationAsync<JoinTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.JoinTournament,
+            variables);
+        var task2 = client2.ExecuteMutationAsync<JoinTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.JoinTournament,
+            variables);
+
+        var results = await Task.WhenAll(task1, task2);
+
+        // Assert
+        var successResponse = results.FirstOrDefault(r => !r.HasErrors);
+        var errorResponse = results.FirstOrDefault(r => r.HasErrors);
+
+        Assert.NotNull(successResponse);
+        Assert.NotNull(errorResponse);
+        Assert.NotNull(successResponse.Data);
+        Assert.NotNull(successResponse.Data.JoinTournament);
+        Assert.NotNull(successResponse.Data.JoinTournament.Boolean);
+        Assert.True(successResponse.Data.JoinTournament.Boolean);
+        Assert.NotNull(errorResponse.Data);
+        Assert.NotNull(errorResponse.Data.JoinTournament);
+        Assert.Null(errorResponse.Data.JoinTournament.Boolean);
+        Assert.NotNull(errorResponse.Errors);
+
+        var error = errorResponse.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.UserAlreadyParticipant(7, tournamentToJoinId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]!.ToString(), error.Extensions["TournamentId"]?.ToString());
+        Assert.Equal(expectedError.Extensions!["UserId"]!.ToString(), error.Extensions["UserId"]?.ToString());
     }
 
     [Fact]

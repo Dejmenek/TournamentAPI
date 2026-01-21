@@ -11,6 +11,77 @@ public class BracketMutationTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task GenerateBracket_HandlesDbUpdateException_WhenRaceConditionOccurs()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentCreateBracketId = 11;
+        using var client1 = CreateClient();
+        using var client2 = CreateClient();
+
+        var tokenResponse = await client1.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client1.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client2.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentCreateBracketId
+            }
+        };
+
+        // Act
+        var task1 = client1.ExecuteMutationAsync<GenerateBracketResponse>(
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
+            variables);
+        var task2 = client2.ExecuteMutationAsync<GenerateBracketResponse>(
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
+            variables);
+
+        var results = await Task.WhenAll(task1, task2);
+
+        // Assert
+        var successResponse = results.FirstOrDefault(r => !r.HasErrors);
+        var errorResponse = results.FirstOrDefault(r => r.HasErrors);
+
+        Assert.NotNull(successResponse);
+        Assert.NotNull(errorResponse);
+        Assert.NotNull(errorResponse.Data);
+        Assert.NotNull(errorResponse.Data.GenerateBracket);
+        Assert.Null(errorResponse.Data.GenerateBracket.Bracket);
+        Assert.NotNull(errorResponse.Errors);
+
+        var error = errorResponse.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = BracketErrors.BracketAlreadyExistsForTournament(tournamentCreateBracketId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"].ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]!.ToString(), error.Extensions["TournamentId"]?.ToString());
+
+        var bracketsInDb = await DbContext.Brackets
+            .AsNoTracking()
+            .Where(b => b.TournamentId == tournamentCreateBracketId)
+            .ToListAsync();
+
+        Assert.Single(bracketsInDb);
+    }
+
+    [Fact]
     public async Task GenerateBracket_ReturnsTournamentNotFoundError_WhenTournamentDoesNotExist()
     {
         // Arrange
@@ -230,10 +301,10 @@ public class BracketMutationTests : BaseIntegrationTest
         Assert.True(error.Extensions.ContainsKey("code"));
         Assert.NotNull(error.Message);
 
-        var expectedError = BracketErrors.BracketAlreadyExists(bracketId);
+        var expectedError = BracketErrors.BracketAlreadyExistsForTournament(tournamentCreateBracketId);
         Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
         Assert.Equal(expectedError.Message, error.Message);
-        Assert.Equal(expectedError.Extensions!["BracketId"]?.ToString(), error.Extensions["BracketId"]?.ToString());
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
 
         var tournamentBrackets = await DbContext.Brackets
             .AsNoTracking()
@@ -405,6 +476,78 @@ public class BracketMutationTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task UpdateRound_HandlesDbUpdateException_WhenRaceConditionOccurs()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var bracketId = 5;
+        using var client1 = CreateClient();
+        using var client2 = CreateClient();
+
+        var tokenResponse = await client1.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client1.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client2.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                bracketId = bracketId,
+                roundNumber = 1
+            }
+        };
+
+        // Act
+        var task1 = client1.ExecuteMutationAsync<UpdateRoundResponse>(
+            Shared.MutationExamples.Mutations.Bracket.UpdateRound,
+            variables);
+        var task2 = client2.ExecuteMutationAsync<UpdateRoundResponse>(
+            Shared.MutationExamples.Mutations.Bracket.UpdateRound,
+            variables);
+
+        var results = await Task.WhenAll(task1, task2);
+
+        // Assert
+        var successResponse = results.FirstOrDefault(r => !r.HasErrors);
+        var errorResponse = results.FirstOrDefault(r => r.HasErrors);
+
+        Assert.NotNull(successResponse);
+        Assert.NotNull(errorResponse);
+        Assert.NotNull(errorResponse.Data);
+        Assert.NotNull(errorResponse.Data.UpdateRound);
+        Assert.Null(errorResponse.Data.UpdateRound.Bracket);
+        Assert.NotNull(errorResponse.Errors);
+
+        var error = errorResponse.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = BracketErrors.NextRoundAlreadyGenerated(bracketId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["BracketId"]!.ToString(), error.Extensions["BracketId"]?.ToString());
+
+        var matchesInDb = await DbContext.Matches
+            .AsNoTracking()
+            .Where(m => m.BracketId == bracketId && m.Round == 2)
+            .ToListAsync();
+
+        Assert.Single(matchesInDb);
+    }
+
+    [Fact]
     public async Task UpdateRound_ReturnsBracketNotFoundError_WhenBracketDoesNotExist()
     {
         // Arrange
@@ -513,11 +656,12 @@ public class BracketMutationTests : BaseIntegrationTest
         Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
         Assert.Equal(expectedError.Extensions!["UserId"]?.ToString(), error.Extensions["UserId"]?.ToString());
 
-        var bracketInDb = await DbContext.Brackets
+        var matchesInDb = await DbContext.Matches
             .AsNoTracking()
-            .FirstOrDefaultAsync(b => b.Id == bracketId);
+            .Where(m => m.BracketId == bracketId && m.Round == 2)
+            .ToListAsync();
 
-        Assert.NotNull(bracketInDb);
+        Assert.Empty(matchesInDb);
     }
 
     [Fact]
@@ -573,6 +717,13 @@ public class BracketMutationTests : BaseIntegrationTest
         Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
         Assert.Equal(expectedError.Message, error.Message);
         Assert.Equal(expectedError.Extensions!["RoundNumber"]?.ToString(), error.Extensions["RoundNumber"]?.ToString());
+
+        var matchesInDb = await DbContext.Matches
+            .AsNoTracking()
+            .Where(m => m.BracketId == bracketId && m.Round == roundNumber + 1)
+            .ToListAsync();
+
+        Assert.Empty(matchesInDb);
     }
 
     [Fact]
@@ -628,6 +779,13 @@ public class BracketMutationTests : BaseIntegrationTest
         Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
         Assert.Equal(expectedError.Message, error.Message);
         Assert.Equal(expectedError.Extensions!["RoundNumber"]?.ToString(), error.Extensions["RoundNumber"]?.ToString());
+
+        var matchesInDb = await DbContext.Matches
+            .AsNoTracking()
+            .Where(m => m.BracketId == bracketId && m.Round == roundNumber + 1)
+            .ToListAsync();
+
+        Assert.Empty(matchesInDb);
     }
 
     [Fact]

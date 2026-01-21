@@ -2,11 +2,11 @@ namespace TournamentAPI.Brackets;
 
 public static class BracketErrors
 {
-    public static IError BracketAlreadyExists(int bracketId) =>
+    public static IError BracketAlreadyExistsForTournament(int tournamentId) =>
         ErrorBuilder.New()
             .SetMessage("Bracket already exists for this tournament.")
             .SetCode(BracketErrorCodes.BracketAlreadyExists)
-            .SetExtension("BracketId", bracketId)
+            .SetExtension("TournamentId", tournamentId)
             .Build();
 
     public static IError NotEnoughParticipants(int participantCount) =>

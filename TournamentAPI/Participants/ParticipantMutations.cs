@@ -76,12 +76,12 @@ public class ParticipantMutations
         try
         {
             await context.SaveChangesAsync(token);
+            return context.Tournaments.AsNoTracking().Where(t => t.Id == input.TournamentId);
         }
         catch (DbUpdateException)
         {
-            throw new GraphQLException("Failed to add participant due to a database error.");
+            resolverContext.ReportError(TournamentErrors.UserAlreadyParticipant(input.UserId, input.TournamentId));
+            return null;
         }
-
-        return context.Tournaments.AsNoTracking().Where(t => t.Id == input.TournamentId);
     }
 }

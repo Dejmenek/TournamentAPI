@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
+using TournamentAPI.Extensions;
 using TournamentAPI.Tournaments;
 
 namespace TournamentAPI.Brackets;
@@ -52,7 +53,7 @@ public class BracketMutations
 
         if (tournament.Bracket != null)
         {
-            resolverContext.ReportError(BracketErrors.BracketAlreadyExists(tournament.Bracket.Id));
+            resolverContext.ReportError(BracketErrors.BracketAlreadyExistsForTournament(tournamentId));
             return null;
         }
 
@@ -85,10 +86,16 @@ public class BracketMutations
             bracket.Matches.Add(match);
         }
 
-        context.Brackets.Add(bracket);
-        tournament.Bracket = bracket;
-
-        await context.SaveChangesAsync(token);
+        try
+        {
+            context.Brackets.Add(bracket);
+            await context.SaveChangesAsync(token);
+        }
+        catch (DbUpdateException ex) when (ex.IsUniqueConstraintViolation())
+        {
+            resolverContext.ReportError(BracketErrors.BracketAlreadyExistsForTournament(tournament.Id));
+            return null;
+        }
 
         return context.Brackets.Where(b => b.Id == bracket.Id);
     }
@@ -149,7 +156,7 @@ public class BracketMutations
             return null;
         }
 
-        var winners = matchesInRound.Select(m => m.WinnerId).ToList();
+        var winners = matchesInRound.Select(m => m.WinnerId!.Value).ToList();
 
         if (winners.Count < 2)
         {
@@ -157,19 +164,37 @@ public class BracketMutations
             return null;
         }
 
+        var newMatches = new List<Match>();
+
         for (int i = 0; i < winners.Count; i += 2)
         {
-            Match match = new()
+            int p1 = winners[i];
+            int? p2 = i + 1 < winners.Count ? winners[i + 1] : null;
+
+            if (p2 != null && p2 < p1)
             {
-                Round = roundNumber + 1,
-                Player1Id = (int)winners[i]!,
-                Player2Id = i + 1 < winners.Count ? winners[i + 1] : null,
+                (p1, p2) = (p2.Value, p1);
+            }
+
+            newMatches.Add(new Match
+            {
                 BracketId = bracket.Id,
-            };
-            bracket.Matches.Add(match);
+                Round = roundNumber + 1,
+                Player1Id = p1,
+                Player2Id = p2
+            });
         }
 
-        await context.SaveChangesAsync(token);
+        try
+        {
+            context.Matches.AddRange(newMatches);
+            await context.SaveChangesAsync(token);
+        }
+        catch (DbUpdateException ex) when (ex.IsUniqueConstraintViolation())
+        {
+            resolverContext.ReportError(BracketErrors.NextRoundAlreadyGenerated(bracketId));
+            return null;
+        }
 
         return context.Brackets.Where(b => b.Id == bracket.Id);
     }

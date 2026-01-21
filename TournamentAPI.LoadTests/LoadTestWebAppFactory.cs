@@ -38,6 +38,7 @@ public class LoadTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifet
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<TournamentAPI.Data.Models.ApplicationUser>>();
 
+        await context.Database.EnsureDeletedAsync();
         await context.Database.EnsureCreatedAsync();
         await DatabaseSeeder.SeedAsync(context, userManager);
     }
