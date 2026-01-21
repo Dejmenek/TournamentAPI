@@ -11,6 +11,72 @@ public class MatchMutationTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task Play_HandlesDbUpdateException_WhenRaceConditionOccurs()
+    {
+        // Arrange
+        var email = "carol@example.com";
+        var password = "Password123!";
+        var matchId = 10;
+        var winnerId = 8;
+        using var client1 = CreateClient();
+        using var client2 = CreateClient();
+
+        var tokenResponse = await client1.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client1.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client2.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                matchId = matchId,
+                winnerId = winnerId
+            }
+        };
+
+        // Act
+        var task1 = client1.ExecuteMutationAsync<PlayMatchResponse>(
+            Shared.MutationExamples.Mutations.Match.Play,
+            variables);
+        var task2 = client2.ExecuteMutationAsync<PlayMatchResponse>(
+            Shared.MutationExamples.Mutations.Match.Play,
+            variables);
+
+        var results = await Task.WhenAll(task1, task2);
+
+        // Assert
+        var successResponse = results.FirstOrDefault(r => !r.HasErrors);
+        var failureResponse = results.FirstOrDefault(r => r.HasErrors);
+
+        Assert.NotNull(successResponse);
+        Assert.NotNull(failureResponse);
+        Assert.NotNull(failureResponse.Data);
+        Assert.NotNull(failureResponse.Data.Play);
+        Assert.Null(failureResponse.Data.Play.Boolean);
+        Assert.NotNull(failureResponse.Errors);
+
+        var error = failureResponse.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = MatchErrors.MatchAlreadyPlayed(matchId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["MatchId"]!.ToString(), error.Extensions["MatchId"]?.ToString());
+    }
+
+    [Fact]
     public async Task Play_ReturnsMatchNotFoundError_WhenMatchDoesNotExist()
     {
         // Arrange
