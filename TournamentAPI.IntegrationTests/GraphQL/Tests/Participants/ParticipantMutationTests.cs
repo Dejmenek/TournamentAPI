@@ -11,6 +11,78 @@ public class ParticipantMutationTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task AddParticipant_HandlesDbUpdateException_WhenRaceConditionOccurs()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentId = 1;
+        var participantId = 8;
+        using var client = CreateClient();
+        using var client2 = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client2.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentId,
+                userId = participantId
+            }
+        };
+
+        // Act
+        var task1 = client.ExecuteMutationAsync<AddParticipantResponse>(
+            Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+            variables);
+        var task2 = client2.ExecuteMutationAsync<AddParticipantResponse>(
+            Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+            variables);
+        var results = await Task.WhenAll(task1, task2);
+
+        // Assert
+        var successResponse = results.FirstOrDefault(r => !r.HasErrors);
+        var errorResponse = results.FirstOrDefault(r => r.HasErrors);
+
+        Assert.NotNull(successResponse);
+        Assert.NotNull(errorResponse);
+        Assert.NotNull(errorResponse.Data);
+        Assert.NotNull(errorResponse.Data.AddParticipant);
+        Assert.Null(errorResponse.Data.AddParticipant.Tournament);
+        Assert.NotNull(errorResponse.Errors);
+
+        var error = errorResponse.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.UserAlreadyParticipant(participantId, tournamentId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]!.ToString(), error.Extensions["TournamentId"]?.ToString());
+        Assert.Equal(expectedError.Extensions!["UserId"]!.ToString(), error.Extensions["UserId"]?.ToString());
+
+        var tournamentParticipants = DbContext.TournamentParticipants
+            .AsNoTracking()
+            .Where(tp => tp.TournamentId == tournamentId && tp.ParticipantId == participantId);
+
+        Assert.Single(tournamentParticipants);
+    }
+
+    [Fact]
     public async Task AddParticipant_ReturnsTournamentNotFoundError_WhenTournamentDoesNotExist()
     {
         // Arrange
@@ -180,6 +252,12 @@ public class ParticipantMutationTests : BaseIntegrationTest
         Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
         Assert.Equal(expectedError.Message, error.Message);
         Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
+
+        var tournamentParticipants = DbContext.TournamentParticipants
+            .AsNoTracking()
+            .Where(tp => tp.TournamentId == tournamentId && tp.ParticipantId == participantId);
+
+        Assert.Empty(tournamentParticipants);
     }
 
     [Fact]
