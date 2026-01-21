@@ -60,13 +60,14 @@ public class TournamentMutations
         try
         {
             await context.SaveChangesAsync(token);
+            return true;
         }
         catch (DbUpdateException)
         {
-            throw new GraphQLException("Failed to join tournament due to a database error.");
+            resolverContext.ReportError(
+                TournamentErrors.UserAlreadyParticipant(userId, tournamentId));
+            return null;
         }
-
-        return true;
     }
 
     [UseFirstOrDefault]
@@ -211,7 +212,6 @@ public class TournamentMutations
         }
 
         await context.SaveChangesAsync(token);
-
         return true;
     }
 }
