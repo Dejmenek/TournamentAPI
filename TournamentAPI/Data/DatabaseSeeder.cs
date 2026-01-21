@@ -10,9 +10,6 @@ public static class DatabaseSeeder
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager)
     {
-        await context.Database.EnsureDeletedAsync();
-        await context.Database.EnsureCreatedAsync();
-
         // Create users
         var user1 = new ApplicationUser { UserName = "alice", Email = "alice@example.com", FirstName = "Alice", LastName = "Smith" };
         var user2 = new ApplicationUser { UserName = "bob", Email = "bob@example.com", FirstName = "Bob", LastName = "Johnson" };
@@ -258,7 +255,46 @@ public static class DatabaseSeeder
             tournament10.Participants.Add(new TournamentParticipant { Tournament = tournament10, Participant = user4 });
             tournament10.Participants.Add(new TournamentParticipant { Tournament = tournament10, Participant = user6 });
 
-            context.Tournaments.AddRange(tournament1, tournament2, tournament3, tournament4, tournament5, tournament6, tournament7, tournament8, tournament9, tournament10);
+            var tournament11 = new Tournament
+            {
+                Name = "Solo Tournament",
+                StartDate = DateTime.UtcNow.AddDays(25),
+                Status = TournamentStatus.Closed,
+                OwnerId = user1.Id,
+                Owner = user1,
+                Participants = new List<TournamentParticipant>()
+            };
+
+            tournament11.Participants.Add(new TournamentParticipant { Tournament = tournament11, Participant = user5 });
+            tournament11.Participants.Add(new TournamentParticipant { Tournament = tournament11, Participant = user7 });
+            tournament11.Participants.Add(new TournamentParticipant { Tournament = tournament11, Participant = user8 });
+
+            var tournament12 = new Tournament
+            {
+                Name = "Doubles Tournament",
+                StartDate = DateTime.UtcNow.AddDays(18),
+                Status = TournamentStatus.Closed,
+                OwnerId = user1.Id,
+                Owner = user1,
+                Participants = new List<TournamentParticipant>(),
+                Bracket = new Bracket
+                {
+                    Matches = new List<Match>()
+                }
+            };
+
+            tournament12.Participants.Add(new TournamentParticipant { Tournament = tournament12, Participant = user1 });
+            tournament12.Participants.Add(new TournamentParticipant { Tournament = tournament12, Participant = user2 });
+            tournament12.Participants.Add(new TournamentParticipant { Tournament = tournament12, Participant = user3 });
+            tournament12.Participants.Add(new TournamentParticipant { Tournament = tournament12, Participant = user4 });
+
+            var match16 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user2.Id, WinnerId = user2.Id, Bracket = tournament12.Bracket };
+            var match17 = new Match { Round = 1, Player1Id = user3.Id, Player2Id = user4.Id, WinnerId = user4.Id, Bracket = tournament12.Bracket };
+
+            tournament12.Bracket.Matches.Add(match16);
+            tournament12.Bracket.Matches.Add(match17);
+
+            await context.Tournaments.AddRangeAsync(tournament1, tournament2, tournament3, tournament4, tournament5, tournament6, tournament7, tournament8, tournament9, tournament10, tournament11, tournament12);
             await context.SaveChangesAsync();
         }
     }

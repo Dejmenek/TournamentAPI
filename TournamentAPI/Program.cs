@@ -150,6 +150,8 @@ if (app.Environment.IsDevelopment())
     var context = services.GetRequiredService<ApplicationDbContext>();
     var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
 
+    await context.Database.EnsureDeletedAsync();
+    await context.Database.EnsureCreatedAsync();
     await DatabaseSeeder.SeedAsync(context, userManager);
 }
 
