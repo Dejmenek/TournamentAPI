@@ -1,18 +1,11 @@
 using TournamentAPI.Data.Models;
-using TournamentAPI.Tournaments;
 
 namespace TournamentAPI.Brackets;
 
 public static class BracketMutationValidations
 {
-    public static IError? ValidateTournamentExists(Tournament? tournament, int tournamentId)
-        => tournament == null ? TournamentErrors.TournamentNotFound(tournamentId) : null;
-
     public static IError? ValidateBracketExists(Bracket? bracket, int bracketId)
         => bracket == null ? BracketErrors.BracketNotFound(bracketId) : null;
-
-    public static IError? ValidateIsOwner(int ownerId, int userId, int tournamentId)
-        => ownerId != userId ? TournamentErrors.TournamentNotOwner(userId, tournamentId) : null;
 
     public static IError? ValidateTournamentIsClosed(Tournament tournament)
         => tournament.Status != TournamentStatus.Closed ? BracketErrors.BracketGenerationNotAllowed(tournament.Id) : null;

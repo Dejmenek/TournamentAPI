@@ -5,6 +5,7 @@ using System.Security.Claims;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Extensions;
+using TournamentAPI.Tournaments;
 
 namespace TournamentAPI.Brackets;
 
@@ -32,8 +33,8 @@ public class BracketMutations
             .Include(t => t.Bracket)
             .FirstOrDefaultAsync(t => t.Id == tournamentId, token);
 
-        if (resolverContext.TryReportError(BracketMutationValidations.ValidateTournamentExists(tournament, tournamentId))) return null;
-        if (resolverContext.TryReportError(BracketMutationValidations.ValidateIsOwner(tournament!.OwnerId, userId, tournamentId))) return null;
+        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentExists(tournament, tournamentId))) return null;
+        if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament!.OwnerId, userId, tournamentId))) return null;
         if (resolverContext.TryReportError(BracketMutationValidations.ValidateTournamentIsClosed(tournament))) return null;
         if (resolverContext.TryReportError(BracketMutationValidations.ValidateBracketDoesNotExist(tournament))) return null;
         if (resolverContext.TryReportError(BracketMutationValidations.ValidateEnoughParticipants(tournament.Participants.Count, tournamentId))) return null;
@@ -78,7 +79,7 @@ public class BracketMutations
             .FirstOrDefaultAsync(b => b.Id == bracketId, token);
 
         if (resolverContext.TryReportError(BracketMutationValidations.ValidateBracketExists(bracket, bracketId))) return null;
-        if (resolverContext.TryReportError(BracketMutationValidations.ValidateIsOwner(bracket!.Tournament.OwnerId, userId, bracket.TournamentId))) return null;
+        if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(bracket!.Tournament.OwnerId, userId, bracket.TournamentId))) return null;
         if (resolverContext.TryReportError(BracketMutationValidations.ValidateNextRoundNotGenerated(bracket.Matches, roundNumber, bracketId))) return null;
 
         var matchesInRound = bracket.Matches.Where(m => m.Round == roundNumber).ToList();
