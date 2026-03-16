@@ -1,6 +1,7 @@
 using HotChocolate.Resolvers;
 using Microsoft.AspNetCore.Identity;
 using TournamentAPI.Data.Models;
+using TournamentAPI.Extensions;
 using TournamentAPI.Services;
 
 namespace TournamentAPI.Users;
@@ -37,11 +38,8 @@ public class UserMutations
     {
         var user = await userManager.FindByEmailAsync(input.Email);
 
-        if (user == null)
-        {
-            resolverContext.ReportError(UserErrors.InvalidCredentials());
+        if (resolverContext.TryReportError(UserValidations.ValidateCredentials(user)))
             return null;
-        }
 
         if (!await userManager.CheckPasswordAsync(user, input.Password))
         {

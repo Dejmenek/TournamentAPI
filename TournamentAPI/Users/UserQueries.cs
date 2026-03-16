@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
+using TournamentAPI.Extensions;
 
 namespace TournamentAPI.Users;
 
@@ -17,19 +18,14 @@ public class UserQueries
         IResolverContext resolverContext,
         CancellationToken token)
     {
-        var userIdClaim = (claimsPrincipal?.FindFirstValue(ClaimTypes.NameIdentifier))
-            ?? throw new GraphQLException("User is not authenticated.");
+        var userId = claimsPrincipal.GetUserId();
 
-        var userId = int.Parse(userIdClaim);
         var user = await context.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == userId, token);
 
-        if (user == null)
-        {
-            resolverContext.ReportError(UserErrors.UserNotFound(userId));
+        if (resolverContext.TryReportError(UserValidations.ValidateUserExists(user, userId)))
             return null;
-        }
 
         return user;
     }
