@@ -3,7 +3,7 @@ using HotChocolate.Resolvers;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using TournamentAPI.Data;
-using TournamentAPI.Data.Models;
+using TournamentAPI.Extensions;
 using TournamentAPI.Tournaments;
 
 namespace TournamentAPI.Matches;
@@ -31,37 +31,22 @@ public class MatchMutations
                 .ThenInclude(b => b.Tournament)
             .FirstOrDefaultAsync(m => m.Id == matchId, token);
 
-        if (match == null)
-        {
-            resolverContext.ReportError(MatchErrors.MatchNotFound(matchId));
+        if (resolverContext.TryReportError(MatchValidations.ValidateMatchExists(match, matchId)))
             return null;
-        }
 
-        var tournament = match.Bracket.Tournament;
+        var tournament = match!.Bracket.Tournament;
 
-        if (tournament.OwnerId != userId)
-        {
-            resolverContext.ReportError(TournamentErrors.TournamentNotOwner(userId, tournament.Id));
+        if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament.OwnerId, userId, tournament.Id)))
             return null;
-        }
 
-        if (tournament.Status != TournamentStatus.Closed)
-        {
-            resolverContext.ReportError(MatchErrors.TournamentNotClosed(tournament.Id));
+        if (resolverContext.TryReportError(MatchValidations.ValidateTournamentIsClosed(tournament)))
             return null;
-        }
 
-        if (match.WinnerId != null)
-        {
-            resolverContext.ReportError(MatchErrors.MatchAlreadyPlayed(matchId));
+        if (resolverContext.TryReportError(MatchValidations.ValidateMatchNotPlayed(match)))
             return null;
-        }
 
-        if (winnerId != match.Player1Id && winnerId != match.Player2Id)
-        {
-            resolverContext.ReportError(MatchErrors.InvalidMatchWinner(matchId, winnerId));
+        if (resolverContext.TryReportError(MatchValidations.ValidateWinnerIsParticipant(match, winnerId)))
             return null;
-        }
 
         match.WinnerId = winnerId;
 
