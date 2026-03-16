@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
+using TournamentAPI.Extensions;
 
 namespace TournamentAPI.Tournaments;
 
@@ -28,27 +29,14 @@ public class TournamentMutations
             .Include(t => t.Participants)
             .FirstOrDefaultAsync(t => t.Id == tournamentId, token);
 
-        if (tournament is null)
-        {
-            resolverContext.ReportError(
-                TournamentErrors.TournamentNotFound(tournamentId));
+        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentExists(tournament, tournamentId)))
             return null;
-        }
 
-        if (tournament.Status == TournamentStatus.Closed)
-        {
-            resolverContext.ReportError(
-                TournamentErrors.TournamentClosed(tournamentId));
+        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotClosed(tournament!)))
             return null;
-        }
 
-        bool alreadyParticipates = tournament.Participants.Any(tp => tp.ParticipantId == userId);
-        if (alreadyParticipates)
-        {
-            resolverContext.ReportError(
-                TournamentErrors.UserAlreadyParticipant(userId, tournamentId));
+        if (resolverContext.TryReportError(TournamentValidations.ValidateUserNotAlreadyParticipant(tournament!, userId)))
             return null;
-        }
 
         var participant = new TournamentParticipant
         {
@@ -86,12 +74,8 @@ public class TournamentMutations
         if (!int.TryParse(userIdClaim.Value, out int userId))
             throw new GraphQLException("Invalid user ID.");
 
-        if (string.IsNullOrWhiteSpace(input.Name))
-        {
-            resolverContext.ReportError(
-                TournamentErrors.TournamentNameEmpty());
+        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentNameNotEmpty(input.Name)))
             return null;
-        }
 
         var tournament = new Tournament
         {
@@ -126,26 +110,14 @@ public class TournamentMutations
         var tournament = await context.Tournaments
             .FirstOrDefaultAsync(t => t.Id == input.TournamentId, token);
 
-        if (tournament is null)
-        {
-            resolverContext.ReportError(
-                TournamentErrors.TournamentNotFound(input.TournamentId));
+        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentExists(tournament, input.TournamentId)))
             return null;
-        }
 
-        if (tournament.OwnerId != userId)
-        {
-            resolverContext.ReportError(
-                TournamentErrors.TournamentNotOwner(userId, input.TournamentId));
+        if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament!.OwnerId, userId, input.TournamentId)))
             return null;
-        }
 
-        if (string.IsNullOrWhiteSpace(input.Name))
-        {
-            resolverContext.ReportError(
-                TournamentErrors.TournamentNameEmpty());
+        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentNameNotEmpty(input.Name)))
             return null;
-        }
         tournament.Name = input.Name;
 
 
@@ -181,19 +153,11 @@ public class TournamentMutations
         .Include(t => t.Participants)
         .FirstOrDefaultAsync(t => t.Id == tournamentId, token);
 
-        if (tournament is null)
-        {
-            resolverContext.ReportError(
-                TournamentErrors.TournamentNotFound(tournamentId));
+        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentExists(tournament, tournamentId)))
             return null;
-        }
 
-        if (tournament.OwnerId != userId)
-        {
-            resolverContext.ReportError(
-                TournamentErrors.TournamentNotOwner(userId, tournamentId));
+        if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament!.OwnerId, userId, tournamentId)))
             return null;
-        }
 
         tournament.IsDeleted = true;
 
