@@ -131,11 +131,10 @@ public class TournamentMutations
         var userId = userClaims.GetUserId();
 
         var tournament = await context.Tournaments
-        .Include(t => t.Owner)
-        .Include(t => t.Bracket)
-            .ThenInclude(b => b.Matches)
-        .Include(t => t.Participants)
-        .FirstOrDefaultAsync(t => t.Id == tournamentId, token);
+            .Include(t => t.Bracket)
+                .ThenInclude(b => b.Matches)
+            .Include(t => t.Participants)
+            .FirstOrDefaultAsync(t => t.Id == tournamentId, token);
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentExists(tournament, tournamentId)))
             return null;
