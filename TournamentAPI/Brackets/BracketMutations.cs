@@ -22,11 +22,7 @@ public class BracketMutations
         IResolverContext resolverContext,
         CancellationToken token)
     {
-        var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
-            ?? throw new GraphQLException("User is not authenticated.");
-
-        if (!int.TryParse(userIdClaim.Value, out int userId))
-            throw new GraphQLException("Invalid user ID.");
+        var userId = userClaims.GetUserId();
 
         var tournament = await context.Tournaments
             .Include(t => t.Participants)
@@ -67,11 +63,7 @@ public class BracketMutations
         IResolverContext resolverContext,
         CancellationToken token)
     {
-        var userIdClaim = userClaims.FindFirst(ClaimTypes.NameIdentifier)
-            ?? throw new GraphQLException("User is not authenticated.");
-
-        if (!int.TryParse(userIdClaim.Value, out int userId))
-            throw new GraphQLException("Invalid user ID.");
+        var userId = userClaims.GetUserId();
 
         var bracket = await context.Brackets
             .Include(b => b.Tournament)
