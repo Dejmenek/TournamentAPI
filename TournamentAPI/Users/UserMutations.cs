@@ -33,6 +33,8 @@ public class UserMutations
     public async Task<string?> LoginUser(
         LoginUserInput input,
         UserManager<ApplicationUser> userManager,
+        ApplicationDbContext context,
+        IHttpContextAccessor httpContextAccessor,
         IResolverContext resolverContext,
         JwtService jwtService)
     {
@@ -44,6 +46,38 @@ public class UserMutations
         if (!await userManager.CheckPasswordAsync(user, input.Password))
         {
             resolverContext.ReportError(UserErrors.InvalidCredentials());
+            return null;
+        }
+
+        var accessToken = jwtService.CreateToken(user);
+        var refreshToken = new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            Token = jwtService.CreateRefreshToken(),
+            ExpiryDateUtc = DateTime.UtcNow.AddDays(7),
+        };
+
+        if (httpContextAccessor.HttpContext == null)
+        {
+            resolverContext.ReportError(UserErrors.UnableToSetRefreshTokenCookie());
+            return null;
+        }
+
+        await context.RefreshTokens
+            .Where(r => r.UserId == user.Id)
+            .ExecuteDeleteAsync();
+
+        context.RefreshTokens.Add(refreshToken);
+        await context.SaveChangesAsync();
+
+        httpContextAccessor.HttpContext.Response.AppendRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiryDateUtc);
+
+        return accessToken;
+    }
+        if (httpContextAccessor.HttpContext == null)
+        {
+            resolverContext.ReportError(UserErrors.UnableToSetRefreshTokenCookie());
             return null;
         }
 
