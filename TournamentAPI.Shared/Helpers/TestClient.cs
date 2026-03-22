@@ -7,6 +7,7 @@ namespace TournamentAPI.Shared.Helpers;
 public class TestClient : IDisposable
 {
     private readonly HttpClient _client;
+    private HttpResponseMessage? _lastResponse;
     public HttpClient HttpClient => _client;
 
     public TestClient(HttpClient client)
@@ -25,6 +26,23 @@ public class TestClient : IDisposable
         _client.DefaultRequestHeaders.Authorization = null;
     }
 
+    public string? GetRefreshTokenCookie()
+    {
+        if (_lastResponse is null) return null;
+        if (!_lastResponse.Headers.TryGetValues("Set-Cookie", out var cookies)) return null;
+
+        var refreshCookie = cookies.FirstOrDefault(c => c.StartsWith("refreshToken="));
+        if (refreshCookie is null) return null;
+
+        return refreshCookie.Split(';')[0]["refreshToken=".Length..];
+    }
+
+    public void SetRefreshTokenCookie(string token)
+    {
+        _client.DefaultRequestHeaders.Remove("Cookie");
+        _client.DefaultRequestHeaders.Add("Cookie", $"refreshToken={token}");
+    }
+
     public async Task<GraphQLResponse<T>> ExecuteQueryAsync<T>(
         string query,
         object? variables = null,
@@ -37,6 +55,7 @@ public class TestClient : IDisposable
         };
 
         var response = await _client.PostAsJsonAsync("/graphql", request, cancellationToken);
+        _lastResponse = response;
 
         if (response.StatusCode == HttpStatusCode.TooManyRequests)
         {
