@@ -109,6 +109,7 @@ builder.Services.AddAuthorizationBuilder()
         .RequireAuthenticatedUser().Build());
 
 builder.Services
+    .AddHttpContextAccessor()
     .AddGraphQLServer()
     .AddHttpRequestInterceptor<HttpRequestInterceptor>()
     .AddDiagnosticEventListener<ExecutionEventListener>()
