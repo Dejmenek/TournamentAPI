@@ -1,5 +1,7 @@
 using HotChocolate.Resolvers;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Extensions;
 using TournamentAPI.Services;
@@ -75,13 +77,46 @@ public class UserMutations
 
         return accessToken;
     }
+
+    public async Task<string?> RefreshToken(
+        JwtService jwtService,
+        ApplicationDbContext context,
+        IResolverContext resolverContext,
+        IHttpContextAccessor httpContextAccessor
+    )
+    {
         if (httpContextAccessor.HttpContext == null)
         {
             resolverContext.ReportError(UserErrors.UnableToSetRefreshTokenCookie());
             return null;
         }
 
-        var token = jwtService.CreateToken(user);
-        return token;
+        var refreshToken = httpContextAccessor.HttpContext.Request.Cookies["refreshToken"];
+
+        var refreshTokenEntity = await context.RefreshTokens
+            .Include(r => r.User)
+            .FirstOrDefaultAsync(r => r.Token == refreshToken);
+
+        if (refreshTokenEntity is null)
+        {
+            resolverContext.ReportError(UserErrors.RefreshTokenInvalid());
+            return null;
+        }
+
+        if (refreshTokenEntity.ExpiryDateUtc < DateTime.UtcNow)
+        {
+            resolverContext.ReportError(UserErrors.RefreshTokenExpired());
+            return null;
+        }
+
+        string accessToken = jwtService.CreateToken(refreshTokenEntity.User);
+        refreshTokenEntity.Token = jwtService.CreateRefreshToken();
+        refreshTokenEntity.ExpiryDateUtc = DateTime.UtcNow.AddDays(7);
+
+        await context.SaveChangesAsync();
+
+        httpContextAccessor.HttpContext.Response.AppendRefreshTokenCookie(refreshTokenEntity.Token, refreshTokenEntity.ExpiryDateUtc);
+
+        return accessToken;
     }
 }
