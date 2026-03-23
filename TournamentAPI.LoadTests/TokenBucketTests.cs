@@ -3,9 +3,9 @@ using TournamentAPI.Shared.Models;
 
 namespace TournamentAPI.LoadTests;
 
-public class RateLimitingTests : BaseLoadTest
+public class TokenBucketTests : BaseLoadTest, IClassFixture<LoadTestWebAppFactory>
 {
-    public RateLimitingTests(LoadTestWebAppFactory factory) : base(factory)
+    public TokenBucketTests(LoadTestWebAppFactory factory) : base(factory)
     {
     }
 
@@ -13,9 +13,7 @@ public class RateLimitingTests : BaseLoadTest
     public void TokenBucket_Should_AllowBurst_Then_Reject()
     {
         // Arrange
-        var clientIp = new Bogus.DataSets.Internet().Ip();
         var client = CreateClient();
-        client.HttpClient.DefaultRequestHeaders.Add("X-Forwarded-For", clientIp);
 
         var scenario = Scenario.Create("token_bucket_burst", async _ =>
         {
