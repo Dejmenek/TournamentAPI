@@ -1,19 +1,20 @@
+using Microsoft.AspNetCore.Mvc.Testing;
 using TournamentAPI.Shared.Helpers;
 
 namespace TournamentAPI.LoadTests;
 
-[Collection(nameof(LoadTestCollection))]
 public abstract class BaseLoadTest
 {
-    protected readonly LoadTestWebAppFactory Factory;
-    protected BaseLoadTest(LoadTestWebAppFactory factory)
+    private readonly WebApplicationFactory<Program> _factory;
+
+    protected BaseLoadTest(WebApplicationFactory<Program> factory)
     {
-        Factory = factory;
+        _factory = factory;
     }
 
     protected TestClient CreateClient()
     {
-        var httpClient = Factory.CreateClient();
+        var httpClient = _factory.CreateClient();
         return new TestClient(httpClient);
     }
 }
