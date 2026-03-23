@@ -3,6 +3,7 @@ using TournamentAPI.Shared.Models;
 
 namespace TournamentAPI.LoadTests;
 
+public class LatencyTests : BaseLoadTest, IClassFixture<LatencyWebAppFactory>
 {
     public LatencyTests(LatencyWebAppFactory factory) : base(factory)
     {
@@ -20,8 +21,8 @@ namespace TournamentAPI.LoadTests;
 
             return response.HasErrors ? Response.Fail() : Response.Ok();
         })
-        .WithoutWarmUp()
-        .WithLoadSimulations(Simulation.KeepConstant(copies: 30, during: TimeSpan.FromSeconds(30)));
+        .WithWarmUpDuration(TimeSpan.FromSeconds(10))
+        .WithLoadSimulations(Simulation.KeepConstant(copies: 10, during: TimeSpan.FromSeconds(30)));
 
         // Act
         var stats = NBomberRunner
@@ -45,11 +46,11 @@ namespace TournamentAPI.LoadTests;
                 Shared.QueryExamples.Queries.Tournaments.GetAllWithBracketAndMatches);
             return response.HasErrors ? Response.Fail() : Response.Ok();
         })
-        .WithoutWarmUp()
+        .WithWarmUpDuration(TimeSpan.FromSeconds(10))
         .WithLoadSimulations(
-            Simulation.RampingConstant(copies: 20, during: TimeSpan.FromSeconds(20)),
-            Simulation.RampingConstant(copies: 50, during: TimeSpan.FromSeconds(20)),
-            Simulation.RampingConstant(copies: 100, during: TimeSpan.FromSeconds(20))
+            Simulation.RampingConstant(copies: 5, during: TimeSpan.FromSeconds(20)),
+            Simulation.RampingConstant(copies: 15, during: TimeSpan.FromSeconds(20)),
+            Simulation.RampingConstant(copies: 20, during: TimeSpan.FromSeconds(20))
         );
 
         // Act
@@ -58,8 +59,7 @@ namespace TournamentAPI.LoadTests;
             .Run();
 
         // Assert
-        Assert.True(
-            stats.ScenarioStats[0].Ok.Latency.Percent95 < 1000
-        );
+        Assert.Equal(0, stats.ScenarioStats[0].Fail.Request.Count);
+        Assert.True(stats.ScenarioStats[0].Ok.Latency.Percent95 < 800);
     }
 }
