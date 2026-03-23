@@ -3,24 +3,25 @@ using TournamentAPI.Shared.Models;
 
 namespace TournamentAPI.LoadTests;
 
-public class RateLimitingTests : BaseLoadTest
+public class ConcurrencyLimiterTests : BaseLoadTest, IClassFixture<LoadTestWebAppFactory>
 {
-    public RateLimitingTests(LoadTestWebAppFactory factory) : base(factory)
+    public ConcurrencyLimiterTests(LoadTestWebAppFactory factory) : base(factory)
     {
     }
 
     [Fact]
-    public void TokenBucket_Should_AllowBurst_Then_Reject()
+    public void ConcurrencyLimiter_Should_LimitConcurrentRequests()
     {
         // Arrange
-        var clientIp = new Bogus.DataSets.Internet().Ip();
         var client = CreateClient();
-        client.HttpClient.DefaultRequestHeaders.Add("X-Forwarded-For", clientIp);
 
-        var scenario = Scenario.Create("token_bucket_burst", async _ =>
+        var scenario = Scenario.Create("concurrency_limiter", async _ =>
         {
             var response = await client.ExecuteQueryAsync<TournamentsResponse>(
-                Shared.QueryExamples.Queries.Tournaments.GetAllWithBracketAndMatches);
+                Shared.QueryExamples.Queries.Tournaments.GetAllWithBracketAndMatches
+            );
+
+            await Task.Delay(1000);
 
             if (response.HasErrors &&
                 response.Errors?.Any(e => e.Extensions?.ContainsKey("statusCode") == true &&
@@ -33,16 +34,14 @@ public class RateLimitingTests : BaseLoadTest
         })
         .WithoutWarmUp()
         .WithLoadSimulations(
-            Simulation.Inject(rate: 300, interval: TimeSpan.FromSeconds(1), during: TimeSpan.FromSeconds(2))
+            Simulation.KeepConstant(copies: 150, during: TimeSpan.FromSeconds(5))
         );
 
         // Act
-        var stats = NBomberRunner
-            .RegisterScenarios(scenario)
-            .Run();
+        var stats = NBomberRunner.RegisterScenarios(scenario).Run();
 
         // Assert
-        Assert.InRange(stats.ScenarioStats[0].Ok.Request.Count, 90, 130);
+        Assert.True(stats.ScenarioStats[0].Ok.Request.Count >= 100);
         Assert.True(stats.ScenarioStats[0].Fail.Request.Count > 0);
 
         Assert.Single(stats.ScenarioStats[0].Fail.StatusCodes);
