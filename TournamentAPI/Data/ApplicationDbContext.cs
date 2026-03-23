@@ -15,6 +15,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<TournamentParticipant> TournamentParticipants { get; set; }
     public DbSet<Bracket> Brackets { get; set; }
     public DbSet<Match> Matches { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -93,5 +94,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<Match>()
             .HasIndex(m => new { m.BracketId, m.Round, m.Player1Id, m.Player2Id })
             .IsUnique();
+
+        builder.Entity<RefreshToken>().HasKey(e => e.Id);
+        builder.Entity<RefreshToken>()
+            .HasIndex(e => e.Token)
+            .IsUnique();
+
+        builder.Entity<RefreshToken>()
+            .HasOne(e => e.User)
+            .WithMany()
+            .HasForeignKey(e => e.UserId);
     }
 }

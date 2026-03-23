@@ -18,5 +18,13 @@ public static partial class Mutations
               }
             }
             """;
+
+        public const string RefreshToken = """
+            mutation RefreshToken {
+              refreshToken {
+                string
+              }
+            }
+            """;
     }
 }

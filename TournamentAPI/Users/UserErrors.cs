@@ -21,4 +21,22 @@ public static class UserErrors
             .SetCode(UserErrorCodes.RegistrationFailed)
             .SetExtension("Errors", errors)
             .Build();
+
+    public static IError RefreshTokenExpired() =>
+        ErrorBuilder.New()
+            .SetMessage("The refresh token has expired.")
+            .SetCode(UserErrorCodes.RefreshTokenExpired)
+            .Build();
+
+    public static IError RefreshTokenInvalid() =>
+        ErrorBuilder.New()
+            .SetMessage("The refresh token is invalid.")
+            .SetCode(UserErrorCodes.RefreshTokenInvalid)
+            .Build();
+
+    public static IError UnableToSetRefreshTokenCookie() =>
+        ErrorBuilder.New()
+            .SetMessage("Unable to set refresh token cookie.")
+            .SetCode(UserErrorCodes.UnableToSetRefreshTokenCookie)
+            .Build();
 }

@@ -193,6 +193,16 @@ public class RegisterUserResult
     public bool? Boolean { get; set; }
 }
 
+public class RefreshTokenResponse
+{
+    public RefreshTokenResult? RefreshToken { get; set; }
+}
+
+public class RefreshTokenResult
+{
+    public string? String { get; set; }
+}
+
 public class MeResponse
 {
     public UserNode? Me { get; set; }

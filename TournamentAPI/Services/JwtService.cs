@@ -1,6 +1,7 @@
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using TournamentAPI.Data.Models;
 
@@ -28,6 +29,11 @@ public class JwtService
         var tokenHandler = new JwtSecurityTokenHandler();
 
         return tokenHandler.WriteToken(token);
+    }
+
+    public string CreateRefreshToken()
+    {
+        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
     }
 
     private JwtSecurityToken CreateJwtToken(Claim[] claims, SigningCredentials credentials, DateTime expiration)
