@@ -2,9 +2,9 @@ using NBomber.CSharp;
 using TournamentAPI.Shared.Models;
 
 namespace TournamentAPI.LoadTests;
-public class LatencyTests : BaseLoadTest
+
 {
-    public LatencyTests(LoadTestWebAppFactory factory) : base(factory)
+    public LatencyTests(LatencyWebAppFactory factory) : base(factory)
     {
     }
 
