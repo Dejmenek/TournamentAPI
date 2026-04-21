@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -82,6 +86,21 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("TournamentAPI"))
+    .WithTracing(tracing =>
+    {
+        tracing.AddHttpClientInstrumentation();
+        tracing.AddAspNetCoreInstrumentation();
+        tracing.AddHotChocolateInstrumentation();
+        tracing.AddConsoleExporter();
+    })
+    .WithMetrics(metrics =>
+    {
+        metrics.AddAspNetCoreInstrumentation();
+        metrics.AddConsoleExporter();
+    });
+
 builder.Services
     .AddAuthentication(options =>
     {
@@ -136,7 +155,8 @@ builder.Services
     .AddProjections()
     .AddFiltering()
     .AddSorting()
-    .AddMaxExecutionDepthRule(8);
+    .AddMaxExecutionDepthRule(8)
+    .AddInstrumentation();
 
 builder.Services.AddScoped<JwtService>();
 
