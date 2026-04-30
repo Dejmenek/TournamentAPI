@@ -115,6 +115,34 @@ public class JwtServiceTests
         Assert.Equal("42", nameIdClaim.Value);
     }
 
+    [Fact]
+    public void HashRefreshToken_ReturnsNonEmptyString()
+    {
+        var hash = _sut.HashRefreshToken("some-token");
+
+        Assert.False(string.IsNullOrEmpty(hash));
+    }
+
+    [Fact]
+    public void HashRefreshToken_IsDeterministic()
+    {
+        var token = "some-token";
+
+        var hash1 = _sut.HashRefreshToken(token);
+        var hash2 = _sut.HashRefreshToken(token);
+
+        Assert.Equal(hash1, hash2);
+    }
+
+    [Fact]
+    public void HashRefreshToken_ReturnsDifferentHashesForDifferentTokens()
+    {
+        var hash1 = _sut.HashRefreshToken("token-one");
+        var hash2 = _sut.HashRefreshToken("token-two");
+
+        Assert.NotEqual(hash1, hash2);
+    }
+
     private static ApplicationUser CreateTestUser(int id = 1, string userName = "testuser", string email = "test@example.com")
         => new()
         {

@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Shared.Extensions;
@@ -286,18 +288,20 @@ public class UserMutationTests : BaseIntegrationTest
     public async Task RefreshToken_ReturnsExpiredError_WhenTokenIsExpired()
     {
         var alice = await DbContext.Users.FirstAsync(u => u.Email == "alice@example.com");
+        var rawToken = "expired-token-value";
+        var hashedToken = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(rawToken))).ToLowerInvariant();
         var expiredToken = new RefreshToken
         {
             Id = Guid.NewGuid(),
             UserId = alice.Id,
-            Token = "expired-token-value",
+            Token = hashedToken,
             ExpiryDateUtc = DateTime.UtcNow.AddDays(-1)
         };
         DbContext.RefreshTokens.Add(expiredToken);
         await DbContext.SaveChangesAsync();
 
         using var client = CreateClient();
-        client.SetRefreshTokenCookie(expiredToken.Token);
+        client.SetRefreshTokenCookie(rawToken);
 
         var response = await client.ExecuteMutationAsync<RefreshTokenResponse>(
             Shared.MutationExamples.Mutations.Users.RefreshToken,

@@ -31,9 +31,16 @@ public class JwtService
         return tokenHandler.WriteToken(token);
     }
 
-    public string CreateRefreshToken()
+    public RefreshTokenResult CreateRefreshToken()
     {
-        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        var raw = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        return new RefreshTokenResult(raw, HashRefreshToken(raw));
+    }
+
+    public string HashRefreshToken(string token)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+        return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 
     private JwtSecurityToken CreateJwtToken(Claim[] claims, SigningCredentials credentials, DateTime expiration)
