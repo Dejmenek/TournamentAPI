@@ -52,11 +52,12 @@ public class UserMutations
         }
 
         var accessToken = jwtService.CreateToken(user);
+        var refreshTokenResult = jwtService.CreateRefreshToken();
         var refreshToken = new RefreshToken
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
-            Token = jwtService.CreateRefreshToken(),
+            Token = refreshTokenResult.Hashed,
             ExpiryDateUtc = DateTime.UtcNow.AddDays(7),
         };
 
@@ -73,7 +74,7 @@ public class UserMutations
         context.RefreshTokens.Add(refreshToken);
         await context.SaveChangesAsync();
 
-        httpContextAccessor.HttpContext.Response.AppendRefreshTokenCookie(refreshToken.Token, refreshToken.ExpiryDateUtc);
+        httpContextAccessor.HttpContext.Response.AppendRefreshTokenCookie(refreshTokenResult.Raw, refreshToken.ExpiryDateUtc);
 
         return accessToken;
     }
@@ -91,11 +92,12 @@ public class UserMutations
             return null;
         }
 
-        var refreshToken = httpContextAccessor.HttpContext.Request.Cookies["refreshToken"];
+        var rawCookieToken = httpContextAccessor.HttpContext.Request.Cookies["refreshToken"];
+        var hashedCookieToken = jwtService.HashRefreshToken(rawCookieToken ?? string.Empty);
 
         var refreshTokenEntity = await context.RefreshTokens
             .Include(r => r.User)
-            .FirstOrDefaultAsync(r => r.Token == refreshToken);
+            .FirstOrDefaultAsync(r => r.Token == hashedCookieToken);
 
         if (refreshTokenEntity is null)
         {
@@ -110,12 +112,13 @@ public class UserMutations
         }
 
         string accessToken = jwtService.CreateToken(refreshTokenEntity.User);
-        refreshTokenEntity.Token = jwtService.CreateRefreshToken();
+        var newRefreshToken = jwtService.CreateRefreshToken();
+        refreshTokenEntity.Token = newRefreshToken.Hashed;
         refreshTokenEntity.ExpiryDateUtc = DateTime.UtcNow.AddDays(7);
 
         await context.SaveChangesAsync();
 
-        httpContextAccessor.HttpContext.Response.AppendRefreshTokenCookie(refreshTokenEntity.Token, refreshTokenEntity.ExpiryDateUtc);
+        httpContextAccessor.HttpContext.Response.AppendRefreshTokenCookie(newRefreshToken.Raw, refreshTokenEntity.ExpiryDateUtc);
 
         return accessToken;
     }
