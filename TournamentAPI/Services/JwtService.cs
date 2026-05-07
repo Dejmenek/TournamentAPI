@@ -1,19 +1,21 @@
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using TournamentAPI.Configuration;
 using TournamentAPI.Data.Models;
 
 namespace TournamentAPI.Services;
 
 public class JwtService
 {
-    private readonly IConfiguration _configuration;
+    private readonly JwtOptions _jwtOptions;
 
-    public JwtService(IConfiguration configuration)
+    public JwtService(IOptions<JwtOptions> jwtOptions)
     {
-        _configuration = configuration;
+        _jwtOptions = jwtOptions.Value;
     }
 
     public string CreateToken(ApplicationUser user)
@@ -46,8 +48,8 @@ public class JwtService
     private JwtSecurityToken CreateJwtToken(Claim[] claims, SigningCredentials credentials, DateTime expiration)
     {
         return new JwtSecurityToken(
-            _configuration["Jwt:Issuer"],
-            _configuration["Jwt:Audience"],
+            _jwtOptions.Issuer,
+            _jwtOptions.Audience,
             claims,
             expires: expiration,
             signingCredentials: credentials
@@ -71,9 +73,7 @@ public class JwtService
     private SigningCredentials CreateSigningCredentials()
     {
         return new SigningCredentials(
-            new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is not configured."))
-            ),
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.Key)),
             SecurityAlgorithms.HmacSha256
         );
     }
