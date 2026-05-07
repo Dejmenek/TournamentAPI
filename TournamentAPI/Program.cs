@@ -33,6 +33,24 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
     .CreateLogger();
 
+builder.Services
+    .AddOptions<JwtOptions>()
+    .BindConfiguration(JwtOptions.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services
+    .AddOptions<DatabaseOptions>()
+    .BindConfiguration(DatabaseOptions.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
+builder.Services
+    .AddOptions<HealthCheckApiKeyOptions>()
+    .BindConfiguration(HealthCheckApiKeyOptions.SectionName)
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+
 if (builder.Environment.IsDevelopment())
 {
     builder.Services.Configure<ForwardedHeadersOptions>(options =>
