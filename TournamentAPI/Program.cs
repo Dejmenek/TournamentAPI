@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
@@ -17,6 +18,7 @@ using System.Text;
 using System.Threading.RateLimiting;
 using TournamentAPI;
 using TournamentAPI.Brackets;
+using TournamentAPI.Configuration;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.EventListeners;
@@ -62,9 +64,10 @@ if (builder.Environment.IsDevelopment())
     });
 }
 
-builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+builder.Services.AddDbContextFactory<ApplicationDbContext>((sp, options) =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+    var dbOptions = sp.GetRequiredService<IOptions<DatabaseOptions>>().Value;
+    options.UseSqlServer(dbOptions.DefaultConnection);
 });
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole<int>>(opt =>
@@ -129,26 +132,29 @@ builder.Services
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     })
-    .AddJwtBearer(options =>
+    .AddJwtBearer();
+
+builder.Services
+    .AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+    .Configure<IOptions<JwtOptions>>((jwtBearerOptions, jwtOpts) =>
     {
-        options.TokenValidationParameters = new()
+        var jwt = jwtOpts.Value;
+        jwtBearerOptions.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidAudience = builder.Configuration["Jwt:Audience"] ?? throw new InvalidOperationException("JWT Audience is not configured."),
-            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("JWT Issuer is not configured."),
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is not configured."))
-            )
+            ValidAudience = jwt.Audience,
+            ValidIssuer = jwt.Issuer,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key))
         };
     });
 
 builder.Services
     .AddHealthChecks()
     .AddSqlServer(
-        connectionString: builder.Configuration.GetConnectionString("DefaultConnection"),
+        connectionStringFactory: sp => sp.GetRequiredService<IOptions<DatabaseOptions>>().Value.DefaultConnection,
         name: "sqlserver",
         tags: ["database"],
         failureStatus: HealthStatus.Unhealthy
@@ -167,7 +173,9 @@ builder.Services.AddAuthorizationBuilder()
         {
             var httpContext = context.Resource as HttpContext;
             var apiKey = httpContext?.Request.Headers["X-Health-Check-Key"].ToString();
-            var expectedKey = builder.Configuration["HealthCheck:ApiKey"];
+            var expectedKey = httpContext?.RequestServices
+                .GetRequiredService<IOptions<HealthCheckApiKeyOptions>>()
+                .Value.ApiKey;
 
             if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(expectedKey))
             {
