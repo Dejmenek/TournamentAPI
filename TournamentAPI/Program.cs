@@ -1,14 +1,18 @@
+using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.RateLimiting;
 using TournamentAPI;
@@ -123,9 +127,40 @@ builder.Services
         };
     });
 
+builder.Services
+    .AddHealthChecks()
+    .AddSqlServer(
+        connectionString: builder.Configuration.GetConnectionString("DefaultConnection"),
+        name: "sqlserver",
+        tags: ["database"],
+        failureStatus: HealthStatus.Unhealthy
+    )
+    .AddDbContextCheck<ApplicationDbContext>(
+        name: "database",
+        tags: ["database"],
+        failureStatus: HealthStatus.Unhealthy
+    );
+
 builder.Services.AddAuthorizationBuilder()
     .SetDefaultPolicy(new AuthorizationPolicyBuilder(JwtBearerDefaults.AuthenticationScheme)
-        .RequireAuthenticatedUser().Build());
+        .RequireAuthenticatedUser().Build())
+    .AddPolicy("HealthCheckPolicy", policy =>
+        policy.RequireAssertion(context =>
+        {
+            var httpContext = context.Resource as HttpContext;
+            var apiKey = httpContext?.Request.Headers["X-Health-Check-Key"].ToString();
+            var expectedKey = builder.Configuration["HealthCheck:ApiKey"];
+
+            if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(expectedKey))
+            {
+                return false;
+            }
+
+            var apiKeySpan = Encoding.UTF8.GetBytes(apiKey).AsSpan();
+            var expectedKeySpan = Encoding.UTF8.GetBytes(expectedKey).AsSpan();
+
+            return CryptographicOperations.FixedTimeEquals(apiKeySpan, expectedKeySpan);
+        }));
 
 builder.Services
     .AddHttpContextAccessor()
@@ -181,6 +216,13 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+})
+.RequireAuthorization("HealthCheckPolicy")
+.RequireRateLimiting("IpBasedTokenBucket");
 
 app.MapGraphQL()
     .RequireRateLimiting("IpBasedTokenBucket");
