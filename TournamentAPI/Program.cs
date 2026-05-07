@@ -12,6 +12,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.RateLimiting;
 using TournamentAPI;
@@ -150,7 +151,15 @@ builder.Services.AddAuthorizationBuilder()
             var apiKey = httpContext?.Request.Headers["X-Health-Check-Key"].ToString();
             var expectedKey = builder.Configuration["HealthCheck:ApiKey"];
 
-            return apiKey == expectedKey;
+            if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(expectedKey))
+            {
+                return false;
+            }
+
+            var apiKeySpan = Encoding.UTF8.GetBytes(apiKey).AsSpan();
+            var expectedKeySpan = Encoding.UTF8.GetBytes(expectedKey).AsSpan();
+
+            return CryptographicOperations.FixedTimeEquals(apiKeySpan, expectedKeySpan);
         }));
 
 builder.Services
