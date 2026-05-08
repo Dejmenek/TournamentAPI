@@ -5,6 +5,7 @@ using System.Security.Claims;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Extensions;
+using TournamentAPI.Metrics;
 
 namespace TournamentAPI.Tournaments;
 
@@ -62,6 +63,7 @@ public class TournamentMutations
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
         IResolverContext resolverContext,
+        TournamentMetrics tournamentMetrics,
         CancellationToken token)
     {
         var userId = userClaims.GetUserId();
@@ -79,6 +81,8 @@ public class TournamentMutations
 
         context.Tournaments.Add(tournament);
         await context.SaveChangesAsync(token);
+
+        tournamentMetrics.IncrementTournamentsCreated();
 
         return context.Tournaments.Where(t => t.Id == tournament.Id);
     }
