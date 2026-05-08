@@ -191,6 +191,7 @@ builder.Services.AddAuthorizationBuilder()
         }));
 
 builder.Services.AddSingleton<TournamentMetrics>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<TournamentMetrics>());
 
 builder.Services
     .AddHttpContextAccessor()

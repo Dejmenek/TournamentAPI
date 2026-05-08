@@ -2,7 +2,7 @@ using System.Diagnostics.Metrics;
 
 namespace TournamentAPI.Metrics;
 
-public class TournamentMetrics
+public class TournamentMetrics : IHostedService
 {
     private readonly Counter<int> _tournamentsCreated;
 
@@ -16,4 +16,7 @@ public class TournamentMetrics
     {
         _tournamentsCreated.Add(1);
     }
+    public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
