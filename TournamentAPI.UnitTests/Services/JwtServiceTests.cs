@@ -1,6 +1,7 @@
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using TournamentAPI.Configuration;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Services;
 
@@ -9,20 +10,17 @@ namespace TournamentAPI.UnitTests.Services;
 public class JwtServiceTests
 {
     private readonly JwtService _sut;
-    private readonly IConfiguration _configuration;
 
     public JwtServiceTests()
     {
-        _configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Jwt:Issuer"] = "test-issuer",
-                ["Jwt:Audience"] = "test-audience",
-                ["Jwt:Key"] = "test-secret-key-that-is-at-least-32-bytes-long!"
-            })
-            .Build();
+        var jwtOptions = Options.Create(new JwtOptions
+        {
+            Issuer = "test-issuer",
+            Audience = "test-audience",
+            Key = "test-secret-key-that-is-at-least-32-bytes-long!"
+        });
 
-        _sut = new JwtService(_configuration);
+        _sut = new JwtService(jwtOptions);
     }
 
     [Fact]
