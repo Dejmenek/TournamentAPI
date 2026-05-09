@@ -23,6 +23,7 @@ using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.EventListeners;
 using TournamentAPI.Matches;
+using TournamentAPI.Metrics;
 using TournamentAPI.Participants;
 using TournamentAPI.Services;
 using TournamentAPI.Tournaments;
@@ -122,6 +123,7 @@ builder.Services.AddOpenTelemetry()
     })
     .WithMetrics(metrics =>
     {
+        metrics.AddMeter(MetricConstants.TournamentMeterName);
         metrics.AddAspNetCoreInstrumentation();
         metrics.AddConsoleExporter();
     });
@@ -187,6 +189,9 @@ builder.Services.AddAuthorizationBuilder()
 
             return CryptographicOperations.FixedTimeEquals(apiKeySpan, expectedKeySpan);
         }));
+
+builder.Services.AddSingleton<TournamentMetrics>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<TournamentMetrics>());
 
 builder.Services
     .AddHttpContextAccessor()
