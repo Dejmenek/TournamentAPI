@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  SOLUTION_PATH: 'TournamentAPI.sln'
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 9.0.x
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+
+      - name: Restore
+        run: dotnet restore ${{ env.SOLUTION_PATH }} --locked-mode
+
+      - name: Build
+        run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
+
+      - name: Test (Unit)
+        run: dotnet test TournamentAPI.UnitTests/TournamentAPI.UnitTests.csproj --configuration Release --no-restore --no-build
+
+      - name: Test (Integration)
+        run: dotnet test TournamentAPI.IntegrationTests/TournamentAPI.IntegrationTests.csproj --configuration Release --no-restore --no-build
