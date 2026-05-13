@@ -4,6 +4,7 @@
 
 - [General Info](#general-info)
 - [Technologies](#technologies)
+- [Running the API](#running-the-api)
 - [Detailed API Documentation](#detailed-api-documentation)
   - [Authentication](#authentication)
   - [Tournament Management](#tournament-management)
@@ -35,6 +36,46 @@
 - **NBomber** (for load testing)
 
 ---
+
+
+## Running the API
+
+### Prerequisites
+
+- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- [Docker](https://www.docker.com/) (for Prometheus and Grafana)
+
+### Start Prometheus and Grafana
+
+The API exports metrics via OpenTelemetry's OTLP exporter directly to Prometheus. Before starting the API, bring up the observability stack with Docker Compose:
+
+```bash
+docker-compose up -d
+```
+
+This starts:
+
+| Service | URL |
+| --- | --- |
+| Prometheus | http://localhost:5431 |
+| Grafana | http://localhost:3000 |
+
+Prometheus is configured with `--web.enable-otlp-receiver` so it accepts OTLP pushes from the API. The scrape interval is set to 15 s globally (10 s for the Prometheus self-scrape job).
+
+### Start the API
+
+```bash
+dotnet run --project TournamentAPI
+```
+
+The API will push metrics to Prometheus automatically once running.
+
+### Grafana
+
+Open `http://localhost:3000`, log in with the default credentials (`admin` / `admin`), and add Prometheus (`http://prometheus:9090`) as a data source to build dashboards from the collected metrics.
+
+---
+
 
 ## Detailed API Documentation
 

@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -23,7 +22,11 @@ internal static class TelemetryExtensions
             {
                 metrics.AddMeter(MetricConstants.TournamentMeterName);
                 metrics.AddAspNetCoreInstrumentation();
-                metrics.AddConsoleExporter();
+                metrics.AddOtlpExporter(o =>
+                {
+                    o.Endpoint = new Uri("http://localhost:5431/api/v1/otlp/v1/metrics");
+                    o.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+                });
             });
 
         return services;

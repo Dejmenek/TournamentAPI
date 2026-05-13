@@ -83,6 +83,8 @@ public class TournamentMutations
         await context.SaveChangesAsync(token);
 
         tournamentMetrics.IncrementTournamentsCreated();
+        if (tournament.Status == TournamentStatus.Open)
+            tournamentMetrics.TournamentOpened();
 
         return context.Tournaments.Where(t => t.Id == tournament.Id);
     }
@@ -95,6 +97,7 @@ public class TournamentMutations
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
         IResolverContext resolverContext,
+        TournamentMetrics tournamentMetrics,
         CancellationToken token)
     {
         var userId = userClaims.GetUserId();
@@ -112,12 +115,19 @@ public class TournamentMutations
             return null;
         tournament.Name = input.Name;
 
-
         if (input.StartDate != null)
             tournament.StartDate = input.StartDate.Value;
 
         if (input.Status != null)
+        {
+            var previousStatus = tournament.Status;
             tournament.Status = input.Status.Value;
+
+            if (previousStatus != TournamentStatus.Open && tournament.Status == TournamentStatus.Open)
+                tournamentMetrics.TournamentOpened();
+            else if (previousStatus == TournamentStatus.Open && tournament.Status != TournamentStatus.Open)
+                tournamentMetrics.TournamentClosed();
+        }
 
         await context.SaveChangesAsync(token);
 
@@ -130,6 +140,7 @@ public class TournamentMutations
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
         IResolverContext resolverContext,
+        TournamentMetrics tournamentMetrics,
         CancellationToken token)
     {
         var userId = userClaims.GetUserId();
@@ -145,6 +156,8 @@ public class TournamentMutations
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament!.OwnerId, userId, tournamentId)))
             return null;
+
+        var wasOpen = tournament!.Status == TournamentStatus.Open;
 
         tournament.IsDeleted = true;
 
@@ -163,6 +176,10 @@ public class TournamentMutations
         }
 
         await context.SaveChangesAsync(token);
+
+        if (wasOpen)
+            tournamentMetrics.TournamentClosed();
+
         return true;
     }
 }

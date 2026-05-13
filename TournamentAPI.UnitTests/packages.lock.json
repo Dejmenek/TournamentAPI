@@ -1143,6 +1143,7 @@
           "Microsoft.EntityFrameworkCore.SqlServer": "[9.0.11, )",
           "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore": "[9.0.11, )",
           "OpenTelemetry.Exporter.Console": "[1.15.3, )",
+          "OpenTelemetry.Exporter.OpenTelemetryProtocol": "[1.15.3, )",
           "OpenTelemetry.Extensions.Hosting": "[1.15.3, )",
           "OpenTelemetry.Instrumentation.AspNetCore": "[1.15.2, )",
           "OpenTelemetry.Instrumentation.Http": "[1.15.1, )",
@@ -1291,6 +1292,15 @@
         "requested": "[1.15.3, )",
         "resolved": "1.15.3",
         "contentHash": "QBGOoPwLHDXX+hXeUpspOjsqEn4vMkLw672QN+MzVWFBzjf625DdxLxhzowS1J/dRtW93U34rRbJec+4808fkg==",
+        "dependencies": {
+          "OpenTelemetry": "1.15.3"
+        }
+      },
+      "OpenTelemetry.Exporter.OpenTelemetryProtocol": {
+        "type": "CentralTransitive",
+        "requested": "[1.15.3, )",
+        "resolved": "1.15.3",
+        "contentHash": "FEXJepcseTGbATiCkUfP7ipoFEYYfl/0UmmUwi0KxCPg9PaUA8ab2P1LGopK+/HExasJ1ZutFhZrN6WvUIR23g==",
         "dependencies": {
           "OpenTelemetry": "1.15.3"
         }
