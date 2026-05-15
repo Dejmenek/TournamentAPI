@@ -2,6 +2,7 @@ using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Serilog;
+using Serilog.Sinks.OpenTelemetry;
 using TournamentAPI.Configuration.Extensions;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
@@ -11,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
-    .CreateLogger();
+    .CreateBootstrapLogger();
 
 builder.Services.AddApplicationOptions();
 
@@ -28,6 +29,19 @@ builder.Services.AddApplicationMetrics();
 builder.Services.AddApplicationGraphQL();
 
 builder.Services.AddScoped<JwtService>();
+
+builder.Services.AddSerilog((_, loggerConfiguration) =>
+    loggerConfiguration
+        .WriteTo.Console()
+        .WriteTo.OpenTelemetry(opt =>
+        {
+            opt.Endpoint = new Uri("http://localhost:3100/otlp").ToString();
+            opt.Protocol = OtlpProtocol.HttpProtobuf;
+            opt.ResourceAttributes = new Dictionary<string, object>
+            {
+                ["service.name"] = "TournamentAPI"
+            };
+        }));
 
 var app = builder.Build();
 
