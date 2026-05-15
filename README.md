@@ -43,11 +43,11 @@
 ### Prerequisites
 
 - [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
-- [Docker](https://www.docker.com/) (for Prometheus and Grafana)
+- [Docker](https://www.docker.com/) (for Prometheus, Loki, and Grafana)
 
-### Start Prometheus and Grafana
+### Start the Observability Stack
 
-The API exports metrics via OpenTelemetry's OTLP exporter directly to Prometheus. Before starting the API, bring up the observability stack with Docker Compose:
+The API exports metrics via OpenTelemetry's OTLP exporter to Prometheus and ships structured logs via Serilog's OpenTelemetry sink to Loki. Before starting the API, bring up the observability stack with Docker Compose:
 
 ```bash
 docker-compose up -d
@@ -58,9 +58,11 @@ This starts:
 | Service | URL |
 | --- | --- |
 | Prometheus | http://localhost:5431 |
+| Loki | http://localhost:3100 |
 | Grafana | http://localhost:3000 |
 
-Prometheus is configured with `--web.enable-otlp-receiver` so it accepts OTLP pushes from the API. The scrape interval is set to 15 s globally (10 s for the Prometheus self-scrape job).
+- **Prometheus** is configured with `--web.enable-otlp-receiver` so it accepts OTLP pushes from the API. The scrape interval is set to 15 s globally (10 s for the Prometheus self-scrape job).
+- **Loki** listens on port `3100` and accepts logs over the OTLP HTTP endpoint (`/otlp`). Logs are stored on the local filesystem.
 
 ### Start the API
 
@@ -68,11 +70,16 @@ Prometheus is configured with `--web.enable-otlp-receiver` so it accepts OTLP pu
 dotnet run --project TournamentAPI
 ```
 
-The API will push metrics to Prometheus automatically once running.
+The API will push metrics to Prometheus and logs to Loki automatically once running.
 
 ### Grafana
 
-Open `http://localhost:3000`, log in with the default credentials (`admin` / `admin`), and add Prometheus (`http://prometheus:9090`) as a data source to build dashboards from the collected metrics.
+Open `http://localhost:3000`, log in with the default credentials (`admin` / `admin`), and add the following data sources to build dashboards:
+
+| Data source | URL |
+| --- | --- |
+| Prometheus | `http://prometheus:9090` |
+| Loki | `http://loki:3100` |
 
 ---
 
