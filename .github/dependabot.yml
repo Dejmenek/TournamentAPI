@@ -9,3 +9,45 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      hotchocolate:
+        patterns:
+          - "HotChocolate.*"
+      efcore:
+        patterns:
+          - "Microsoft.EntityFrameworkCore*"
+          - "Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore"
+      aspnetcore:
+        patterns:
+          - "Microsoft.AspNetCore.*"
+        exclude-patterns:
+          - "Microsoft.AspNetCore.Mvc.Testing"
+      healthchecks:
+        patterns:
+          - "AspNetCore.HealthChecks.*"
+      opentelemetry:
+        patterns:
+          - "OpenTelemetry.*"
+          - "Serilog.Sinks.OpenTelemetry"
+      serilog:
+        patterns:
+          - "Serilog"
+          - "Serilog.*"
+      testing:
+        patterns:
+          - "Microsoft.AspNetCore.Mvc.Testing"
+          - "Microsoft.NET.Test.Sdk"
+          - "xunit"
+          - "xunit.*"
+          - "coverlet.collector"
+          - "Testcontainers.*"
+          - "BenchmarkDotNet"
+          - "NBomber"
+          - "Bogus"
+  
