@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }} # Required
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
@@ -36,7 +38,7 @@ jobs:
           git config user.email "<>"
           git add "**/packages.lock.json"
           git commit -m "chore: regenerate packages.lock.json"
-          git push origin HEAD:${{ github.head_ref }}
+          git push
 
   build-test:
     needs: update-lock-files
