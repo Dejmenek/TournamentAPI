@@ -55,7 +55,8 @@ public class ParticipantMutations
         var participant = new TournamentParticipant
         {
             TournamentId = input.TournamentId,
-            ParticipantId = input.UserId
+            ParticipantId = input.UserId,
+            SlotNumber = tournament.Participants.Count + 1
         };
 
         context.TournamentParticipants.Add(participant);
@@ -64,6 +65,11 @@ public class ParticipantMutations
         {
             await context.SaveChangesAsync(token);
             return context.Tournaments.AsNoTracking().Where(t => t.Id == input.TournamentId);
+        }
+        catch (DbUpdateException ex) when (ex.IsUniqueConstraintViolation(TournamentParticipant.SlotNumberUniqueIndexName))
+        {
+            resolverContext.ReportError(TournamentErrors.TournamentFull(input.TournamentId, tournament.MaxParticipants));
+            return null;
         }
         catch (DbUpdateException)
         {
