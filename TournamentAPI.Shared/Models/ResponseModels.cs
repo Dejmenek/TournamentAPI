@@ -32,6 +32,7 @@ public class TournamentNode
     public string Status { get; set; } = string.Empty;
     public DateTime StartDate { get; set; }
     public int OwnerId { get; set; }
+    public int MaxParticipants { get; set; }
     public ApplicationUserNode? Owner { get; set; }
     public BracketNode? Bracket { get; set; }
     public List<TournamentParticipantNode>? Participants { get; set; }

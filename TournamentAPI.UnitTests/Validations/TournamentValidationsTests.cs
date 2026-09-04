@@ -117,4 +117,88 @@ public class TournamentValidationsTests
 
         Assert.Null(error);
     }
+
+    [Fact]
+    public void ValidateTournamentNotFull_WhenAtCapacity_ReturnsError()
+    {
+        var tournament = new Tournament
+        {
+            Id = 1,
+            MaxParticipants = 2,
+            Participants =
+            [
+                new() { ParticipantId = 1 },
+                new() { ParticipantId = 2 }
+            ]
+        };
+
+        IError? error = TournamentValidations.ValidateTournamentNotFull(tournament);
+
+        Assert.NotNull(error);
+        Assert.Equal(TournamentErrorCodes.TournamentFull, error.Code);
+    }
+
+    [Fact]
+    public void ValidateTournamentNotFull_WhenBelowCapacity_ReturnsNull()
+    {
+        var tournament = new Tournament
+        {
+            Id = 1,
+            MaxParticipants = 2,
+            Participants =
+            [
+                new() { ParticipantId = 1 }
+            ]
+        };
+
+        IError? error = TournamentValidations.ValidateTournamentNotFull(tournament);
+
+        Assert.Null(error);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public void ValidateMaxParticipantsAtLeastTwo_WhenLessThanTwo_ReturnsError(int maxParticipants)
+    {
+        IError? error = TournamentValidations.ValidateMaxParticipantsAtLeastTwo(maxParticipants);
+
+        Assert.NotNull(error);
+        Assert.Equal(TournamentErrorCodes.InvalidMaxParticipants, error.Code);
+    }
+
+    [Theory]
+    [InlineData(2)]
+    [InlineData(8)]
+    public void ValidateMaxParticipantsAtLeastTwo_WhenAtLeastTwo_ReturnsNull(int maxParticipants)
+    {
+        IError? error = TournamentValidations.ValidateMaxParticipantsAtLeastTwo(maxParticipants);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateMaxParticipantsNotBelowParticipantCount_WhenBelowCurrentCount_ReturnsError()
+    {
+        IError? error = TournamentValidations.ValidateMaxParticipantsNotBelowParticipantCount(tournamentId: 1, currentParticipantCount: 3, maxParticipants: 2);
+
+        Assert.NotNull(error);
+        Assert.Equal(TournamentErrorCodes.MaxParticipantsBelowParticipantCount, error.Code);
+    }
+
+    [Fact]
+    public void ValidateMaxParticipantsNotBelowParticipantCount_WhenEqualToCurrentCount_ReturnsNull()
+    {
+        IError? error = TournamentValidations.ValidateMaxParticipantsNotBelowParticipantCount(tournamentId: 1, currentParticipantCount: 3, maxParticipants: 3);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateMaxParticipantsNotBelowParticipantCount_WhenAboveCurrentCount_ReturnsNull()
+    {
+        IError? error = TournamentValidations.ValidateMaxParticipantsNotBelowParticipantCount(tournamentId: 1, currentParticipantCount: 3, maxParticipants: 5);
+
+        Assert.Null(error);
+    }
 }

@@ -514,4 +514,142 @@ public class ParticipantMutationTests : BaseIntegrationTest
         Assert.NotNull(response.Data.AddParticipant.Tournament.Participants);
         Assert.All(response.Data.AddParticipant.Tournament.Participants, p => Assert.NotNull(p.Participant));
     }
+
+    [Fact]
+    public async Task AddParticipant_ReturnsTournamentFullError_WhenTournamentIsAtCapacity()
+    {
+        // Arrange
+        var email = "carol@example.com";
+        var password = "Password123!";
+        var tournamentId = 13; // already at capacity (2/2)
+        var participantId = 6;
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentId,
+                userId = participantId
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<AddParticipantResponse>(
+            Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+            variables);
+
+        // Assert
+        Assert.True(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.AddParticipant);
+        Assert.Null(response.Data.AddParticipant.Tournament);
+        Assert.NotNull(response.Errors);
+
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.TournamentFull(tournamentId, 2);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
+
+        var tournamentParticipants = DbContext.TournamentParticipants
+            .AsNoTracking()
+            .Where(tp => tp.TournamentId == tournamentId && tp.ParticipantId == participantId);
+
+        Assert.Empty(tournamentParticipants);
+    }
+
+    [Fact]
+    public async Task AddParticipant_HandlesDbUpdateException_WhenRaceConditionFillsLastSlot_ReturnsTournamentFullError()
+    {
+        // Arrange
+        var email = "emma@example.com";
+        var password = "Password123!";
+        var tournamentId = 14; // 2/3 filled, exactly one slot open
+        using var client = CreateClient();
+        using var client2 = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client2.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables1 = new
+        {
+            input = new
+            {
+                tournamentId = tournamentId,
+                userId = 3 // carol
+            }
+        };
+        var variables2 = new
+        {
+            input = new
+            {
+                tournamentId = tournamentId,
+                userId = 4 // david
+            }
+        };
+
+        // Act
+        var task1 = client.ExecuteMutationAsync<AddParticipantResponse>(
+            Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+            variables1);
+        var task2 = client2.ExecuteMutationAsync<AddParticipantResponse>(
+            Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+            variables2);
+        var results = await Task.WhenAll(task1, task2);
+
+        // Assert
+        var successResponse = results.FirstOrDefault(r => !r.HasErrors);
+        var errorResponse = results.FirstOrDefault(r => r.HasErrors);
+
+        Assert.NotNull(successResponse);
+        Assert.NotNull(errorResponse);
+        Assert.NotNull(successResponse.Data);
+        Assert.NotNull(successResponse.Data.AddParticipant);
+        Assert.NotNull(successResponse.Data.AddParticipant.Tournament);
+        Assert.NotNull(errorResponse.Errors);
+
+        var error = errorResponse.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+
+        var expectedError = TournamentErrors.TournamentFull(tournamentId, 3);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+
+        var participantsInDb = await DbContext.TournamentParticipants
+            .AsNoTracking()
+            .Where(tp => tp.TournamentId == tournamentId)
+            .ToListAsync();
+
+        Assert.Equal(3, participantsInDb.Count);
+        Assert.Equal(3, participantsInDb.Select(tp => tp.SlotNumber).Distinct().Count());
+    }
 }

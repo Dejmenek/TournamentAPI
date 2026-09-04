@@ -7,4 +7,7 @@ public static class TournamentErrorCodes
     public const string UserAlreadyParticipant = "Tournament.UserAlreadyParticipant";
     public const string TournamentNameEmpty = "Tournament.NameEmpty";
     public const string TournamentNotOwner = "Tournament.NotOwner";
+    public const string TournamentFull = "Tournament.Full";
+    public const string InvalidMaxParticipants = "Tournament.InvalidMaxParticipants";
+    public const string MaxParticipantsBelowParticipantCount = "Tournament.MaxParticipantsBelowParticipantCount";
 }

@@ -20,6 +20,7 @@ public static partial class Mutations
                 ownerId
                 startDate
                 status
+                maxParticipants
               }
             }
             }
@@ -56,6 +57,7 @@ public static partial class Mutations
                   ownerId
                   startDate
                   status
+                  maxParticipants
                 }
               }
             }

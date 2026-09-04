@@ -32,10 +32,16 @@ public class ParticipantMutations
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentExists(tournament, input.TournamentId)))
             return null;
 
-        if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament!.OwnerId, userId, input.TournamentId)))
+        if (tournament is null)
+            return null;
+
+        if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament.OwnerId, userId, input.TournamentId)))
             return null;
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotClosed(tournament)))
+            return null;
+
+        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentNotFull(tournament)))
             return null;
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == input.UserId, token);
@@ -49,7 +55,8 @@ public class ParticipantMutations
         var participant = new TournamentParticipant
         {
             TournamentId = input.TournamentId,
-            ParticipantId = input.UserId
+            ParticipantId = input.UserId,
+            SlotNumber = tournament.Participants.Count + 1
         };
 
         context.TournamentParticipants.Add(participant);
@@ -58,6 +65,11 @@ public class ParticipantMutations
         {
             await context.SaveChangesAsync(token);
             return context.Tournaments.AsNoTracking().Where(t => t.Id == input.TournamentId);
+        }
+        catch (DbUpdateException ex) when (ex.IsUniqueConstraintViolation(TournamentParticipant.SlotNumberUniqueIndexName))
+        {
+            resolverContext.ReportError(TournamentErrors.TournamentFull(input.TournamentId, tournament.MaxParticipants));
+            return null;
         }
         catch (DbUpdateException)
         {
