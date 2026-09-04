@@ -29,10 +29,16 @@ public class TournamentMutations
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentExists(tournament, tournamentId)))
             return null;
 
-        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotClosed(tournament!)))
+        if (tournament is null)
             return null;
 
-        if (resolverContext.TryReportError(TournamentValidations.ValidateUserNotAlreadyParticipant(tournament!, userId)))
+        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotClosed(tournament)))
+            return null;
+
+        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentNotFull(tournament)))
+            return null;
+
+        if (resolverContext.TryReportError(TournamentValidations.ValidateUserNotAlreadyParticipant(tournament, userId)))
             return null;
 
         var participant = new TournamentParticipant
@@ -71,12 +77,16 @@ public class TournamentMutations
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentNameNotEmpty(input.Name)))
             return null;
 
+        if (resolverContext.TryReportError(TournamentValidations.ValidateMaxParticipantsAtLeastTwo(input.MaxParticipants)))
+            return null;
+
         var tournament = new Tournament
         {
             Name = input.Name,
             StartDate = input.StartDate,
             Status = input.Status,
-            OwnerId = userId
+            OwnerId = userId,
+            MaxParticipants = input.MaxParticipants
         };
 
         context.Tournaments.Add(tournament);
@@ -108,7 +118,10 @@ public class TournamentMutations
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentExists(tournament, input.TournamentId)))
             return null;
 
-        if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament!.OwnerId, userId, input.TournamentId)))
+        if (tournament is null)
+            return null;
+
+        if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament.OwnerId, userId, input.TournamentId)))
             return null;
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentNameNotEmpty(input.Name)))
@@ -117,6 +130,23 @@ public class TournamentMutations
 
         if (input.StartDate != null)
             tournament.StartDate = input.StartDate.Value;
+
+        if (input.MaxParticipants != null)
+        {
+            if (resolverContext.TryReportError(TournamentValidations.ValidateMaxParticipantsAtLeastTwo(input.MaxParticipants.Value)))
+                return null;
+
+            if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotClosed(tournament)))
+                return null;
+
+            var currentParticipantCount = await context.TournamentParticipants
+                .CountAsync(tp => tp.TournamentId == tournament.Id, token);
+
+            if (resolverContext.TryReportError(TournamentValidations.ValidateMaxParticipantsNotBelowParticipantCount(tournament.Id, currentParticipantCount, input.MaxParticipants.Value)))
+                return null;
+
+            tournament.MaxParticipants = input.MaxParticipants.Value;
+        }
 
         if (input.Status != null)
         {

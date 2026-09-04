@@ -18,4 +18,13 @@ public static class TournamentValidations
 
     public static IError? ValidateTournamentNameNotEmpty(string? name)
         => string.IsNullOrWhiteSpace(name) ? TournamentErrors.TournamentNameEmpty() : null;
+
+    public static IError? ValidateTournamentNotFull(Tournament tournament)
+        => tournament.Participants.Count >= tournament.MaxParticipants ? TournamentErrors.TournamentFull(tournament.Id, tournament.MaxParticipants) : null;
+
+    public static IError? ValidateMaxParticipantsAtLeastTwo(int maxParticipants)
+        => maxParticipants < 2 ? TournamentErrors.InvalidMaxParticipants(maxParticipants) : null;
+
+    public static IError? ValidateMaxParticipantsNotBelowParticipantCount(int tournamentId, int currentParticipantCount, int maxParticipants)
+        => maxParticipants < currentParticipantCount ? TournamentErrors.MaxParticipantsBelowParticipantCount(tournamentId, maxParticipants, currentParticipantCount) : null;
 }

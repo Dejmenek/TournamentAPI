@@ -16,6 +16,7 @@ public class TournamentType : ObjectType<Tournament>
         descriptor.Field(t => t.StartDate);
         descriptor.Field(t => t.Status);
         descriptor.Field(t => t.OwnerId);
+        descriptor.Field(t => t.MaxParticipants);
         descriptor.Field(t => t.Bracket)
             .Type<BracketType>();
         descriptor.Field(t => t.Owner)

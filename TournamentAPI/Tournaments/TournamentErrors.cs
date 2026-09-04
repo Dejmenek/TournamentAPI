@@ -37,4 +37,28 @@ public static class TournamentErrors
             .SetExtension("UserId", userId)
             .SetExtension("TournamentId", tournamentId)
             .Build();
+
+    public static IError TournamentFull(int tournamentId, int maxParticipants) =>
+        ErrorBuilder.New()
+            .SetMessage("Tournament has reached its maximum number of participants.")
+            .SetCode(TournamentErrorCodes.TournamentFull)
+            .SetExtension("TournamentId", tournamentId)
+            .SetExtension("MaxParticipants", maxParticipants)
+            .Build();
+
+    public static IError InvalidMaxParticipants(int maxParticipants) =>
+        ErrorBuilder.New()
+            .SetMessage("MaxParticipants must be at least 2.")
+            .SetCode(TournamentErrorCodes.InvalidMaxParticipants)
+            .SetExtension("MaxParticipants", maxParticipants)
+            .Build();
+
+    public static IError MaxParticipantsBelowParticipantCount(int tournamentId, int maxParticipants, int currentParticipantCount) =>
+        ErrorBuilder.New()
+            .SetMessage("MaxParticipants cannot be lower than the current number of participants.")
+            .SetCode(TournamentErrorCodes.MaxParticipantsBelowParticipantCount)
+            .SetExtension("TournamentId", tournamentId)
+            .SetExtension("MaxParticipants", maxParticipants)
+            .SetExtension("CurrentParticipantCount", currentParticipantCount)
+            .Build();
 }
