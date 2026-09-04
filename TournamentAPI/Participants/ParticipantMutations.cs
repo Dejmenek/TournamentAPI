@@ -32,10 +32,16 @@ public class ParticipantMutations
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentExists(tournament, input.TournamentId)))
             return null;
 
-        if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament!.OwnerId, userId, input.TournamentId)))
+        if (tournament is null)
+            return null;
+
+        if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament.OwnerId, userId, input.TournamentId)))
             return null;
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotClosed(tournament)))
+            return null;
+
+        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentNotFull(tournament)))
             return null;
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == input.UserId, token);
