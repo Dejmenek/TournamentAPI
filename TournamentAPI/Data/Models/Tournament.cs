@@ -7,6 +7,7 @@ public class Tournament
     public DateTime StartDate { get; set; }
     public TournamentStatus Status { get; set; }
     public int OwnerId { get; set; }
+    public int MaxParticipants { get; set; }
     public bool IsDeleted { get; set; }
 
     public Bracket? Bracket { get; set; }
