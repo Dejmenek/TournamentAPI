@@ -76,6 +76,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasForeignKey(tp => tp.ParticipantId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<TournamentParticipant>()
+            .HasIndex(tp => new { tp.TournamentId, tp.SlotNumber })
+            .IsUnique()
+            .HasDatabaseName(TournamentParticipant.SlotNumberUniqueIndexName);
+
         builder.Entity<Match>().HasQueryFilter(m => !m.IsDeleted);
         builder.Entity<Bracket>().HasQueryFilter(b => !b.IsDeleted);
 
