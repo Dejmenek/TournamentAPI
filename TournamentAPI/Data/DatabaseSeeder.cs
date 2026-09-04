@@ -48,11 +48,12 @@ public static class DatabaseSeeder
                 Status = TournamentStatus.Open,
                 OwnerId = user1.Id,
                 Owner = user1,
+                MaxParticipants = 8,
                 Participants = new List<TournamentParticipant>()
             };
 
-            tournament1.Participants.Add(new TournamentParticipant { Tournament = tournament1, Participant = user1 });
-            tournament1.Participants.Add(new TournamentParticipant { Tournament = tournament1, Participant = user2 });
+            tournament1.Participants.Add(new TournamentParticipant { Tournament = tournament1, Participant = user1, SlotNumber = 1 });
+            tournament1.Participants.Add(new TournamentParticipant { Tournament = tournament1, Participant = user2, SlotNumber = 2 });
 
             // Tournament 2: Open tournament with more participants
             var tournament2 = new Tournament
@@ -62,11 +63,12 @@ public static class DatabaseSeeder
                 Status = TournamentStatus.Open,
                 OwnerId = user2.Id,
                 Owner = user2,
+                MaxParticipants = 8,
                 Participants = new List<TournamentParticipant>()
             };
 
-            tournament2.Participants.Add(new TournamentParticipant { Tournament = tournament2, Participant = user2 });
-            tournament2.Participants.Add(new TournamentParticipant { Tournament = tournament2, Participant = user3 });
+            tournament2.Participants.Add(new TournamentParticipant { Tournament = tournament2, Participant = user2, SlotNumber = 1 });
+            tournament2.Participants.Add(new TournamentParticipant { Tournament = tournament2, Participant = user3, SlotNumber = 2 });
 
             // Tournament 3: Closed tournament with 8 participants and full bracket (completed)
             var tournament3 = new Tournament
@@ -76,6 +78,7 @@ public static class DatabaseSeeder
                 Status = TournamentStatus.Closed,
                 OwnerId = user1.Id,
                 Owner = user1,
+                MaxParticipants = 8,
                 Participants = new List<TournamentParticipant>(),
                 Bracket = new Bracket
                 {
@@ -83,14 +86,14 @@ public static class DatabaseSeeder
                 }
             };
 
-            tournament3.Participants.Add(new TournamentParticipant { Tournament = tournament3, Participant = user1 });
-            tournament3.Participants.Add(new TournamentParticipant { Tournament = tournament3, Participant = user2 });
-            tournament3.Participants.Add(new TournamentParticipant { Tournament = tournament3, Participant = user3 });
-            tournament3.Participants.Add(new TournamentParticipant { Tournament = tournament3, Participant = user4 });
-            tournament3.Participants.Add(new TournamentParticipant { Tournament = tournament3, Participant = user5 });
-            tournament3.Participants.Add(new TournamentParticipant { Tournament = tournament3, Participant = user6 });
-            tournament3.Participants.Add(new TournamentParticipant { Tournament = tournament3, Participant = user7 });
-            tournament3.Participants.Add(new TournamentParticipant { Tournament = tournament3, Participant = user8 });
+            tournament3.Participants.Add(new TournamentParticipant { Tournament = tournament3, Participant = user1, SlotNumber = 1 });
+            tournament3.Participants.Add(new TournamentParticipant { Tournament = tournament3, Participant = user2, SlotNumber = 2 });
+            tournament3.Participants.Add(new TournamentParticipant { Tournament = tournament3, Participant = user3, SlotNumber = 3 });
+            tournament3.Participants.Add(new TournamentParticipant { Tournament = tournament3, Participant = user4, SlotNumber = 4 });
+            tournament3.Participants.Add(new TournamentParticipant { Tournament = tournament3, Participant = user5, SlotNumber = 5 });
+            tournament3.Participants.Add(new TournamentParticipant { Tournament = tournament3, Participant = user6, SlotNumber = 6 });
+            tournament3.Participants.Add(new TournamentParticipant { Tournament = tournament3, Participant = user7, SlotNumber = 7 });
+            tournament3.Participants.Add(new TournamentParticipant { Tournament = tournament3, Participant = user8, SlotNumber = 8 });
 
             // Round 1 - Quarter Finals (4 matches)
             var match1 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user2.Id, WinnerId = user1.Id, Bracket = tournament3.Bracket };
@@ -121,6 +124,7 @@ public static class DatabaseSeeder
                 Status = TournamentStatus.Closed,
                 OwnerId = user3.Id,
                 Owner = user3,
+                MaxParticipants = 8,
                 Participants = new List<TournamentParticipant>(),
                 Bracket = new Bracket
                 {
@@ -128,12 +132,12 @@ public static class DatabaseSeeder
                 }
             };
 
-            tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user2 });
-            tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user3 });
-            tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user5 });
-            tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user6 });
-            tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user7 });
-            tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user8 });
+            tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user2, SlotNumber = 1 });
+            tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user3, SlotNumber = 2 });
+            tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user5, SlotNumber = 3 });
+            tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user6, SlotNumber = 4 });
+            tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user7, SlotNumber = 5 });
+            tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user8, SlotNumber = 6 });
 
             // Round 1 - Semi Finals (2 matches, one completed, one in progress)
             var match8 = new Match { Round = 1, Player1Id = user2.Id, Player2Id = user3.Id, WinnerId = user3.Id, Bracket = tournament4.Bracket };
@@ -152,6 +156,7 @@ public static class DatabaseSeeder
                 Status = TournamentStatus.Closed,
                 OwnerId = user4.Id,
                 Owner = user4,
+                MaxParticipants = 8,
                 Participants = new List<TournamentParticipant>(),
                 Bracket = new Bracket
                 {
@@ -159,11 +164,11 @@ public static class DatabaseSeeder
                 }
             };
 
-            tournament5.Participants.Add(new TournamentParticipant { Tournament = tournament5, Participant = user1 });
-            tournament5.Participants.Add(new TournamentParticipant { Tournament = tournament5, Participant = user3 });
-            tournament5.Participants.Add(new TournamentParticipant { Tournament = tournament5, Participant = user4 });
-            tournament5.Participants.Add(new TournamentParticipant { Tournament = tournament5, Participant = user6 });
-            tournament5.Participants.Add(new TournamentParticipant { Tournament = tournament5, Participant = user8 });
+            tournament5.Participants.Add(new TournamentParticipant { Tournament = tournament5, Participant = user1, SlotNumber = 1 });
+            tournament5.Participants.Add(new TournamentParticipant { Tournament = tournament5, Participant = user3, SlotNumber = 2 });
+            tournament5.Participants.Add(new TournamentParticipant { Tournament = tournament5, Participant = user4, SlotNumber = 3 });
+            tournament5.Participants.Add(new TournamentParticipant { Tournament = tournament5, Participant = user6, SlotNumber = 4 });
+            tournament5.Participants.Add(new TournamentParticipant { Tournament = tournament5, Participant = user8, SlotNumber = 5 });
 
             // Round 1 - First round with bye (3 matches, one player gets bye)
             var match11 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user3.Id, WinnerId = user1.Id, Bracket = tournament5.Bracket };
@@ -183,12 +188,13 @@ public static class DatabaseSeeder
                 OwnerId = user2.Id,
                 Owner = user2,
                 IsDeleted = true,
+                MaxParticipants = 8,
                 Participants = new List<TournamentParticipant>()
             };
 
-            tournament6.Participants.Add(new TournamentParticipant { Tournament = tournament6, Participant = user2, IsDeleted = true });
-            tournament6.Participants.Add(new TournamentParticipant { Tournament = tournament6, Participant = user4, IsDeleted = true });
-            tournament6.Participants.Add(new TournamentParticipant { Tournament = tournament6, Participant = user6, IsDeleted = true });
+            tournament6.Participants.Add(new TournamentParticipant { Tournament = tournament6, Participant = user2, SlotNumber = 1, IsDeleted = true });
+            tournament6.Participants.Add(new TournamentParticipant { Tournament = tournament6, Participant = user4, SlotNumber = 2, IsDeleted = true });
+            tournament6.Participants.Add(new TournamentParticipant { Tournament = tournament6, Participant = user6, SlotNumber = 3, IsDeleted = true });
 
             // Tournament 7
             var tournament7 = new Tournament
@@ -198,6 +204,7 @@ public static class DatabaseSeeder
                 Status = TournamentStatus.Closed,
                 OwnerId = user3.Id,
                 Owner = user3,
+                MaxParticipants = 8,
                 Participants = new List<TournamentParticipant>(),
                 Bracket = new Bracket
                 {
@@ -205,10 +212,10 @@ public static class DatabaseSeeder
                 }
             };
 
-            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user1 });
-            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user2 });
-            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user7 });
-            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user8 });
+            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user1, SlotNumber = 1 });
+            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user2, SlotNumber = 2 });
+            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user7, SlotNumber = 3 });
+            tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user8, SlotNumber = 4 });
 
             var match14 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user2.Id, WinnerId = user1.Id, Bracket = tournament7.Bracket };
             var match15 = new Match { Round = 1, Player1Id = user7.Id, Player2Id = user8.Id, WinnerId = user7.Id, Bracket = tournament7.Bracket };
@@ -224,11 +231,12 @@ public static class DatabaseSeeder
                 Status = TournamentStatus.Closed,
                 OwnerId = user2.Id,
                 Owner = user2,
+                MaxParticipants = 8,
                 Participants = new List<TournamentParticipant>()
             };
 
-            tournament8.Participants.Add(new TournamentParticipant { Tournament = tournament8, Participant = user3 });
-            tournament8.Participants.Add(new TournamentParticipant { Tournament = tournament8, Participant = user5 });
+            tournament8.Participants.Add(new TournamentParticipant { Tournament = tournament8, Participant = user3, SlotNumber = 1 });
+            tournament8.Participants.Add(new TournamentParticipant { Tournament = tournament8, Participant = user5, SlotNumber = 2 });
 
             // Tournament 9: Closed tournament with no participants
             var tournament9 = new Tournament
@@ -238,6 +246,7 @@ public static class DatabaseSeeder
                 Status = TournamentStatus.Closed,
                 OwnerId = user2.Id,
                 Owner = user2,
+                MaxParticipants = 8,
                 Participants = new List<TournamentParticipant>()
             };
 
@@ -249,11 +258,12 @@ public static class DatabaseSeeder
                 Status = TournamentStatus.Closed,
                 OwnerId = user2.Id,
                 Owner = user2,
+                MaxParticipants = 8,
                 Participants = new List<TournamentParticipant>()
             };
-            tournament10.Participants.Add(new TournamentParticipant { Tournament = tournament10, Participant = user2 });
-            tournament10.Participants.Add(new TournamentParticipant { Tournament = tournament10, Participant = user4 });
-            tournament10.Participants.Add(new TournamentParticipant { Tournament = tournament10, Participant = user6 });
+            tournament10.Participants.Add(new TournamentParticipant { Tournament = tournament10, Participant = user2, SlotNumber = 1 });
+            tournament10.Participants.Add(new TournamentParticipant { Tournament = tournament10, Participant = user4, SlotNumber = 2 });
+            tournament10.Participants.Add(new TournamentParticipant { Tournament = tournament10, Participant = user6, SlotNumber = 3 });
 
             var tournament11 = new Tournament
             {
@@ -262,12 +272,13 @@ public static class DatabaseSeeder
                 Status = TournamentStatus.Closed,
                 OwnerId = user1.Id,
                 Owner = user1,
+                MaxParticipants = 8,
                 Participants = new List<TournamentParticipant>()
             };
 
-            tournament11.Participants.Add(new TournamentParticipant { Tournament = tournament11, Participant = user5 });
-            tournament11.Participants.Add(new TournamentParticipant { Tournament = tournament11, Participant = user7 });
-            tournament11.Participants.Add(new TournamentParticipant { Tournament = tournament11, Participant = user8 });
+            tournament11.Participants.Add(new TournamentParticipant { Tournament = tournament11, Participant = user5, SlotNumber = 1 });
+            tournament11.Participants.Add(new TournamentParticipant { Tournament = tournament11, Participant = user7, SlotNumber = 2 });
+            tournament11.Participants.Add(new TournamentParticipant { Tournament = tournament11, Participant = user8, SlotNumber = 3 });
 
             var tournament12 = new Tournament
             {
@@ -276,6 +287,7 @@ public static class DatabaseSeeder
                 Status = TournamentStatus.Closed,
                 OwnerId = user1.Id,
                 Owner = user1,
+                MaxParticipants = 8,
                 Participants = new List<TournamentParticipant>(),
                 Bracket = new Bracket
                 {
@@ -283,10 +295,10 @@ public static class DatabaseSeeder
                 }
             };
 
-            tournament12.Participants.Add(new TournamentParticipant { Tournament = tournament12, Participant = user1 });
-            tournament12.Participants.Add(new TournamentParticipant { Tournament = tournament12, Participant = user2 });
-            tournament12.Participants.Add(new TournamentParticipant { Tournament = tournament12, Participant = user3 });
-            tournament12.Participants.Add(new TournamentParticipant { Tournament = tournament12, Participant = user4 });
+            tournament12.Participants.Add(new TournamentParticipant { Tournament = tournament12, Participant = user1, SlotNumber = 1 });
+            tournament12.Participants.Add(new TournamentParticipant { Tournament = tournament12, Participant = user2, SlotNumber = 2 });
+            tournament12.Participants.Add(new TournamentParticipant { Tournament = tournament12, Participant = user3, SlotNumber = 3 });
+            tournament12.Participants.Add(new TournamentParticipant { Tournament = tournament12, Participant = user4, SlotNumber = 4 });
 
             var match16 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user2.Id, WinnerId = user2.Id, Bracket = tournament12.Bracket };
             var match17 = new Match { Round = 1, Player1Id = user3.Id, Player2Id = user4.Id, WinnerId = user4.Id, Bracket = tournament12.Bracket };
@@ -294,7 +306,53 @@ public static class DatabaseSeeder
             tournament12.Bracket.Matches.Add(match16);
             tournament12.Bracket.Matches.Add(match17);
 
-            await context.Tournaments.AddRangeAsync(tournament1, tournament2, tournament3, tournament4, tournament5, tournament6, tournament7, tournament8, tournament9, tournament10, tournament11, tournament12);
+            // Tournament 13: Open tournament already at capacity
+            var tournament13 = new Tournament
+            {
+                Name = "Full Tournament",
+                StartDate = DateTime.UtcNow.AddDays(9),
+                Status = TournamentStatus.Open,
+                OwnerId = user3.Id,
+                Owner = user3,
+                MaxParticipants = 2,
+                Participants = new List<TournamentParticipant>()
+            };
+
+            tournament13.Participants.Add(new TournamentParticipant { Tournament = tournament13, Participant = user1, SlotNumber = 1 });
+            tournament13.Participants.Add(new TournamentParticipant { Tournament = tournament13, Participant = user2, SlotNumber = 2 });
+
+            // Tournament 14: Open tournament with exactly one slot remaining
+            var tournament14 = new Tournament
+            {
+                Name = "Almost Full Tournament",
+                StartDate = DateTime.UtcNow.AddDays(11),
+                Status = TournamentStatus.Open,
+                OwnerId = user5.Id,
+                Owner = user5,
+                MaxParticipants = 3,
+                Participants = new List<TournamentParticipant>()
+            };
+
+            tournament14.Participants.Add(new TournamentParticipant { Tournament = tournament14, Participant = user1, SlotNumber = 1 });
+            tournament14.Participants.Add(new TournamentParticipant { Tournament = tournament14, Participant = user2, SlotNumber = 2 });
+
+            // Tournament 15: Open tournament with several participants, for MaxParticipants-lowering guard tests
+            var tournament15 = new Tournament
+            {
+                Name = "Growing Tournament",
+                StartDate = DateTime.UtcNow.AddDays(13),
+                Status = TournamentStatus.Open,
+                OwnerId = user1.Id,
+                Owner = user1,
+                MaxParticipants = 8,
+                Participants = new List<TournamentParticipant>()
+            };
+
+            tournament15.Participants.Add(new TournamentParticipant { Tournament = tournament15, Participant = user2, SlotNumber = 1 });
+            tournament15.Participants.Add(new TournamentParticipant { Tournament = tournament15, Participant = user3, SlotNumber = 2 });
+            tournament15.Participants.Add(new TournamentParticipant { Tournament = tournament15, Participant = user4, SlotNumber = 3 });
+
+            await context.Tournaments.AddRangeAsync(tournament1, tournament2, tournament3, tournament4, tournament5, tournament6, tournament7, tournament8, tournament9, tournament10, tournament11, tournament12, tournament13, tournament14, tournament15);
             await context.SaveChangesAsync();
         }
     }

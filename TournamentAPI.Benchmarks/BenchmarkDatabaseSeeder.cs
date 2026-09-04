@@ -53,6 +53,7 @@ internal static class BenchmarkDatabaseSeeder
                 Status = status,
                 OwnerId = owner.Id,
                 Owner = owner,
+                MaxParticipants = Math.Max(participantsPerTournament, 2),
                 Participants = new List<TournamentParticipant>()
             };
 
@@ -62,12 +63,13 @@ internal static class BenchmarkDatabaseSeeder
                 .Take(Math.Min(participantsPerTournament, users.Count))
                 .ToList();
 
-            foreach (var user in selectedUsers)
+            for (int j = 0; j < selectedUsers.Count; j++)
             {
                 tournament.Participants.Add(new TournamentParticipant
                 {
                     Tournament = tournament,
-                    Participant = user
+                    Participant = selectedUsers[j],
+                    SlotNumber = j + 1
                 });
             }
 
