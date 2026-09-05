@@ -1109,6 +1109,66 @@ public class TournamentMutationTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task UpdateTournament_ReturnsError_WhenReopeningTournamentWithExistingBracket()
+    {
+        // Arrange
+        var email = "carol@example.com";
+        var password = "Password123!";
+        var tournamentToUpdateId = 4; // closed tournament with an existing bracket
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToUpdateId,
+                status = TournamentStatus.Open.ToString().ToUpper()
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            variables);
+
+        // Assert
+        Assert.True(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.UpdateTournament);
+        Assert.Null(response.Data.UpdateTournament.Tournament);
+        Assert.NotNull(response.Errors);
+
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.CannotReopenTournamentWithBracket(tournamentToUpdateId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+
+        var tournamentInDb = await DbContext.Tournaments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tournamentToUpdateId);
+
+        Assert.NotNull(tournamentInDb);
+        Assert.Equal(TournamentStatus.Closed, tournamentInDb.Status);
+    }
+
+    [Fact]
     public async Task UpdateTournament_WithOwnerReturn_ReturnsOwnerDetails()
     {
         // Arrange
