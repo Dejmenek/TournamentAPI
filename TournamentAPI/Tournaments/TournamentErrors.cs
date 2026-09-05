@@ -61,4 +61,11 @@ public static class TournamentErrors
             .SetExtension("MaxParticipants", maxParticipants)
             .SetExtension("CurrentParticipantCount", currentParticipantCount)
             .Build();
+
+    public static IError StartDateTooSoon(DateTime startDate) =>
+        ErrorBuilder.New()
+            .SetMessage($"StartDate must be at least {TournamentValidations.MinimumStartDateLeadTime.TotalMinutes} minutes from now.")
+            .SetCode(TournamentErrorCodes.StartDateTooSoon)
+            .SetExtension("StartDate", startDate)
+            .Build();
 }

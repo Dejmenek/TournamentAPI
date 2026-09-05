@@ -201,4 +201,32 @@ public class TournamentValidationsTests
 
         Assert.Null(error);
     }
+
+    [Theory]
+    [InlineData(-1440)] // a day in the past
+    [InlineData(0)]     // exactly now
+    [InlineData(29)]    // one minute short of the minimum lead time
+    public void ValidateStartDateHasMinimumLeadTime_WhenLeadTimeIsInsufficient_ReturnsError(double minutesFromNow)
+    {
+        var now = new DateTime(2026, 1, 15, 12, 0, 0, DateTimeKind.Utc);
+        var startDate = now.AddMinutes(minutesFromNow);
+
+        IError? error = TournamentValidations.ValidateStartDateHasMinimumLeadTime(startDate, now);
+
+        Assert.NotNull(error);
+        Assert.Equal(TournamentErrorCodes.StartDateTooSoon, error.Code);
+    }
+
+    [Theory]
+    [InlineData(30)]    // exactly at the minimum lead time boundary
+    [InlineData(10080)] // a week in the future
+    public void ValidateStartDateHasMinimumLeadTime_WhenLeadTimeIsSufficient_ReturnsNull(double minutesFromNow)
+    {
+        var now = new DateTime(2026, 1, 15, 12, 0, 0, DateTimeKind.Utc);
+        var startDate = now.AddMinutes(minutesFromNow);
+
+        IError? error = TournamentValidations.ValidateStartDateHasMinimumLeadTime(startDate, now);
+
+        Assert.Null(error);
+    }
 }

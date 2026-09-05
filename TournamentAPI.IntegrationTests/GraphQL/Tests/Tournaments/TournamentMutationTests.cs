@@ -4,6 +4,7 @@ using TournamentAPI.Shared.Models;
 using TournamentAPI.Tournaments;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Tournaments;
+
 public class TournamentMutationTests : BaseIntegrationTest
 {
     public TournamentMutationTests(IntegrationTestWebAppFactory factory) : base(factory)
@@ -169,6 +170,64 @@ public class TournamentMutationTests : BaseIntegrationTest
         Assert.NotNull(error.Message);
 
         var expectedError = TournamentErrors.InvalidMaxParticipants(maxParticipants);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+    }
+
+    [Theory]
+    [InlineData(-1440)] // a day in the past
+    [InlineData(0)]     // exactly now
+    [InlineData(15)]    // 15 minutes out, inside the 30-minute buffer
+    public async Task CreateTournament_ReturnsStartDateTooSoonError_WhenStartDateIsLessThanMinimumLeadTimeFromNow(double minutesFromNow)
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var startDate = DateTime.UtcNow.AddMinutes(minutesFromNow);
+        var variables = new
+        {
+            input = new
+            {
+                name = "Test Tournament",
+                startDate = startDate.ToString("o"),
+                status = TournamentStatus.Open.ToString().ToUpper(),
+                maxParticipants = 4
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<CreateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.CreateTournamentWithBasicFieldsReturn,
+            variables);
+
+        // Assert
+        Assert.True(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.CreateTournament);
+        Assert.Null(response.Data.CreateTournament.Tournament);
+        Assert.NotNull(response.Errors);
+
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.StartDateTooSoon(startDate);
         Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
         Assert.Equal(expectedError.Message, error.Message);
     }
@@ -596,6 +655,12 @@ public class TournamentMutationTests : BaseIntegrationTest
             });
         client.SetAuthToken(tokenResponse.Data.LoginUser.String);
 
+        var tournamentBeforeUpdate = await DbContext.Tournaments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tournamentToUpdateId);
+        Assert.NotNull(tournamentBeforeUpdate);
+        var originalStartDate = tournamentBeforeUpdate.StartDate;
+
         var variables = new
         {
             input = new
@@ -623,6 +688,133 @@ public class TournamentMutationTests : BaseIntegrationTest
 
         Assert.NotNull(tournamentInDb);
         Assert.Equal(updatedTournamentName, tournamentInDb.Name);
+        Assert.Equal(originalStartDate, tournamentInDb.StartDate);
+    }
+
+    [Theory]
+    [InlineData(-1440)] // a day in the past
+    [InlineData(0)]     // exactly now
+    [InlineData(10)]    // 10 minutes out, inside the 30-minute buffer
+    public async Task UpdateTournament_ReturnsStartDateTooSoonError_WhenStartDateIsLessThanMinimumLeadTimeFromNow(double minutesFromNow)
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToUpdateId = 1;
+        var updatedTournamentName = "Updated Tournament Name";
+
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var tournamentBeforeUpdate = await DbContext.Tournaments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tournamentToUpdateId);
+        Assert.NotNull(tournamentBeforeUpdate);
+        var originalStartDate = tournamentBeforeUpdate.StartDate;
+
+        var startDate = DateTime.UtcNow.AddMinutes(minutesFromNow);
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToUpdateId,
+                startDate = startDate.ToString("o"),
+                name = updatedTournamentName
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            variables);
+
+        // Assert
+        Assert.True(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.UpdateTournament);
+        Assert.Null(response.Data.UpdateTournament.Tournament);
+        Assert.NotNull(response.Errors);
+
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.StartDateTooSoon(startDate);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+
+        var tournamentInDb = await DbContext.Tournaments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tournamentToUpdateId);
+
+        Assert.NotNull(tournamentInDb);
+        Assert.Equal(originalStartDate, tournamentInDb.StartDate);
+    }
+
+    [Fact]
+    public async Task UpdateTournament_UpdatesStartDate_WhenAtLeastMinimumLeadTimeFromNow()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToUpdateId = 1;
+        var newStartDate = DateTime.UtcNow.AddDays(20);
+        var updatedTournamentName = "Updated Tournament Name";
+
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToUpdateId,
+                startDate = newStartDate.ToString("o"),
+                name = updatedTournamentName
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.UpdateTournament);
+        Assert.NotNull(response.Data.UpdateTournament.Tournament);
+
+        var tournamentInDb = await DbContext.Tournaments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tournamentToUpdateId);
+
+        Assert.NotNull(tournamentInDb);
+        Assert.Equal(newStartDate.Date, tournamentInDb.StartDate.Date);
     }
 
     [Fact]

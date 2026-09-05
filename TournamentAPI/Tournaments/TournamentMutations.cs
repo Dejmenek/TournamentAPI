@@ -87,6 +87,9 @@ public class TournamentMutations
         if (resolverContext.TryReportError(TournamentValidations.ValidateMaxParticipantsAtLeastTwo(input.MaxParticipants)))
             return null;
 
+        if (resolverContext.TryReportError(TournamentValidations.ValidateStartDateHasMinimumLeadTime(input.StartDate, DateTime.UtcNow)))
+            return null;
+
         var tournament = new Tournament
         {
             Name = input.Name,
@@ -136,7 +139,12 @@ public class TournamentMutations
         tournament.Name = input.Name;
 
         if (input.StartDate != null)
+        {
+            if (resolverContext.TryReportError(TournamentValidations.ValidateStartDateHasMinimumLeadTime(input.StartDate.Value, DateTime.UtcNow)))
+                return null;
+
             tournament.StartDate = input.StartDate.Value;
+        }
 
         if (input.MaxParticipants != null)
         {
