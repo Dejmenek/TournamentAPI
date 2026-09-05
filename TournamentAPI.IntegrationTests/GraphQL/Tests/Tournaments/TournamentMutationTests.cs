@@ -691,6 +691,64 @@ public class TournamentMutationTests : BaseIntegrationTest
         Assert.Equal(originalStartDate, tournamentInDb.StartDate);
     }
 
+    [Fact]
+    public async Task UpdateTournament_UpdatesSuccessfully_WhenNameIsOmitted()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToUpdateId = 1;
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var tournamentBeforeUpdate = await DbContext.Tournaments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tournamentToUpdateId);
+        Assert.NotNull(tournamentBeforeUpdate);
+        var originalName = tournamentBeforeUpdate.Name;
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToUpdateId,
+                status = TournamentStatus.Closed.ToString().ToUpper()
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.UpdateTournament);
+        Assert.NotNull(response.Data.UpdateTournament.Tournament);
+        Assert.Equal(originalName, response.Data.UpdateTournament.Tournament.Name);
+        Assert.Equal(TournamentStatus.Closed.ToString().ToUpper(), response.Data.UpdateTournament.Tournament.Status);
+
+        var tournamentInDb = await DbContext.Tournaments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tournamentToUpdateId);
+
+        Assert.NotNull(tournamentInDb);
+        Assert.Equal(originalName, tournamentInDb.Name);
+        Assert.Equal(TournamentStatus.Closed, tournamentInDb.Status);
+    }
+
     [Theory]
     [InlineData(-1440)] // a day in the past
     [InlineData(0)]     // exactly now
@@ -701,7 +759,6 @@ public class TournamentMutationTests : BaseIntegrationTest
         var email = "alice@example.com";
         var password = "Password123!";
         var tournamentToUpdateId = 1;
-        var updatedTournamentName = "Updated Tournament Name";
 
         using var client = CreateClient();
 
@@ -729,8 +786,7 @@ public class TournamentMutationTests : BaseIntegrationTest
             input = new
             {
                 tournamentId = tournamentToUpdateId,
-                startDate = startDate.ToString("o"),
-                name = updatedTournamentName
+                startDate = startDate.ToString("o")
             }
         };
 
@@ -772,7 +828,6 @@ public class TournamentMutationTests : BaseIntegrationTest
         var password = "Password123!";
         var tournamentToUpdateId = 1;
         var newStartDate = DateTime.UtcNow.AddDays(20);
-        var updatedTournamentName = "Updated Tournament Name";
 
         using var client = CreateClient();
 
@@ -793,8 +848,7 @@ public class TournamentMutationTests : BaseIntegrationTest
             input = new
             {
                 tournamentId = tournamentToUpdateId,
-                startDate = newStartDate.ToString("o"),
-                name = updatedTournamentName
+                startDate = newStartDate.ToString("o")
             }
         };
 
@@ -844,7 +898,6 @@ public class TournamentMutationTests : BaseIntegrationTest
             input = new
             {
                 tournamentId = tournamentToUpdateId,
-                name = "Summer Cup",
                 maxParticipants = updatedMaxParticipants
             }
         };
@@ -897,7 +950,6 @@ public class TournamentMutationTests : BaseIntegrationTest
             input = new
             {
                 tournamentId = tournamentToUpdateId,
-                name = "Spring Invitational",
                 maxParticipants = maxParticipants
             }
         };
@@ -959,7 +1011,6 @@ public class TournamentMutationTests : BaseIntegrationTest
             input = new
             {
                 tournamentId = tournamentToUpdateId,
-                name = "Growing Tournament",
                 maxParticipants = attemptedMaxParticipants
             }
         };
@@ -1023,7 +1074,6 @@ public class TournamentMutationTests : BaseIntegrationTest
             input = new
             {
                 tournamentId = tournamentToUpdateId,
-                name = "Autumn Battle",
                 maxParticipants = 10
             }
         };
