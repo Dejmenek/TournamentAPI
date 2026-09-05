@@ -134,9 +134,13 @@ public class TournamentMutations
         if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament.OwnerId, userId, input.TournamentId)))
             return null;
 
-        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentNameNotEmpty(input.Name)))
-            return null;
-        tournament.Name = input.Name;
+        if (input.Name != null)
+        {
+            if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentNameNotEmpty(input.Name)))
+                return null;
+
+            tournament.Name = input.Name;
+        }
 
         if (input.StartDate != null)
         {
