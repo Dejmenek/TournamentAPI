@@ -729,8 +729,7 @@ public class TournamentMutationTests : BaseIntegrationTest
             input = new
             {
                 tournamentId = tournamentToUpdateId,
-                startDate = startDate.ToString("o"),
-                name = updatedTournamentName
+                startDate = startDate.ToString("o")
             }
         };
 
@@ -772,7 +771,6 @@ public class TournamentMutationTests : BaseIntegrationTest
         var password = "Password123!";
         var tournamentToUpdateId = 1;
         var newStartDate = DateTime.UtcNow.AddDays(20);
-        var updatedTournamentName = "Updated Tournament Name";
 
         using var client = CreateClient();
 
@@ -793,8 +791,7 @@ public class TournamentMutationTests : BaseIntegrationTest
             input = new
             {
                 tournamentId = tournamentToUpdateId,
-                startDate = newStartDate.ToString("o"),
-                name = updatedTournamentName
+                startDate = newStartDate.ToString("o")
             }
         };
 
