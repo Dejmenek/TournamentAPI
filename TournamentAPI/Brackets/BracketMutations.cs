@@ -75,7 +75,7 @@ public class BracketMutations
         if (resolverContext.TryReportError(BracketMutationValidations.ValidateTournamentIsClosedForRoundUpdate(bracket.Tournament))) return null;
         if (resolverContext.TryReportError(BracketMutationValidations.ValidateNextRoundNotGenerated(bracket.Matches, roundNumber, bracketId))) return null;
 
-        var matchesInRound = bracket.Matches.Where(m => m.Round == roundNumber).ToList();
+        var matchesInRound = bracket.Matches.Where(m => m.Round == roundNumber).OrderBy(m => m.Id).ToList();
 
         if (resolverContext.TryReportError(BracketMutationValidations.ValidateMatchesExistInRound(matchesInRound, roundNumber))) return null;
         if (resolverContext.TryReportError(BracketMutationValidations.ValidateAllMatchesCompleted(matchesInRound, roundNumber))) return null;
