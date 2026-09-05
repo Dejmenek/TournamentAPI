@@ -47,6 +47,27 @@ public class BracketMutationValidationsTests
     }
 
     [Fact]
+    public void ValidateTournamentIsClosedForRoundUpdate_WhenTournamentIsOpen_ReturnsError()
+    {
+        var tournament = new Tournament { Id = 1, Status = TournamentStatus.Open };
+
+        IError? error = BracketMutationValidations.ValidateTournamentIsClosedForRoundUpdate(tournament);
+
+        Assert.NotNull(error);
+        Assert.Equal(BracketErrorCodes.RoundUpdateNotAllowed, error.Code);
+    }
+
+    [Fact]
+    public void ValidateTournamentIsClosedForRoundUpdate_WhenTournamentIsClosed_ReturnsNull()
+    {
+        var tournament = new Tournament { Id = 1, Status = TournamentStatus.Closed };
+
+        IError? error = BracketMutationValidations.ValidateTournamentIsClosedForRoundUpdate(tournament);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
     public void ValidateBracketDoesNotExist_WhenBracketExists_ReturnsError()
     {
         var tournament = new Tournament { Id = 1, Bracket = new Bracket() };
