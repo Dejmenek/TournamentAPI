@@ -10,6 +10,9 @@ public static class BracketMutationValidations
     public static IError? ValidateTournamentIsClosed(Tournament tournament)
         => tournament.Status != TournamentStatus.Closed ? BracketErrors.BracketGenerationNotAllowed(tournament.Id) : null;
 
+    public static IError? ValidateTournamentIsClosedForRoundUpdate(Tournament tournament)
+        => tournament.Status != TournamentStatus.Closed ? BracketErrors.RoundUpdateNotAllowed(tournament.Id) : null;
+
     public static IError? ValidateBracketDoesNotExist(Tournament tournament)
         => tournament.Bracket != null ? BracketErrors.BracketAlreadyExistsForTournament(tournament.Id) : null;
 
