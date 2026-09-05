@@ -57,4 +57,11 @@ public static class BracketErrors
             .SetCode(BracketErrorCodes.NextRoundAlreadyGenerated)
             .SetExtension("BracketId", bracketId)
             .Build();
+
+    public static IError RoundUpdateNotAllowed(int tournamentId) =>
+        ErrorBuilder.New()
+            .SetMessage("Round can only be updated when the tournament is closed.")
+            .SetCode(BracketErrorCodes.RoundUpdateNotAllowed)
+            .SetExtension("TournamentId", tournamentId)
+            .Build();
 }

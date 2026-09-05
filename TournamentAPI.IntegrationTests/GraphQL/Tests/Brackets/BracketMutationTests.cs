@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Brackets;
+using TournamentAPI.Data.Models;
 using TournamentAPI.Shared.Models;
 using TournamentAPI.Tournaments;
 
@@ -655,6 +656,72 @@ public class BracketMutationTests : BaseIntegrationTest
         Assert.Equal(expectedError.Message, error.Message);
         Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
         Assert.Equal(expectedError.Extensions!["UserId"]?.ToString(), error.Extensions["UserId"]?.ToString());
+
+        var matchesInDb = await DbContext.Matches
+            .AsNoTracking()
+            .Where(m => m.BracketId == bracketId && m.Round == 2)
+            .ToListAsync();
+
+        Assert.Empty(matchesInDb);
+    }
+
+    [Fact]
+    public async Task UpdateRound_ReturnsRoundUpdateNotAllowedError_WhenTournamentIsNotClosed()
+    {
+        // Arrange
+        var email = "carol@example.com";
+        var password = "Password123!";
+        var bracketId = 4;
+        var tournamentId = 7;
+        using var client = CreateClient();
+
+        var tournament = await DbContext.Tournaments.FirstAsync(t => t.Id == tournamentId);
+        tournament.Status = TournamentStatus.Open;
+        await DbContext.SaveChangesAsync();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                bracketId = bracketId,
+                roundNumber = 1
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<UpdateRoundResponse>(
+            Shared.MutationExamples.Mutations.Bracket.UpdateRound,
+            variables);
+
+        // Assert
+        Assert.True(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.UpdateRound);
+        Assert.Null(response.Data.UpdateRound.Bracket);
+        Assert.NotNull(response.Errors);
+
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = BracketErrors.RoundUpdateNotAllowed(tournamentId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
 
         var matchesInDb = await DbContext.Matches
             .AsNoTracking()
