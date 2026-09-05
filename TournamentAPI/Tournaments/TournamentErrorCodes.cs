@@ -10,4 +10,5 @@ public static class TournamentErrorCodes
     public const string TournamentFull = "Tournament.Full";
     public const string InvalidMaxParticipants = "Tournament.InvalidMaxParticipants";
     public const string MaxParticipantsBelowParticipantCount = "Tournament.MaxParticipantsBelowParticipantCount";
+    public const string StartDateTooSoon = "Tournament.StartDateTooSoon";
 }

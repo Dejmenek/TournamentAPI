@@ -4,6 +4,8 @@ namespace TournamentAPI.Tournaments;
 
 public static class TournamentValidations
 {
+    public static readonly TimeSpan MinimumStartDateLeadTime = TimeSpan.FromMinutes(30);
+
     public static IError? ValidateTournamentExists(Tournament? tournament, int tournamentId)
         => tournament == null ? TournamentErrors.TournamentNotFound(tournamentId) : null;
 
@@ -27,4 +29,7 @@ public static class TournamentValidations
 
     public static IError? ValidateMaxParticipantsNotBelowParticipantCount(int tournamentId, int currentParticipantCount, int maxParticipants)
         => maxParticipants < currentParticipantCount ? TournamentErrors.MaxParticipantsBelowParticipantCount(tournamentId, maxParticipants, currentParticipantCount) : null;
+
+    public static IError? ValidateStartDateHasMinimumLeadTime(DateTime startDate, DateTime now)
+        => startDate < now.Add(MinimumStartDateLeadTime) ? TournamentErrors.StartDateTooSoon(startDate) : null;
 }
