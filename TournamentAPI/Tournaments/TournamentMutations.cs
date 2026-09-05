@@ -169,6 +169,11 @@ public class TournamentMutations
 
         if (input.Status != null)
         {
+            var bracketExists = await context.Brackets.AnyAsync(b => b.TournamentId == tournament.Id, token);
+
+            if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentCanBeReopened(tournament.Id, bracketExists, input.Status.Value)))
+                return null;
+
             var previousStatus = tournament.Status;
             tournament.Status = input.Status.Value;
 

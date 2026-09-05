@@ -68,4 +68,11 @@ public static class TournamentErrors
             .SetCode(TournamentErrorCodes.StartDateTooSoon)
             .SetExtension("StartDate", startDate)
             .Build();
+
+    public static IError CannotReopenTournamentWithBracket(int tournamentId) =>
+        ErrorBuilder.New()
+            .SetMessage("Tournament cannot be reopened because a bracket already exists.")
+            .SetCode(TournamentErrorCodes.CannotReopenTournamentWithBracket)
+            .SetExtension("TournamentId", tournamentId)
+            .Build();
 }

@@ -229,4 +229,29 @@ public class TournamentValidationsTests
 
         Assert.Null(error);
     }
+
+    [Fact]
+    public void ValidateTournamentCanBeReopened_WhenReopeningWithExistingBracket_ReturnsError()
+    {
+        IError? error = TournamentValidations.ValidateTournamentCanBeReopened(tournamentId: 1, bracketExists: true, newStatus: TournamentStatus.Open);
+
+        Assert.NotNull(error);
+        Assert.Equal(TournamentErrorCodes.CannotReopenTournamentWithBracket, error.Code);
+    }
+
+    [Fact]
+    public void ValidateTournamentCanBeReopened_WhenReopeningWithoutBracket_ReturnsNull()
+    {
+        IError? error = TournamentValidations.ValidateTournamentCanBeReopened(tournamentId: 1, bracketExists: false, newStatus: TournamentStatus.Open);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateTournamentCanBeReopened_WhenClosingTournamentWithBracket_ReturnsNull()
+    {
+        IError? error = TournamentValidations.ValidateTournamentCanBeReopened(tournamentId: 1, bracketExists: true, newStatus: TournamentStatus.Closed);
+
+        Assert.Null(error);
+    }
 }
