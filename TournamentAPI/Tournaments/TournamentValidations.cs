@@ -32,4 +32,7 @@ public static class TournamentValidations
 
     public static IError? ValidateStartDateHasMinimumLeadTime(DateTime startDate, DateTime now)
         => startDate < now.Add(MinimumStartDateLeadTime) ? TournamentErrors.StartDateTooSoon(startDate) : null;
+
+    public static IError? ValidateTournamentCanBeReopened(int tournamentId, bool bracketExists, TournamentStatus newStatus)
+        => newStatus == TournamentStatus.Open && bracketExists ? TournamentErrors.CannotReopenTournamentWithBracket(tournamentId) : null;
 }
