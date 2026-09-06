@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using System.Threading.RateLimiting;
 
 namespace TournamentAPI.Configuration.Extensions;
@@ -27,7 +24,7 @@ internal static class RateLimiterExtensions
             );
             options.AddPolicy("IpBasedTokenBucket", httpContext =>
             {
-                var clientIp = httpContext.Connection.RemoteIpAddress!.ToString();
+                var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
                 return RateLimitPartition.GetTokenBucketLimiter(
                     clientIp,
