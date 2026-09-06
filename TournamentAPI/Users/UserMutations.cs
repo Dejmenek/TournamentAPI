@@ -35,6 +35,7 @@ public class UserMutations
     public async Task<string?> LoginUser(
         LoginUserInput input,
         UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
         ApplicationDbContext context,
         IHttpContextAccessor httpContextAccessor,
         IResolverContext resolverContext,
@@ -45,7 +46,15 @@ public class UserMutations
         if (resolverContext.TryReportError(UserValidations.ValidateCredentials(user)))
             return null;
 
-        if (!await userManager.CheckPasswordAsync(user, input.Password))
+        var canSignIn = await signInManager.CheckPasswordSignInAsync(user!, input.Password, true);
+
+        if (canSignIn.IsLockedOut)
+        {
+            resolverContext.ReportError(UserErrors.AccountLockedOut);
+            return null;
+        }
+
+        if (!canSignIn.Succeeded)
         {
             resolverContext.ReportError(UserErrors.InvalidCredentials());
             return null;

@@ -39,4 +39,10 @@ public static class UserErrors
             .SetMessage("Unable to set refresh token cookie.")
             .SetCode(UserErrorCodes.UnableToSetRefreshTokenCookie)
             .Build();
+
+    public static IError AccountLockedOut =>
+        ErrorBuilder.New()
+            .SetMessage("The account is locked out due to multiple failed login attempts.")
+            .SetCode(UserErrorCodes.AccountLockedOut)
+            .Build();
 }

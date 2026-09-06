@@ -1,6 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Shared.Extensions;
 using TournamentAPI.Shared.Models;
@@ -210,6 +213,135 @@ public class UserMutationTests : BaseIntegrationTest
         Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
         Assert.Equal(expectedError.Message, error.Message);
     }
+
+    [Fact]
+    public async Task LoginUser_ReturnsInvalidCredentials_ForFailedAttemptsBelowLockoutThreshold()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var maxFailedAccessAttempts = GetMaxFailedAccessAttempts();
+
+        using var client = CreateClient();
+
+        // Act
+        for (var attempt = 1; attempt < maxFailedAccessAttempts; attempt++)
+        {
+            var response = await client.ExecuteMutationAsync<LoginResponse>(
+                Shared.MutationExamples.Mutations.Users.LoginUser,
+                new { input = new { email, password = "WrongPassword!" } });
+
+            // Assert
+            Assert.True(response.HasErrors);
+            var error = response.Errors!.First();
+            var expectedError = UserErrors.InvalidCredentials();
+            Assert.Equal(expectedError.Code, error.Extensions!["code"]?.ToString());
+        }
+
+        var alice = await DbContext.Users.AsNoTracking().FirstAsync(u => u.Email == email);
+        Assert.Equal(maxFailedAccessAttempts - 1, alice.AccessFailedCount);
+        Assert.True(alice.LockoutEnd is null || alice.LockoutEnd <= DateTimeOffset.UtcNow);
+    }
+
+    [Fact]
+    public async Task LoginUser_LocksOutAccount_WhenMaxFailedAttemptsReached()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var maxFailedAccessAttempts = GetMaxFailedAccessAttempts();
+
+        using var client = CreateClient();
+
+        // Act
+        var lastResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email, password = "WrongPassword!" } });
+        for (var attempt = 2; attempt <= maxFailedAccessAttempts; attempt++)
+        {
+            lastResponse = await client.ExecuteMutationAsync<LoginResponse>(
+                Shared.MutationExamples.Mutations.Users.LoginUser,
+                new { input = new { email, password = "WrongPassword!" } });
+        }
+
+        // Assert - the attempt that reaches the threshold locks the account immediately
+        Assert.True(lastResponse.HasErrors);
+        Assert.Null(lastResponse.Data?.LoginUser.String);
+
+        var error = lastResponse.Errors!.First();
+        var expectedError = UserErrors.AccountLockedOut;
+        Assert.Equal(expectedError.Code, error.Extensions!["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+
+        var alice = await DbContext.Users.AsNoTracking().FirstAsync(u => u.Email == email);
+        Assert.NotNull(alice.LockoutEnd);
+        Assert.True(alice.LockoutEnd > DateTimeOffset.UtcNow);
+    }
+
+    [Fact]
+    public async Task LoginUser_ReturnsLockedOutError_WhenAccountIsLockedOut_EvenWithCorrectPassword()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var correctPassword = "Password123!";
+        var maxFailedAccessAttempts = GetMaxFailedAccessAttempts();
+
+        using var client = CreateClient();
+
+        for (var attempt = 0; attempt < maxFailedAccessAttempts; attempt++)
+        {
+            await client.ExecuteMutationAsync<LoginResponse>(
+                Shared.MutationExamples.Mutations.Users.LoginUser,
+                new { input = new { email, password = "WrongPassword!" } });
+        }
+
+        // Act
+        var response = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email, password = correctPassword } });
+
+        // Assert
+        Assert.True(response.HasErrors);
+        Assert.Null(response.Data?.LoginUser.String);
+
+        var error = response.Errors!.First();
+        var expectedError = UserErrors.AccountLockedOut;
+        Assert.Equal(expectedError.Code, error.Extensions!["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+    }
+
+    [Fact]
+    public async Task LoginUser_ResetsFailedAccessCount_AfterSuccessfulLogin()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var correctPassword = "Password123!";
+
+        using var client = CreateClient();
+
+        await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email, password = "WrongPassword!" } });
+        await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email, password = "WrongPassword!" } });
+
+        var aliceAfterFailures = await DbContext.Users.AsNoTracking().FirstAsync(u => u.Email == email);
+        Assert.Equal(2, aliceAfterFailures.AccessFailedCount);
+
+        // Act
+        var response = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email, password = correctPassword } });
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.False(string.IsNullOrEmpty(response.Data?.LoginUser.String));
+
+        var aliceAfterSuccess = await DbContext.Users.AsNoTracking().FirstAsync(u => u.Email == email);
+        Assert.Equal(0, aliceAfterSuccess.AccessFailedCount);
+    }
+
+    private int GetMaxFailedAccessAttempts()
+        => Factory.Services.GetRequiredService<IOptions<IdentityOptions>>().Value.Lockout.MaxFailedAccessAttempts;
 
     [Fact]
     public async Task LoginUser_SetsRefreshTokenCookie()
