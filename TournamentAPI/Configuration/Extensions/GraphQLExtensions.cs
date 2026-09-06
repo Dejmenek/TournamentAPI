@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using TournamentAPI.Brackets;
 using TournamentAPI.Data;
 using TournamentAPI.EventListeners;
@@ -12,12 +11,13 @@ namespace TournamentAPI.Configuration.Extensions;
 
 internal static class GraphQLExtensions
 {
-    internal static IServiceCollection AddApplicationGraphQL(this IServiceCollection services)
+    internal static IServiceCollection AddApplicationGraphQL(this IServiceCollection services, bool isDevelopment)
     {
         services.AddHttpContextAccessor();
 
         services
             .AddGraphQLServer()
+            .DisableIntrospection(!isDevelopment)
             .AddHttpRequestInterceptor<HttpRequestInterceptor>()
             .AddDiagnosticEventListener<ExecutionEventListener>()
             .AddAuthorization()

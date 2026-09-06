@@ -26,7 +26,7 @@ builder.Services.AddApplicationAuthentication();
 builder.Services.AddApplicationHealthChecks();
 builder.Services.AddApplicationAuthorization();
 builder.Services.AddApplicationMetrics();
-builder.Services.AddApplicationGraphQL();
+builder.Services.AddApplicationGraphQL(builder.Environment.IsDevelopment());
 
 builder.Services.AddScoped<JwtService>();
 
