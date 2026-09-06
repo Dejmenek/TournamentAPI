@@ -17,6 +17,10 @@ internal static class GraphQLExtensions
 
         services
             .AddGraphQLServer()
+            .ModifyRequestOptions(options =>
+            {
+                options.ExecutionTimeout = TimeSpan.FromSeconds(30);
+            })
             .DisableIntrospection(!isDevelopment)
             .AddHttpRequestInterceptor<HttpRequestInterceptor>()
             .AddDiagnosticEventListener<ExecutionEventListener>()
