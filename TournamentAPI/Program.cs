@@ -1,4 +1,5 @@
 using HealthChecks.UI.Client;
+using HotChocolate.AspNetCore;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Serilog;
@@ -73,6 +74,10 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 .RequireRateLimiting("IpBasedTokenBucket");
 
 app.MapGraphQL()
+    .WithOptions(new GraphQLServerOptions
+    {
+        Tool = { Enable = app.Environment.IsDevelopment() }
+    })
     .RequireRateLimiting("IpBasedTokenBucket");
 
 app.Run();
