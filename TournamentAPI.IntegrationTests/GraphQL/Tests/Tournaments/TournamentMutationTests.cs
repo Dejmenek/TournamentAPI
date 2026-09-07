@@ -334,6 +334,65 @@ public class TournamentMutationTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task DeleteTournament_ReturnsCannotDeleteWithBracketError_WhenTournamentIsClosedWithBracket()
+    {
+        // Arrange
+        var email = "carol@example.com";
+        var password = "Password123!";
+        var tournamentToDeleteId = 4; // closed tournament with an existing bracket in progress
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToDeleteId
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<DeleteTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.DeleteTournament,
+            variables);
+
+        // Assert
+        Assert.True(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.DeleteTournament);
+        Assert.Null(response.Data.DeleteTournament.Boolean);
+        Assert.NotNull(response.Errors);
+
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.CannotDeleteTournamentWithBracket(tournamentToDeleteId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
+
+        var tournamentInDb = await DbContext.Tournaments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tournamentToDeleteId);
+
+        Assert.NotNull(tournamentInDb);
+    }
+
+    [Fact]
     public async Task DeleteTournament_ReturnsNotOwnerError_WhenUserIsNotOwner()
     {
         // Arrange
