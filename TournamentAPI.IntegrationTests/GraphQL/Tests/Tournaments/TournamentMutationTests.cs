@@ -1395,6 +1395,74 @@ public class TournamentMutationTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task JoinTournament_ReturnsClosedError_WhenTournamentStartDateHasPassed()
+    {
+        // Arrange
+        var email = "carol@example.com";
+        var password = "Password123!";
+        var tournamentToJoinId = 1;
+        using var client = CreateClient();
+
+        var tournament = await DbContext.Tournaments.FirstAsync(t => t.Id == tournamentToJoinId);
+        tournament.StartDate = DateTime.UtcNow.AddMinutes(-10);
+        await DbContext.SaveChangesAsync();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToJoinId,
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<JoinTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.JoinTournament,
+            variables);
+
+        // Assert
+        Assert.True(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.JoinTournament);
+        Assert.Null(response.Data.JoinTournament.Boolean);
+        Assert.NotNull(response.Errors);
+
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.TournamentClosed(tournamentToJoinId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+
+        var tournamentInDb = await DbContext.Tournaments
+            .AsNoTracking()
+            .FirstAsync(t => t.Id == tournamentToJoinId);
+
+        Assert.Equal(TournamentStatus.Open, tournamentInDb.Status);
+
+        var participantInDb = await DbContext.TournamentParticipants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(tp => tp.TournamentId == tournamentToJoinId && tp.Participant.Email == email);
+
+        Assert.Null(participantInDb);
+    }
+
+    [Fact]
     public async Task JoinTournament_ReturnsJoinFailedError_WhenUserAlreadyParticipates()
     {
         // Arrange
