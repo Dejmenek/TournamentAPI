@@ -5,6 +5,8 @@
   <ItemGroup>
     <PackageVersion Include="AspNetCore.HealthChecks.SqlServer" Version="9.0.0" />
     <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
+    <PackageVersion Include="Hangfire.AspNetCore" Version="1.8.25" />
+    <PackageVersion Include="Hangfire.SqlServer" Version="1.8.25" />
     <PackageVersion Include="HotChocolate.AspNetCore" Version="15.1.16" />
     <PackageVersion Include="HotChocolate.AspNetCore.Authorization" Version="15.1.16" />
     <PackageVersion Include="HotChocolate.Data.EntityFramework" Version="15.1.16" />
