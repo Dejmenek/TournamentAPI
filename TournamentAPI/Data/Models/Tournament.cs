@@ -13,4 +13,6 @@ public class Tournament
     public Bracket? Bracket { get; set; }
     public ApplicationUser Owner { get; set; } = null!;
     public ICollection<TournamentParticipant> Participants { get; set; } = new List<TournamentParticipant>();
+
+    public bool IsActive(DateTime utcNow) => Status == TournamentStatus.Open && StartDate > utcNow;
 }
