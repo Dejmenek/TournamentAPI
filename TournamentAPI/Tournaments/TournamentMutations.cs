@@ -211,6 +211,9 @@ public class TournamentMutations
         if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament!.OwnerId, userId, tournamentId)))
             return null;
 
+        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentCanBeDeleted(tournament)))
+            return null;
+
         var wasOpen = tournament!.Status == TournamentStatus.Open;
 
         context.Tournaments.Remove(tournament);

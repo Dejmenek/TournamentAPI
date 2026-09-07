@@ -82,4 +82,11 @@ public static class TournamentErrors
             .SetCode(TournamentErrorCodes.CannotReopenTournamentAfterStartDate)
             .SetExtension("TournamentId", tournamentId)
             .Build();
+
+    public static IError CannotDeleteTournamentWithBracket(int tournamentId) =>
+        ErrorBuilder.New()
+            .SetMessage("Tournament cannot be deleted because it is closed and already has a bracket in play.")
+            .SetCode(TournamentErrorCodes.CannotDeleteTournamentWithBracket)
+            .SetExtension("TournamentId", tournamentId)
+            .Build();
 }
