@@ -1,3 +1,4 @@
+using Hangfire;
 using HealthChecks.UI.Client;
 using HotChocolate.AspNetCore;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -28,6 +29,7 @@ builder.Services.AddApplicationHealthChecks();
 builder.Services.AddApplicationAuthorization();
 builder.Services.AddApplicationMetrics();
 builder.Services.AddApplicationGraphQL(builder.Environment.IsDevelopment());
+builder.Services.AddApplicationHangfire();
 
 builder.Services.AddScoped<JwtService>();
 
