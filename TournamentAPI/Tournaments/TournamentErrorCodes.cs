@@ -13,4 +13,5 @@ public static class TournamentErrorCodes
     public const string StartDateTooSoon = "Tournament.StartDateTooSoon";
     public const string CannotReopenTournamentWithBracket = "Tournament.CannotReopenWithBracket";
     public const string CannotReopenTournamentAfterStartDate = "Tournament.CannotReopenAfterStartDate";
+    public const string CannotDeleteTournamentWithBracket = "Tournament.CannotDeleteWithBracket";
 }

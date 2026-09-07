@@ -1,6 +1,6 @@
 namespace TournamentAPI.Data.Models;
 
-public class TournamentParticipant
+public class TournamentParticipant : ISoftDeletable
 {
     public const string SlotNumberUniqueIndexName = "IX_TournamentParticipants_TournamentId_SlotNumber";
 

@@ -211,23 +211,12 @@ public class TournamentMutations
         if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament!.OwnerId, userId, tournamentId)))
             return null;
 
+        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentCanBeDeleted(tournament)))
+            return null;
+
         var wasOpen = tournament!.Status == TournamentStatus.Open;
 
-        tournament.IsDeleted = true;
-
-        if (tournament.Bracket != null)
-        {
-            tournament.Bracket.IsDeleted = true;
-            foreach (var match in tournament.Bracket.Matches)
-            {
-                match.IsDeleted = true;
-            }
-        }
-
-        foreach (var participant in tournament.Participants)
-        {
-            participant.IsDeleted = true;
-        }
+        context.Tournaments.Remove(tournament);
 
         await context.SaveChangesAsync(token);
 
