@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace TournamentAPI.Data.Models;
 
-public class Match
+public class Match : ISoftDeletable
 {
     public int Id { get; set; }
     public int Round { get; set; }

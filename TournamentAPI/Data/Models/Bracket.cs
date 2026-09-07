@@ -1,6 +1,6 @@
 namespace TournamentAPI.Data.Models;
 
-public class Bracket
+public class Bracket : ISoftDeletable
 {
     public int Id { get; set; }
     public int TournamentId { get; set; }

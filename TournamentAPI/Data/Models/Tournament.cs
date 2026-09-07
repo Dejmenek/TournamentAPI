@@ -1,6 +1,6 @@
 namespace TournamentAPI.Data.Models;
 
-public class Tournament
+public class Tournament : ISoftDeletable
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
