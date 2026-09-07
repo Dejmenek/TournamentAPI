@@ -32,7 +32,7 @@ public class TournamentMutations
         if (tournament is null)
             return null;
 
-        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotClosed(tournament)))
+        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotClosed(tournament, DateTime.UtcNow)))
             return null;
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentNotFull(tournament)))
@@ -155,7 +155,7 @@ public class TournamentMutations
             if (resolverContext.TryReportError(TournamentValidations.ValidateMaxParticipantsAtLeastTwo(input.MaxParticipants.Value)))
                 return null;
 
-            if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotClosed(tournament)))
+            if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotClosed(tournament, DateTime.UtcNow)))
                 return null;
 
             var currentParticipantCount = await context.TournamentParticipants
@@ -171,7 +171,7 @@ public class TournamentMutations
         {
             var bracketExists = await context.Brackets.AnyAsync(b => b.TournamentId == tournament.Id, token);
 
-            if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentCanBeReopened(tournament.Id, bracketExists, input.Status.Value)))
+            if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentCanBeReopened(tournament.Id, bracketExists, input.Status.Value, tournament.StartDate, DateTime.UtcNow)))
                 return null;
 
             var previousStatus = tournament.Status;

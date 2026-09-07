@@ -38,7 +38,7 @@ public class ParticipantMutations
         if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament.OwnerId, userId, input.TournamentId)))
             return null;
 
-        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotClosed(tournament)))
+        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotClosed(tournament, DateTime.UtcNow)))
             return null;
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentNotFull(tournament)))

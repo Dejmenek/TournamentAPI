@@ -12,8 +12,8 @@ public static class TournamentValidations
     public static IError? ValidateIsOwner(int ownerId, int userId, int tournamentId)
         => ownerId != userId ? TournamentErrors.TournamentNotOwner(userId, tournamentId) : null;
 
-    public static IError? ValidateTournamentIsNotClosed(Tournament tournament)
-        => tournament.Status == TournamentStatus.Closed ? TournamentErrors.TournamentClosed(tournament.Id) : null;
+    public static IError? ValidateTournamentIsNotClosed(Tournament tournament, DateTime now)
+        => !tournament.IsActive(now) ? TournamentErrors.TournamentClosed(tournament.Id) : null;
 
     public static IError? ValidateUserNotAlreadyParticipant(Tournament tournament, int userId)
         => tournament.Participants.Any(tp => tp.ParticipantId == userId) ? TournamentErrors.UserAlreadyParticipant(userId, tournament.Id) : null;
@@ -33,6 +33,17 @@ public static class TournamentValidations
     public static IError? ValidateStartDateHasMinimumLeadTime(DateTime startDate, DateTime now)
         => startDate < now.Add(MinimumStartDateLeadTime) ? TournamentErrors.StartDateTooSoon(startDate) : null;
 
-    public static IError? ValidateTournamentCanBeReopened(int tournamentId, bool bracketExists, TournamentStatus newStatus)
-        => newStatus == TournamentStatus.Open && bracketExists ? TournamentErrors.CannotReopenTournamentWithBracket(tournamentId) : null;
+    public static IError? ValidateTournamentCanBeReopened(int tournamentId, bool bracketExists, TournamentStatus newStatus, DateTime startDate, DateTime now)
+    {
+        if (newStatus != TournamentStatus.Open)
+            return null;
+
+        if (bracketExists)
+            return TournamentErrors.CannotReopenTournamentWithBracket(tournamentId);
+
+        if (startDate <= now)
+            return TournamentErrors.CannotReopenTournamentAfterStartDate(tournamentId);
+
+        return null;
+    }
 }

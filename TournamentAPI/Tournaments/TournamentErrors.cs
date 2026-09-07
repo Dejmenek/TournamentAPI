@@ -75,4 +75,11 @@ public static class TournamentErrors
             .SetCode(TournamentErrorCodes.CannotReopenTournamentWithBracket)
             .SetExtension("TournamentId", tournamentId)
             .Build();
+
+    public static IError CannotReopenTournamentAfterStartDate(int tournamentId) =>
+        ErrorBuilder.New()
+            .SetMessage("Tournament cannot be reopened because its StartDate has already passed.")
+            .SetCode(TournamentErrorCodes.CannotReopenTournamentAfterStartDate)
+            .SetExtension("TournamentId", tournamentId)
+            .Build();
 }
