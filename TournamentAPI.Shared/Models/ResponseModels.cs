@@ -33,6 +33,7 @@ public class TournamentNode
     public DateTime StartDate { get; set; }
     public int OwnerId { get; set; }
     public int MaxParticipants { get; set; }
+    public bool IsActive { get; set; }
     public ApplicationUserNode? Owner { get; set; }
     public BracketNode? Bracket { get; set; }
     public List<TournamentParticipantNode>? Participants { get; set; }

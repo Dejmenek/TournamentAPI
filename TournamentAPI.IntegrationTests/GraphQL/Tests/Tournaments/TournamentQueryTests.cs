@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Shared.Models;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Tournaments;
@@ -339,5 +340,29 @@ public class TournamentQueryTests : BaseIntegrationTest
         var participants = response.Data.TournamentById.Participants;
         Assert.NotNull(participants);
         Assert.Equal(2, participants.Count);
+    }
+
+    [Fact]
+    public async Task GetTournamentById_ReturnsIsActiveFalse_WhenStartDateHasPassedButStatusIsOpen()
+    {
+        // Arrange
+        var tournamentId = 1;
+
+        var tournament = await DbContext.Tournaments.FirstAsync(t => t.Id == tournamentId);
+        tournament.StartDate = DateTime.UtcNow.AddMinutes(-10);
+        await DbContext.SaveChangesAsync();
+
+        // Act
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithIsActive,
+            new { id = tournamentId });
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data?.TournamentById);
+        Assert.Equal("OPEN", response.Data.TournamentById.Status);
+        Assert.False(response.Data.TournamentById.IsActive);
     }
 }

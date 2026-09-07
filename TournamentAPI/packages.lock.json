@@ -21,6 +21,24 @@
           "AspNetCore.HealthChecks.UI.Core": "9.0.0"
         }
       },
+      "Hangfire.AspNetCore": {
+        "type": "Direct",
+        "requested": "[1.8.25, )",
+        "resolved": "1.8.25",
+        "contentHash": "IqklPyZDacfrCM6I9vpoTd9n14AvP5tepgR/IfKTUlPzGihLzey9jpL7PTKguJ3CPAA12qz3WCDUfIJ9IsCLQw==",
+        "dependencies": {
+          "Hangfire.NetCore": "[1.8.25]"
+        }
+      },
+      "Hangfire.SqlServer": {
+        "type": "Direct",
+        "requested": "[1.8.25, )",
+        "resolved": "1.8.25",
+        "contentHash": "KuDVyRuixoEnvIpKJ+PCvIlxNoRyVNOQPmYD4H6k1J4ZE6C372aBKZ17MawwtWTL+Mpqa10TgOaIivI1xXj1Ug==",
+        "dependencies": {
+          "Hangfire.Core": "[1.8.25]"
+        }
+      },
       "HotChocolate.AspNetCore": {
         "type": "Direct",
         "requested": "[15.1.16, )",
@@ -365,6 +383,25 @@
         "contentHash": "rBdEUMyCwa+iB8mqC6JKyPbj3SBHHkReJj/yy/XKJI63GcG6w9DJMMGTVcYHqq4Ci2W4m0HT4jt2pFfFscar8g==",
         "dependencies": {
           "Grpc.Core.Api": "2.70.0"
+        }
+      },
+      "Hangfire.Core": {
+        "type": "Transitive",
+        "resolved": "1.8.25",
+        "contentHash": "BxzXlHwXNrGPHJ7YfAVfeiXC+BHd6uPoyyfV+9bCJVPPGs4z0EQCW1X44Og/IUFM81ENCqAFP1r2rOkQhm4ydA==",
+        "dependencies": {
+          "Newtonsoft.Json": "11.0.1"
+        }
+      },
+      "Hangfire.NetCore": {
+        "type": "Transitive",
+        "resolved": "1.8.25",
+        "contentHash": "ZfI7gwr7n70r635VS9aKsWSzOodY6U0bSIG0jDrqd5ODRLKvc+e5aXXGCnWHWzjvagvlwtUcRGG/lD0/3C7chA==",
+        "dependencies": {
+          "Hangfire.Core": "[1.8.25]",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "3.0.0",
+          "Microsoft.Extensions.Hosting.Abstractions": "3.0.0",
+          "Microsoft.Extensions.Logging.Abstractions": "3.0.0"
         }
       },
       "HotChocolate": {
@@ -1215,6 +1252,11 @@
         "dependencies": {
           "System.CodeDom": "6.0.0"
         }
+      },
+      "Newtonsoft.Json": {
+        "type": "Transitive",
+        "resolved": "11.0.1",
+        "contentHash": "pNN4l+J6LlpIvHOeNdXlwxv39NPJ2B5klz+Rd2UQZIx30Squ5oND1Yy3wEAUoKn0GPUj6Yxt9lxlYWQqfZcvKg=="
       },
       "OpenTelemetry": {
         "type": "Transitive",

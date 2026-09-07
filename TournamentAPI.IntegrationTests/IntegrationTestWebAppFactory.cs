@@ -1,13 +1,16 @@
+using Hangfire;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Testcontainers.MsSql;
 using TournamentAPI.Data;
 
 namespace TournamentAPI.IntegrationTests;
+
 public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly MsSqlContainer _dbContainer = new MsSqlBuilder()
@@ -19,13 +22,18 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
     {
         builder.ConfigureTestServices(services =>
         {
-            services.RemoveAll(typeof(IDbContextFactory<ApplicationDbContext>));
+            services.RemoveAll<IDbContextFactory<ApplicationDbContext>>();
+
+            var connectionString = _dbContainer.GetConnectionString() + ";Initial Catalog=TournamentTestDb";
 
             services.AddDbContextFactory<ApplicationDbContext>(options =>
             {
-                var connectionString = _dbContainer.GetConnectionString() + ";Initial Catalog=TournamentTestDb";
                 options.UseSqlServer(connectionString);
             });
+
+            services.AddHangfire(config => config.UseSqlServerStorage(connectionString));
+
+            services.RemoveAll<IHostedService>();
         });
     }
 

@@ -45,9 +45,10 @@ public class TournamentValidationsTests
     [Fact]
     public void ValidateTournamentIsNotClosed_WhenTournamentIsClosed_ReturnsError()
     {
-        var tournament = new Tournament { Id = 1, Status = TournamentStatus.Closed };
+        var now = new DateTime(2026, 1, 15, 12, 0, 0, DateTimeKind.Utc);
+        var tournament = new Tournament { Id = 1, Status = TournamentStatus.Closed, StartDate = now.AddDays(1) };
 
-        IError? error = TournamentValidations.ValidateTournamentIsNotClosed(tournament);
+        IError? error = TournamentValidations.ValidateTournamentIsNotClosed(tournament, now);
 
         Assert.NotNull(error);
         Assert.Equal(TournamentErrorCodes.TournamentClosed, error.Code);
@@ -56,11 +57,24 @@ public class TournamentValidationsTests
     [Fact]
     public void ValidateTournamentIsNotClosed_WhenTournamentIsOpen_ReturnsNull()
     {
-        var tournament = new Tournament { Id = 1, Status = TournamentStatus.Open };
+        var now = new DateTime(2026, 1, 15, 12, 0, 0, DateTimeKind.Utc);
+        var tournament = new Tournament { Id = 1, Status = TournamentStatus.Open, StartDate = now.AddDays(1) };
 
-        IError? error = TournamentValidations.ValidateTournamentIsNotClosed(tournament);
+        IError? error = TournamentValidations.ValidateTournamentIsNotClosed(tournament, now);
 
         Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateTournamentIsNotClosed_WhenTournamentIsOpenButStartDateHasPassed_ReturnsError()
+    {
+        var now = new DateTime(2026, 1, 15, 12, 0, 0, DateTimeKind.Utc);
+        var tournament = new Tournament { Id = 1, Status = TournamentStatus.Open, StartDate = now.AddMinutes(-1) };
+
+        IError? error = TournamentValidations.ValidateTournamentIsNotClosed(tournament, now);
+
+        Assert.NotNull(error);
+        Assert.Equal(TournamentErrorCodes.TournamentClosed, error.Code);
     }
 
     [Fact]
@@ -233,7 +247,10 @@ public class TournamentValidationsTests
     [Fact]
     public void ValidateTournamentCanBeReopened_WhenReopeningWithExistingBracket_ReturnsError()
     {
-        IError? error = TournamentValidations.ValidateTournamentCanBeReopened(tournamentId: 1, bracketExists: true, newStatus: TournamentStatus.Open);
+        var now = new DateTime(2026, 1, 15, 12, 0, 0, DateTimeKind.Utc);
+
+        IError? error = TournamentValidations.ValidateTournamentCanBeReopened(
+            tournamentId: 1, bracketExists: true, newStatus: TournamentStatus.Open, startDate: now.AddDays(1), now: now);
 
         Assert.NotNull(error);
         Assert.Equal(TournamentErrorCodes.CannotReopenTournamentWithBracket, error.Code);
@@ -242,7 +259,10 @@ public class TournamentValidationsTests
     [Fact]
     public void ValidateTournamentCanBeReopened_WhenReopeningWithoutBracket_ReturnsNull()
     {
-        IError? error = TournamentValidations.ValidateTournamentCanBeReopened(tournamentId: 1, bracketExists: false, newStatus: TournamentStatus.Open);
+        var now = new DateTime(2026, 1, 15, 12, 0, 0, DateTimeKind.Utc);
+
+        IError? error = TournamentValidations.ValidateTournamentCanBeReopened(
+            tournamentId: 1, bracketExists: false, newStatus: TournamentStatus.Open, startDate: now.AddDays(1), now: now);
 
         Assert.Null(error);
     }
@@ -250,8 +270,23 @@ public class TournamentValidationsTests
     [Fact]
     public void ValidateTournamentCanBeReopened_WhenClosingTournamentWithBracket_ReturnsNull()
     {
-        IError? error = TournamentValidations.ValidateTournamentCanBeReopened(tournamentId: 1, bracketExists: true, newStatus: TournamentStatus.Closed);
+        var now = new DateTime(2026, 1, 15, 12, 0, 0, DateTimeKind.Utc);
+
+        IError? error = TournamentValidations.ValidateTournamentCanBeReopened(
+            tournamentId: 1, bracketExists: true, newStatus: TournamentStatus.Closed, startDate: now.AddDays(-1), now: now);
 
         Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateTournamentCanBeReopened_WhenReopeningAfterStartDateHasPassed_ReturnsError()
+    {
+        var now = new DateTime(2026, 1, 15, 12, 0, 0, DateTimeKind.Utc);
+
+        IError? error = TournamentValidations.ValidateTournamentCanBeReopened(
+            tournamentId: 1, bracketExists: false, newStatus: TournamentStatus.Open, startDate: now.AddMinutes(-1), now: now);
+
+        Assert.NotNull(error);
+        Assert.Equal(TournamentErrorCodes.CannotReopenTournamentAfterStartDate, error.Code);
     }
 }

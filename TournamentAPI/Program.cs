@@ -1,3 +1,4 @@
+using Hangfire;
 using HealthChecks.UI.Client;
 using HotChocolate.AspNetCore;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -8,6 +9,7 @@ using TournamentAPI.Configuration.Extensions;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Services;
+using TournamentAPI.Tournaments;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,8 +30,10 @@ builder.Services.AddApplicationHealthChecks();
 builder.Services.AddApplicationAuthorization();
 builder.Services.AddApplicationMetrics();
 builder.Services.AddApplicationGraphQL(builder.Environment.IsDevelopment());
+builder.Services.AddApplicationHangfire();
 
 builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<TournamentAutoCloseJob>();
 
 builder.Services.AddSerilog((_, loggerConfiguration) =>
     loggerConfiguration
@@ -58,6 +62,15 @@ if (app.Environment.IsDevelopment())
     await context.Database.EnsureDeletedAsync();
     await context.Database.EnsureCreatedAsync();
     await DatabaseSeeder.SeedAsync(context, userManager);
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var recurringJobs = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+    recurringJobs.AddOrUpdate<TournamentAutoCloseJob>(
+        "auto-close-tournaments",
+        job => job.RunAsync(CancellationToken.None),
+        Cron.MinuteInterval(5));
 }
 
 app.UseRateLimiter();

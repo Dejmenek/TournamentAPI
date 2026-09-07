@@ -13,8 +13,13 @@ public class TournamentType : ObjectType<Tournament>
 
         descriptor.Field(t => t.Id);
         descriptor.Field(t => t.Name);
-        descriptor.Field(t => t.StartDate);
-        descriptor.Field(t => t.Status);
+        descriptor.Field(t => t.StartDate)
+            .IsProjected(true);
+        descriptor.Field(t => t.Status)
+            .IsProjected(true);
+        descriptor.Field("isActive")
+            .Type<NonNullType<BooleanType>>()
+            .Resolve(ctx => ctx.Parent<Tournament>().IsActive(DateTime.UtcNow));
         descriptor.Field(t => t.OwnerId);
         descriptor.Field(t => t.MaxParticipants);
         descriptor.Field(t => t.Bracket)
