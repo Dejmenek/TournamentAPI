@@ -199,6 +199,17 @@ public static partial class Queries
         }
         """;
 
+        public const string GetByIdWithIsActive = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            id
+            name
+            status
+            isActive
+          }
+        }
+        """;
+
         public const string GetByIdWithOwner = """
         query($id: Int!) {
           tournamentById(id: $id) {
