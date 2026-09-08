@@ -38,6 +38,15 @@ public class BracketServiceTests
     }
 
     [Fact]
+    public void CreateBracket_WithOddParticipantCount_ByeMatchIsAutoResolved()
+    {
+        var bracket = BracketService.CreateBracket(tournamentId: 1, participantIds: [1, 2, 3]);
+
+        var byeMatch = bracket.Matches.Single(m => m.Player2Id == null);
+        Assert.Equal(byeMatch.Player1Id, byeMatch.WinnerId);
+    }
+
+    [Fact]
     public void CreateBracket_AllMatchesAreInRoundOne()
     {
         var bracket = BracketService.CreateBracket(tournamentId: 1, participantIds: [1, 2, 3, 4]);
@@ -82,6 +91,15 @@ public class BracketServiceTests
 
         var byeMatch = matches.SingleOrDefault(m => m.Player2Id == null);
         Assert.NotNull(byeMatch);
+    }
+
+    [Fact]
+    public void CreateNextRoundMatches_WithOddWinnerCount_ByeMatchIsAutoResolved()
+    {
+        var matches = BracketService.CreateNextRoundMatches(bracketId: 1, roundNumber: 1, winners: [1, 2, 3]);
+
+        var byeMatch = matches.Single(m => m.Player2Id == null);
+        Assert.Equal(byeMatch.Player1Id, byeMatch.WinnerId);
     }
 
     [Fact]
