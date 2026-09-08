@@ -22,6 +22,7 @@ public static class BracketService
                 Player1Id = shuffled[i],
                 Player2Id = i + 1 < shuffled.Count ? shuffled[i + 1] : null,
                 Bracket = bracket,
+                WinnerId = i + 1 < shuffled.Count ? null : shuffled[i]
             });
         }
 
@@ -45,7 +46,8 @@ public static class BracketService
                 BracketId = bracketId,
                 Round = roundNumber + 1,
                 Player1Id = p1,
-                Player2Id = p2
+                Player2Id = p2,
+                WinnerId = p2 == null ? p1 : null,
             });
         }
 
