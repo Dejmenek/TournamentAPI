@@ -23,6 +23,7 @@ internal static class GraphQLExtensions
             })
             .DisableIntrospection(!isDevelopment)
             .AddHttpRequestInterceptor<HttpRequestInterceptor>()
+            .AddApplicationService<ILogger<ExecutionEventListener>>()
             .AddDiagnosticEventListener<ExecutionEventListener>()
             .AddAuthorization()
             .RegisterDbContextFactory<ApplicationDbContext>()

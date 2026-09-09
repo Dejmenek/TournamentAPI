@@ -78,10 +78,19 @@ public class TestClient : IDisposable
 
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
 
-        var result = JsonSerializer.Deserialize<GraphQLResponse<T>>(content, new JsonSerializerOptions
+        GraphQLResponse<T>? result;
+        try
         {
-            PropertyNameCaseInsensitive = true
-        });
+            result = JsonSerializer.Deserialize<GraphQLResponse<T>>(content, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidOperationException(
+                $"Failed to parse GraphQL response as JSON. StatusCode={response.StatusCode}; ContentType={response.Content.Headers.ContentType}; Body={content}", ex);
+        }
 
         return result ?? throw new InvalidOperationException("Failed to deserialize GraphQL response");
     }
