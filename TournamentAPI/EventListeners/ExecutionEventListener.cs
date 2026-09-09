@@ -13,7 +13,7 @@ public sealed class ExecutionEventListener : ExecutionDiagnosticEventListener
         _logger = logger;
     }
 
-    public override IDisposable ExecuteRequest(IRequestContext context)
+    public override IDisposable ExecuteRequest(RequestContext context)
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -22,7 +22,7 @@ public sealed class ExecutionEventListener : ExecutionDiagnosticEventListener
             stopwatch.Stop();
             var duration = stopwatch.ElapsedMilliseconds;
 
-            var operationType = context.Operation?.Type.ToString() ?? "Unknown";
+            var operationType = context.TryGetOperation(out var operation) ? operation.Kind.ToString() : "Unknown";
             var requestId = context.ContextData.TryGetValue("requestId", out var reqId) ? reqId : "Unknown";
             var userId = context.ContextData.TryGetValue("userId", out var uid) ? uid : "Anonymous";
 
