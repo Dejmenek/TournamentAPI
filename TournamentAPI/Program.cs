@@ -87,9 +87,9 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 .RequireRateLimiting("IpBasedTokenBucket");
 
 app.MapGraphQL()
-    .WithOptions(new GraphQLServerOptions
+    .WithOptions(options =>
     {
-        Tool = { Enable = app.Environment.IsDevelopment() }
+        options.Tool.Enable = app.Environment.IsDevelopment();
     })
     .RequireRateLimiting("IpBasedTokenBucket");
 
