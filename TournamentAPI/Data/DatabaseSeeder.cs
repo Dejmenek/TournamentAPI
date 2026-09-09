@@ -11,14 +11,14 @@ public static class DatabaseSeeder
         UserManager<ApplicationUser> userManager)
     {
         // Create users
-        var user1 = new ApplicationUser { UserName = "alice", Email = "alice@example.com", FirstName = "Alice", LastName = "Smith" };
-        var user2 = new ApplicationUser { UserName = "bob", Email = "bob@example.com", FirstName = "Bob", LastName = "Johnson" };
-        var user3 = new ApplicationUser { UserName = "carol", Email = "carol@example.com", FirstName = "Carol", LastName = "Williams" };
-        var user4 = new ApplicationUser { UserName = "david", Email = "david@example.com", FirstName = "David", LastName = "Brown" };
-        var user5 = new ApplicationUser { UserName = "emma", Email = "emma@example.com", FirstName = "Emma", LastName = "Davis" };
-        var user6 = new ApplicationUser { UserName = "frank", Email = "frank@example.com", FirstName = "Frank", LastName = "Miller" };
-        var user7 = new ApplicationUser { UserName = "grace", Email = "grace@example.com", FirstName = "Grace", LastName = "Wilson" };
-        var user8 = new ApplicationUser { UserName = "henry", Email = "henry@example.com", FirstName = "Henry", LastName = "Moore" };
+        var user1 = new ApplicationUser { UserName = "alice", Email = "alice@example.com", FirstName = "Alice", LastName = "Smith", IsEmailPublic = true };
+        var user2 = new ApplicationUser { UserName = "bob", Email = "bob@example.com", FirstName = "Bob", LastName = "Johnson", IsEmailPublic = true };
+        var user3 = new ApplicationUser { UserName = "carol", Email = "carol@example.com", FirstName = "Carol", LastName = "Williams", IsEmailPublic = true };
+        var user4 = new ApplicationUser { UserName = "david", Email = "david@example.com", FirstName = "David", LastName = "Brown", IsEmailPublic = true };
+        var user5 = new ApplicationUser { UserName = "emma", Email = "emma@example.com", FirstName = "Emma", LastName = "Davis", IsEmailPublic = true };
+        var user6 = new ApplicationUser { UserName = "frank", Email = "frank@example.com", FirstName = "Frank", LastName = "Miller", IsEmailPublic = true };
+        var user7 = new ApplicationUser { UserName = "grace", Email = "grace@example.com", FirstName = "Grace", LastName = "Wilson", IsEmailPublic = true };
+        var user8 = new ApplicationUser { UserName = "henry", Email = "henry@example.com", FirstName = "Henry", LastName = "Moore", IsEmailPublic = false };
 
         user1 = await EnsureUserAsync(userManager, user1, "Password123!");
         user2 = await EnsureUserAsync(userManager, user2, "Password123!");
