@@ -52,7 +52,8 @@ public class ApplicationUserNode
     public int Id { get; set; }
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
+    public string? Email { get; set; }
+    public bool IsEmailPublic { get; set; }
 }
 
 public class BracketNode
@@ -213,7 +214,18 @@ public class MeResponse
 public class UserNode
 {
     public int Id { get; set; }
-    public string Email { get; set; } = string.Empty;
+    public string? Email { get; set; }
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
+    public bool IsEmailPublic { get; set; }
+}
+
+public class UpdateEmailVisibilityResponse
+{
+    public UpdateEmailVisibilityResult? UpdateEmailVisibility { get; set; }
+}
+
+public class UpdateEmailVisibilityResult
+{
+    public UserNode? ApplicationUser { get; set; }
 }
