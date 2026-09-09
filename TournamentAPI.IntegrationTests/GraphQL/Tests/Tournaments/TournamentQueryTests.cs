@@ -10,6 +10,134 @@ public class TournamentQueryTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task GetTournaments_WithOwner_ShowsPublicEmail_EvenWhenIsEmailPublicNotRequested()
+    {
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentsResponse>(
+            Shared.QueryExamples.Queries.Tournaments.GetAllWithOwnerEmailOnly);
+
+        Assert.False(response.HasErrors);
+        var aliceOwnedTournament = response.Data!.Tournaments!.Nodes!.First(t => t.OwnerId == 1);
+        Assert.Equal("alice@example.com", aliceOwnedTournament.Owner!.Email);
+    }
+
+    [Fact]
+    public async Task GetTournaments_WithOwner_HidesEmail_WhenOwnerMakesEmailPrivate()
+    {
+        using var client = CreateClient();
+        var token = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email = "alice@example.com", password = "Password123!" } });
+        client.SetAuthToken(token.Data!.LoginUser!.String!);
+
+        await client.ExecuteMutationAsync<UpdateEmailVisibilityResponse>(
+            Shared.MutationExamples.Mutations.Users.UpdateEmailVisibility,
+            new { input = new { isEmailPublic = false } });
+        client.ClearAuthToken();
+
+        var response = await client.ExecuteQueryAsync<TournamentsResponse>(
+            Shared.QueryExamples.Queries.Tournaments.GetAllWithOwner);
+
+        Assert.False(response.HasErrors);
+        var aliceOwnedTournament = response.Data!.Tournaments!.Nodes!.First(t => t.OwnerId == 1);
+        Assert.Null(aliceOwnedTournament.Owner!.Email);
+    }
+
+    [Fact]
+    public async Task GetTournaments_WithOwner_ShowsOwnEmail_ToOwnerEvenWhenPrivate()
+    {
+        using var client = CreateClient();
+        var token = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email = "alice@example.com", password = "Password123!" } });
+        client.SetAuthToken(token.Data!.LoginUser!.String!);
+
+        await client.ExecuteMutationAsync<UpdateEmailVisibilityResponse>(
+            Shared.MutationExamples.Mutations.Users.UpdateEmailVisibility,
+            new { input = new { isEmailPublic = false } });
+
+        var response = await client.ExecuteQueryAsync<TournamentsResponse>(
+            Shared.QueryExamples.Queries.Tournaments.GetAllWithOwnerEmailOnly);
+
+        Assert.False(response.HasErrors);
+        var aliceOwnedTournament = response.Data!.Tournaments!.Nodes!.First(t => t.OwnerId == 1);
+        Assert.Equal("alice@example.com", aliceOwnedTournament.Owner!.Email);
+    }
+
+    [Fact]
+    public async Task GetTournamentById_WithParticipants_HidesPrivateParticipantEmail()
+    {
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithParticipantEmailOnly,
+            new { id = 3 });
+
+        Assert.False(response.HasErrors);
+        var henry = response.Data!.TournamentById!.Participants!
+            .Select(p => p.Participant)
+            .First(p => p!.Id == 8);
+        Assert.Null(henry!.Email);
+    }
+
+    [Fact]
+    public async Task GetTournamentById_WithOwner_ShowsPublicEmail_EvenWhenIsEmailPublicNotRequested()
+    {
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithOwnerEmailOnly,
+            new { id = 1 });
+
+        Assert.False(response.HasErrors);
+        Assert.Equal("alice@example.com", response.Data!.TournamentById!.Owner!.Email);
+    }
+
+    [Fact]
+    public async Task GetTournamentById_WithOwner_HidesEmail_WhenOwnerMakesEmailPrivate()
+    {
+        using var client = CreateClient();
+        var token = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email = "alice@example.com", password = "Password123!" } });
+        client.SetAuthToken(token.Data!.LoginUser!.String!);
+
+        await client.ExecuteMutationAsync<UpdateEmailVisibilityResponse>(
+            Shared.MutationExamples.Mutations.Users.UpdateEmailVisibility,
+            new { input = new { isEmailPublic = false } });
+        client.ClearAuthToken();
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithOwner,
+            new { id = 1 });
+
+        Assert.False(response.HasErrors);
+        Assert.Null(response.Data!.TournamentById!.Owner!.Email);
+    }
+
+    [Fact]
+    public async Task GetTournamentById_WithOwner_ShowsOwnEmail_ToOwnerEvenWhenPrivate()
+    {
+        using var client = CreateClient();
+        var token = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email = "alice@example.com", password = "Password123!" } });
+        client.SetAuthToken(token.Data!.LoginUser!.String!);
+
+        await client.ExecuteMutationAsync<UpdateEmailVisibilityResponse>(
+            Shared.MutationExamples.Mutations.Users.UpdateEmailVisibility,
+            new { input = new { isEmailPublic = false } });
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithOwnerEmailOnly,
+            new { id = 1 });
+
+        Assert.False(response.HasErrors);
+        Assert.Equal("alice@example.com", response.Data!.TournamentById!.Owner!.Email);
+    }
+
+    [Fact]
     public async Task GetTournaments_ReturnsAllTournamentsWithTotalCount()
     {
         // Act
