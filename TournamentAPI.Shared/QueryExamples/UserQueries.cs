@@ -10,6 +10,7 @@ public static partial class Queries
                 firstName
                 lastName
                 email
+                isEmailPublic
               }
             }
             """;

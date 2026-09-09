@@ -180,6 +180,22 @@ public static partial class Queries
                       firstName
                       id
                       lastName
+                      isEmailPublic
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        public const string GetAllWithOwnerEmailOnly = """
+            query {
+              tournaments(first: 10) {
+                edges {
+                  node {
+                    ownerId
+                    owner {
+                      email
                     }
                   }
                 }
@@ -223,6 +239,30 @@ public static partial class Queries
               firstName
               id
               lastName
+              isEmailPublic
+            }
+          }
+        }
+        """;
+
+        public const string GetByIdWithOwnerEmailOnly = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            owner {
+              email
+            }
+          }
+        }
+        """;
+
+        public const string GetByIdWithParticipantEmailOnly = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            participants {
+              participant {
+                id
+                email
+              }
             }
           }
         }

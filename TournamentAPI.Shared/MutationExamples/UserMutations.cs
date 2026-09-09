@@ -26,5 +26,17 @@ public static partial class Mutations
               }
             }
             """;
+
+        public const string UpdateEmailVisibility = """
+            mutation UpdateEmailVisibility($input: UpdateEmailVisibilityInput!) {
+              updateEmailVisibility(input: $input) {
+                applicationUser {
+                  id
+                  email
+                  isEmailPublic
+                }
+              }
+            }
+            """;
     }
 }
