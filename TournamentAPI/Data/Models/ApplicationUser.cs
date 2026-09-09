@@ -6,6 +6,7 @@ public class ApplicationUser : IdentityUser<int>
 {
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
+    public bool IsEmailPublic { get; set; } = false;
 
     public ICollection<TournamentParticipant> ParticipatedTournaments { get; set; } = new List<TournamentParticipant>();
     public ICollection<Tournament> OwnedTournaments { get; set; } = new List<Tournament>();

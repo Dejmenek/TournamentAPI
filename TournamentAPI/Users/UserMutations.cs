@@ -1,6 +1,8 @@
+using HotChocolate.Authorization;
 using HotChocolate.Resolvers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Extensions;
@@ -11,6 +13,28 @@ namespace TournamentAPI.Users;
 [ExtendObjectType(typeof(Mutation))]
 public class UserMutations
 {
+    [Authorize]
+    public async Task<ApplicationUser?> UpdateEmailVisibility(
+        UpdateEmailVisibilityInput input,
+        ClaimsPrincipal userClaims,
+        ApplicationDbContext context,
+        IResolverContext resolverContext,
+        CancellationToken token)
+    {
+        var userId = userClaims.GetUserId();
+
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId, token);
+
+        if (resolverContext.TryReportError(UserValidations.ValidateUserExists(user, userId)))
+            return null;
+
+        user!.IsEmailPublic = input.IsEmailPublic;
+
+        await context.SaveChangesAsync(token);
+
+        return user;
+    }
+
     public async Task<bool?> RegisterUser(
         RegisterUserInput input,
         UserManager<ApplicationUser> userManager,

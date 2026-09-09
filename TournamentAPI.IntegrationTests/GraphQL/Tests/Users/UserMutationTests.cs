@@ -462,4 +462,39 @@ public class UserMutationTests : BaseIntegrationTest
         var tokenCount = await DbContext.RefreshTokens.CountAsync(r => r.UserId == alice.Id);
         Assert.Equal(1, tokenCount);
     }
+
+    [Fact]
+    public async Task UpdateEmailVisibility_UpdatesFlag_WhenAuthenticated()
+    {
+        using var client = CreateClient();
+
+        var token = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email = "alice@example.com", password = "Password123!" } });
+        client.SetAuthToken(token.Data!.LoginUser!.String!);
+
+        var response = await client.ExecuteMutationAsync<UpdateEmailVisibilityResponse>(
+            Shared.MutationExamples.Mutations.Users.UpdateEmailVisibility,
+            new { input = new { isEmailPublic = false } });
+
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data?.UpdateEmailVisibility?.ApplicationUser);
+        Assert.False(response.Data.UpdateEmailVisibility.ApplicationUser.IsEmailPublic);
+
+        var alice = await DbContext.Users.AsNoTracking().FirstAsync(u => u.Email == "alice@example.com");
+        Assert.False(alice.IsEmailPublic);
+    }
+
+    [Fact]
+    public async Task UpdateEmailVisibility_ReturnsError_WhenNotAuthenticated()
+    {
+        using var client = CreateClient();
+
+        var response = await client.ExecuteMutationAsync<UpdateEmailVisibilityResponse>(
+            Shared.MutationExamples.Mutations.Users.UpdateEmailVisibility,
+            new { input = new { isEmailPublic = false } });
+
+        Assert.True(response.HasErrors);
+        Assert.Null(response.Data?.UpdateEmailVisibility);
+    }
 }

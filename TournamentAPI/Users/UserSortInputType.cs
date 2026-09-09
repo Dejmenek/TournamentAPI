@@ -12,6 +12,5 @@ public class UserSortInputType : SortInputType<ApplicationUser>
         descriptor.Field(u => u.Id);
         descriptor.Field(u => u.FirstName);
         descriptor.Field(u => u.LastName);
-        descriptor.Field(u => u.Email);
     }
 }
