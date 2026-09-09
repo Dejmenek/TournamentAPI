@@ -36,4 +36,35 @@ public class UserQueryTests : BaseIntegrationTest
         Assert.NotNull(response.Data.Me);
         Assert.Equal(email, response.Data.Me.Email);
     }
+
+    [Fact]
+    public async Task GetMe_ReturnsOwnEmail_EvenWhenPrivate()
+    {
+        // Arrange
+        var email = "henry@example.com";
+        using var client = CreateClient();
+
+        var token = await client.ExecuteQueryAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = "Password123!"
+                }
+            });
+        client.SetAuthToken(token.Data.LoginUser.String);
+
+        // Act
+        var response = await client.ExecuteQueryAsync<MeResponse>(
+            Shared.QueryExamples.Queries.Users.GetMe);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.Me);
+        Assert.False(response.Data.Me.IsEmailPublic);
+        Assert.Equal(email, response.Data.Me.Email);
+    }
 }
