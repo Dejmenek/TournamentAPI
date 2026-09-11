@@ -8,7 +8,7 @@ namespace TournamentAPI.Brackets;
 [ObjectType<Bracket>]
 public static partial class BracketResolvers
 {
-    [UseConnection]
+    [UseConnection(IncludeTotalCount = true)]
     [UseFiltering]
     [UseSorting]
     public static async Task<PageConnection<Match>> GetMatchesByBracket(

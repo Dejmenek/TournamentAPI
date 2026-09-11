@@ -25,7 +25,7 @@ public static partial class TournamentResolvers
         CancellationToken cancellationToken)
         => await bracketLookupService.GetBracketByTournamentIdAsync(tournament.Id, cancellationToken);
 
-    [UseConnection]
+    [UseConnection(IncludeTotalCount = true)]
     [UseFiltering]
     [UseSorting]
     public static async Task<PageConnection<TournamentParticipant>> GetParticipants(
