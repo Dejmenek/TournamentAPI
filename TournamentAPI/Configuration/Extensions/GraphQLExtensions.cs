@@ -30,6 +30,10 @@ internal static class GraphQLExtensions
             .AddFiltering(x => x.AddDefaults())
             .AddSorting()
             .AddMaxExecutionDepthRule(10)
+            .ModifyCostOptions(options =>
+            {
+                options.MaxFieldCost = 3_000;
+            })
             .AddInstrumentation();
 
         return services;
