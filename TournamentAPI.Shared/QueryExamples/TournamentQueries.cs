@@ -118,13 +118,18 @@ public static partial class Queries
                     bracket {
                       id
                       tournamentId
-                      matches {
-                        bracketId
-                        id
-                        player1Id
-                        player2Id
-                        round
-                        winnerId
+                      matchesByBracket(first: 10) {
+                        totalCount
+                        edges {
+                          node {
+                            bracketId
+                            id
+                            player1Id
+                            player2Id
+                            round
+                            winnerId
+                          }
+                        }
                       }
                     }
                   }
@@ -148,13 +153,18 @@ public static partial class Queries
                     bracket {
                       id
                       tournamentId
-                      matches {
-                        bracketId
-                        id
-                        player1Id
-                        player2Id
-                        round
-                        winnerId
+                      matchesByBracket(first: 10) {
+                        totalCount
+                        edges {
+                          node {
+                            bracketId
+                            id
+                            player1Id
+                            player2Id
+                            round
+                            winnerId
+                          }
+                        }
                       }
                     }
                   }
@@ -301,13 +311,18 @@ public static partial class Queries
             bracket {
               id
               tournamentId
-              matches {
-                bracketId
-                id
-                player1Id
-                player2Id
-                round
-                winnerId
+              matchesByBracket(first: 10) {
+                totalCount
+                edges {
+                  node {
+                    bracketId
+                    id
+                    player1Id
+                    player2Id
+                    round
+                    winnerId
+                  }
+                }
               }
             }
           }

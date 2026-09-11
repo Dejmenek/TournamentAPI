@@ -60,7 +60,22 @@ public class BracketNode
 {
     public int Id { get; set; }
     public int TournamentId { get; set; }
-    public List<MatchNode>? Matches { get; set; }
+    public MatchesByBracketConnection? MatchesByBracket { get; set; }
+}
+
+public class MatchesByBracketConnection
+{
+    public int? TotalCount { get; set; }
+    public PageInfo? PageInfo { get; set; }
+    public List<MatchEdge>? Edges { get; set; }
+
+    public List<MatchNode>? Nodes => Edges?.Select(e => e.Node).ToList();
+}
+
+public class MatchEdge
+{
+    public string? Cursor { get; set; }
+    public MatchNode Node { get; set; } = null!;
 }
 
 public class MatchNode

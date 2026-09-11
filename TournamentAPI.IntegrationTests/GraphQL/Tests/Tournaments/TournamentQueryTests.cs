@@ -262,8 +262,8 @@ public class TournamentQueryTests : BaseIntegrationTest
         var winterTournament = response.Data.Tournaments.Nodes?.FirstOrDefault(t => t.Name == "Winter Championship 2024");
         Assert.NotNull(winterTournament);
         Assert.NotNull(winterTournament.Bracket);
-        Assert.NotNull(winterTournament.Bracket.Matches);
-        Assert.Equal(7, winterTournament.Bracket.Matches.Count);
+        Assert.NotNull(winterTournament.Bracket.MatchesByBracket);
+        Assert.Equal(7, winterTournament.Bracket.MatchesByBracket.TotalCount);
     }
 
     [Fact]
@@ -442,8 +442,8 @@ public class TournamentQueryTests : BaseIntegrationTest
 
         var bracket = response.Data.TournamentById.Bracket;
         Assert.NotNull(bracket);
-        Assert.NotNull(bracket.Matches);
-        Assert.Equal(7, bracket.Matches.Count);
+        Assert.NotNull(bracket.MatchesByBracket);
+        Assert.Equal(7, bracket.MatchesByBracket.TotalCount);
     }
 
     [Fact]
