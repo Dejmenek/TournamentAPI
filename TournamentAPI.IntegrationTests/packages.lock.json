@@ -204,15 +204,6 @@
           "GreenDonut.Data.Primitives": "16.6.4"
         }
       },
-      "GreenDonut.Data.EntityFramework": {
-        "type": "Transitive",
-        "resolved": "16.6.4",
-        "contentHash": "+FjI3XBfdhvDeef+XqAKb5+OQ0IxeR4tocvJZd19zAtvwc3rtDtFTJ7BvSyIMp7TLh3s+XHBI9Rf1D8pBSb+QQ==",
-        "dependencies": {
-          "GreenDonut.Data": "16.6.4",
-          "Microsoft.EntityFrameworkCore": "9.0.4"
-        }
-      },
       "GreenDonut.Data.Primitives": {
         "type": "Transitive",
         "resolved": "16.6.4",
@@ -1633,6 +1624,7 @@
         "dependencies": {
           "AspNetCore.HealthChecks.SqlServer": "[9.0.0, )",
           "AspNetCore.HealthChecks.UI.Client": "[9.0.0, )",
+          "GreenDonut.Data.EntityFramework": "[16.6.4, )",
           "Hangfire.AspNetCore": "[1.8.25, )",
           "Hangfire.SqlServer": "[1.8.25, )",
           "HotChocolate.AspNetCore": "[16.6.4, )",
@@ -1676,6 +1668,16 @@
         "contentHash": "1Ub3Wvvbz7CMuFNWgLEc9qqQibiMoovDML/WHrwr5J83RPgtI20giCR92s/ipLgu7IIuqw+W/y7WpIeHqAICxg==",
         "dependencies": {
           "AspNetCore.HealthChecks.UI.Core": "9.0.0"
+        }
+      },
+      "GreenDonut.Data.EntityFramework": {
+        "type": "CentralTransitive",
+        "requested": "[16.6.4, )",
+        "resolved": "16.6.4",
+        "contentHash": "+FjI3XBfdhvDeef+XqAKb5+OQ0IxeR4tocvJZd19zAtvwc3rtDtFTJ7BvSyIMp7TLh3s+XHBI9Rf1D8pBSb+QQ==",
+        "dependencies": {
+          "GreenDonut.Data": "16.6.4",
+          "Microsoft.EntityFrameworkCore": "9.0.4"
         }
       },
       "Hangfire.AspNetCore": {
