@@ -10,11 +10,11 @@ using TournamentAPI.Services;
 
 namespace TournamentAPI.Users;
 
-[ExtendObjectType(typeof(Mutation))]
-public class UserMutations
+[MutationType]
+public static partial class UserMutations
 {
     [Authorize]
-    public async Task<ApplicationUser?> UpdateEmailVisibility(
+    public static async Task<ApplicationUser?> UpdateEmailVisibility(
         UpdateEmailVisibilityInput input,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
@@ -35,7 +35,7 @@ public class UserMutations
         return user;
     }
 
-    public async Task<bool?> RegisterUser(
+    public static async Task<bool?> RegisterUser(
         RegisterUserInput input,
         UserManager<ApplicationUser> userManager,
         IResolverContext resolverContext)
@@ -56,7 +56,7 @@ public class UserMutations
         return true;
     }
 
-    public async Task<string?> LoginUser(
+    public static async Task<string?> LoginUser(
         LoginUserInput input,
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
@@ -112,7 +112,7 @@ public class UserMutations
         return accessToken;
     }
 
-    public async Task<string?> RefreshToken(
+    public static async Task<string?> RefreshToken(
         JwtService jwtService,
         ApplicationDbContext context,
         IResolverContext resolverContext,

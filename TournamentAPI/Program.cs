@@ -1,15 +1,18 @@
 using Hangfire;
 using HealthChecks.UI.Client;
-using HotChocolate.AspNetCore;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Serilog;
 using Serilog.Sinks.OpenTelemetry;
+using TournamentAPI.Brackets;
 using TournamentAPI.Configuration.Extensions;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
+using TournamentAPI.Matches;
+using TournamentAPI.Participants;
 using TournamentAPI.Services;
 using TournamentAPI.Tournaments;
+using TournamentAPI.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +25,11 @@ builder.Services.AddApplicationOptions();
 if (builder.Environment.IsDevelopment())
     builder.Services.AddForwardedHeaders();
 
+builder.Services.AddScoped<MatchService>();
+builder.Services.AddScoped<ApplicationUserService>();
+builder.Services.AddScoped<BracketLookupService>();
+builder.Services.AddScoped<ParticipantsService>();
+builder.Services.AddScoped<TournamentLookupService>();
 builder.Services.AddApplicationDatabase();
 builder.Services.AddApplicationRateLimiting();
 builder.Services.AddApplicationTelemetry();

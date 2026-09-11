@@ -1,50 +1,47 @@
 using GreenDonut.Data;
-using HotChocolate.Data.Sorting;
+using HotChocolate.Types.Pagination;
 using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 
 namespace TournamentAPI.Tournaments;
 
-[ExtendObjectType(typeof(Query))]
-public class TournamentQueries
+[QueryType]
+public static partial class TournamentQueries
 {
-    [UsePaging(
+    [UseConnection(
         MaxPageSize = 100,
         IncludeTotalCount = true,
         DefaultPageSize = 10,
         RequirePagingBoundaries = true)]
-    [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Tournament> GetTournaments(
-        ISortingContext sorting, ApplicationDbContext context)
+    public static async Task<PageConnection<Tournament>> GetTournaments(
+        PagingArguments pagingArgs,
+        QueryContext<Tournament> query,
+        ApplicationDbContext context,
+        CancellationToken cancellationToken)
     {
-        sorting.Handled(false);
+        var page = await context.Tournaments
+            .AsNoTracking()
+            .With(query, DefaultOrder)
+            .ToPageAsync(pagingArgs, cancellationToken);
 
-        sorting.OnAfterSortingApplied<IQueryable<Tournament>>(
-            static (sortingApplied, query) =>
-            {
-                if (sortingApplied && query is IOrderedQueryable<Tournament> ordered)
-                {
-                    return ordered.ThenBy(t => t.Id);
-                }
-
-                return query.OrderBy(t => t.Id);
-            }
-        );
-
-        return context.Tournaments.AsNoTracking();
+        return page;
     }
 
+    private static SortDefinition<Tournament> DefaultOrder(SortDefinition<Tournament> sort)
+        => sort.IfEmpty(o => o.AddAscending(t => t.Id)).AddAscending(t => t.Id);
+
     [UseFirstOrDefault]
-    [UseProjection]
-    public IQueryable<Tournament>? GetTournamentById(
+    public static IQueryable<Tournament>? GetTournamentById(
         int id,
+        QueryContext<Tournament> query,
         ApplicationDbContext context)
     {
         return context.Tournaments
             .AsNoTracking()
-            .Where(t => t.Id == id);
+            .Where(t => t.Id == id)
+            .With(query);
     }
 }

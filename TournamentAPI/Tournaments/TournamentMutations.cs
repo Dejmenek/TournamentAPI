@@ -9,11 +9,11 @@ using TournamentAPI.Metrics;
 
 namespace TournamentAPI.Tournaments;
 
-[ExtendObjectType(typeof(Mutation))]
-public class TournamentMutations
+[MutationType]
+public static partial class TournamentMutations
 {
     [Authorize]
-    public async Task<bool?> JoinTournament(
+    public static async Task<bool?> JoinTournament(
         int tournamentId,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
@@ -71,7 +71,7 @@ public class TournamentMutations
     [UseFirstOrDefault]
     [UseProjection]
     [Authorize]
-    public async Task<IQueryable<Tournament>?> CreateTournament(
+    public static async Task<IQueryable<Tournament>?> CreateTournament(
         CreateTournamentInput input,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
@@ -112,7 +112,7 @@ public class TournamentMutations
     [UseFirstOrDefault]
     [UseProjection]
     [Authorize]
-    public async Task<IQueryable<Tournament>?> UpdateTournament(
+    public static async Task<IQueryable<Tournament>?> UpdateTournament(
         UpdateTournamentInput input,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
@@ -189,7 +189,7 @@ public class TournamentMutations
     }
 
     [Authorize]
-    public async Task<bool?> DeleteTournament(
+    public static async Task<bool?> DeleteTournament(
         int tournamentId,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
