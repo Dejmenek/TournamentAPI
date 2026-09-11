@@ -87,14 +87,19 @@ public static partial class Queries
                     ownerId
                     startDate
                     status
-                    participants {
-                      participantId
-                      tournamentId
-                      participant {
-                        email
-                        firstName
-                        id
-                        lastName
+                    participants(first: 10) {
+                      totalCount
+                      edges {
+                        node {
+                          participantId
+                          tournamentId
+                          participant {
+                            email
+                            firstName
+                            id
+                            lastName
+                          }
+                        }
                       }
                     }
                   }
@@ -268,10 +273,14 @@ public static partial class Queries
         public const string GetByIdWithParticipantEmailOnly = """
         query($id: Int!) {
           tournamentById(id: $id) {
-            participants {
-              participant {
-                id
-                email
+            participants(first: 10) {
+              edges {
+                node {
+                  participant {
+                    id
+                    email
+                  }
+                }
               }
             }
           }
@@ -286,14 +295,19 @@ public static partial class Queries
             ownerId
             startDate
             status
-            participants {
-              participantId
-              tournamentId
-              participant {
-                email
-                firstName
-                id
-                lastName
+            participants(first: 10) {
+              totalCount
+              edges {
+                node {
+                  participantId
+                  tournamentId
+                  participant {
+                    email
+                    firstName
+                    id
+                    lastName
+                  }
+                }
               }
             }
           }
