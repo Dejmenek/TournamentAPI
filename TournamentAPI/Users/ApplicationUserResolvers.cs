@@ -21,10 +21,10 @@ public static partial class ApplicationUserResolvers
         descriptor.Ignore(u => u.LockoutEnd);
         descriptor.Ignore(u => u.LockoutEnabled);
         descriptor.Ignore(u => u.AccessFailedCount);
+        descriptor.Ignore(u => u.Email);
         descriptor.Field(u => u.Id).IsProjected(true);
     }
 
-    [BindMember(nameof(ApplicationUser.Email))]
     public static string? GetEmail([Parent] ApplicationUser user, IResolverContext ctx)
         => user.IsEmailPublic || IsViewingOwnAccount(ctx, user) ? user.Email : null;
 
