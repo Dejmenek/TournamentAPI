@@ -1,3 +1,4 @@
+using GreenDonut.Data;
 using HotChocolate.Authorization;
 using HotChocolate.Resolvers;
 using Microsoft.EntityFrameworkCore;
@@ -69,10 +70,10 @@ public static partial class TournamentMutations
     }
 
     [UseFirstOrDefault]
-    [UseProjection]
     [Authorize]
     public static async Task<IQueryable<Tournament>?> CreateTournament(
         CreateTournamentInput input,
+        QueryContext<Tournament> query,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
         IResolverContext resolverContext,
@@ -106,14 +107,14 @@ public static partial class TournamentMutations
         if (tournament.Status == TournamentStatus.Open)
             tournamentMetrics.TournamentOpened();
 
-        return context.Tournaments.Where(t => t.Id == tournament.Id);
+        return context.Tournaments.AsNoTracking().Where(t => t.Id == tournament.Id).With(query);
     }
 
     [UseFirstOrDefault]
-    [UseProjection]
     [Authorize]
     public static async Task<IQueryable<Tournament>?> UpdateTournament(
         UpdateTournamentInput input,
+        QueryContext<Tournament> query,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
         IResolverContext resolverContext,
@@ -185,7 +186,7 @@ public static partial class TournamentMutations
 
         await context.SaveChangesAsync(token);
 
-        return context.Tournaments.Where(t => t.Id == tournament.Id);
+        return context.Tournaments.AsNoTracking().Where(t => t.Id == tournament.Id).With(query);
     }
 
     [Authorize]
