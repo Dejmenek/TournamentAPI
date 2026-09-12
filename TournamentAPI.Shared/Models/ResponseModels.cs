@@ -69,6 +69,8 @@ public class ApplicationUserNode
     public string LastName { get; set; } = string.Empty;
     public string? Email { get; set; }
     public bool IsEmailPublic { get; set; }
+    public TournamentsConnection? WonTournaments { get; set; }
+    public TournamentsConnection? PlayedTournaments { get; set; }
 }
 
 public class BracketNode
@@ -243,6 +245,8 @@ public class UserNode
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public bool IsEmailPublic { get; set; }
+    public TournamentsConnection? WonTournaments { get; set; }
+    public TournamentsConnection? PlayedTournaments { get; set; }
 }
 
 public class UpdateEmailVisibilityResponse
