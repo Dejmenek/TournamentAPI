@@ -1,3 +1,4 @@
+using GreenDonut.Data;
 using HotChocolate.Authorization;
 using HotChocolate.Resolvers;
 using Microsoft.EntityFrameworkCore;
@@ -13,10 +14,10 @@ namespace TournamentAPI.Brackets;
 public static partial class BracketMutations
 {
     [UseFirstOrDefault]
-    [UseProjection]
     [Authorize]
     public static async Task<IQueryable<Bracket>?> GenerateBracket(
         int tournamentId,
+        QueryContext<Bracket> query,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
         IResolverContext resolverContext,
@@ -49,15 +50,15 @@ public static partial class BracketMutations
             return null;
         }
 
-        return context.Brackets.Where(b => b.Id == bracket.Id);
+        return context.Brackets.AsNoTracking().Where(b => b.Id == bracket.Id).With(query);
     }
 
     [UseFirstOrDefault]
-    [UseProjection]
     [Authorize]
     public static async Task<IQueryable<Bracket>?> UpdateRound(
         int bracketId,
         int roundNumber,
+        QueryContext<Bracket> query,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
         IResolverContext resolverContext,
@@ -97,6 +98,6 @@ public static partial class BracketMutations
             return null;
         }
 
-        return context.Brackets.Where(b => b.Id == bracket.Id);
+        return context.Brackets.AsNoTracking().Where(b => b.Id == bracket.Id).With(query);
     }
 }
