@@ -30,6 +30,7 @@ builder.Services.AddScoped<ApplicationUserService>();
 builder.Services.AddScoped<BracketLookupService>();
 builder.Services.AddScoped<ParticipantsService>();
 builder.Services.AddScoped<TournamentLookupService>();
+builder.Services.AddScoped<UserTournamentsService>();
 builder.Services.AddApplicationDatabase();
 builder.Services.AddApplicationRateLimiting();
 builder.Services.AddApplicationTelemetry();
