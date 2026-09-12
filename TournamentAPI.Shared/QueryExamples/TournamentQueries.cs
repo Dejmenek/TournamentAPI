@@ -314,6 +314,36 @@ public static partial class Queries
         }
         """;
 
+        public const string GetByIdWithOwnerTournamentHistory = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            id
+            name
+            owner {
+              id
+              wonTournaments(first: 10) {
+                totalCount
+                edges {
+                  node {
+                    id
+                    name
+                  }
+                }
+              }
+              playedTournaments(first: 10) {
+                totalCount
+                edges {
+                  node {
+                    id
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
         public const string GetByIdWithBracketAndMatches = """
         query($id: Int!) {
           tournamentById(id: $id) {

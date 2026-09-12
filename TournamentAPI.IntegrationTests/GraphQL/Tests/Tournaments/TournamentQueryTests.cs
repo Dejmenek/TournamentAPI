@@ -138,6 +138,24 @@ public class TournamentQueryTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task GetTournamentById_WithOwnerTournamentHistory_IsReachableViaOwnerField()
+    {
+        // wonTournaments/playedTournaments live on the shared ApplicationUser type, so they
+        // should be reachable through tournament.owner, not just through getMe.
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithOwnerTournamentHistory,
+            new { id = 3 });
+
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data?.TournamentById?.Owner?.WonTournaments);
+
+        var wonTournamentNames = response.Data.TournamentById.Owner.WonTournaments.Nodes?.Select(t => t.Name).ToList();
+        Assert.Contains("Winter Championship 2024", wonTournamentNames);
+    }
+
+    [Fact]
     public async Task GetTournaments_ReturnsAllTournamentsWithTotalCount()
     {
         // Act
@@ -149,7 +167,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         // Assert
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
-        Assert.Equal(14, response.Data.Tournaments.TotalCount);
+        Assert.Equal(15, response.Data.Tournaments.TotalCount);
         Assert.Equal(10, response.Data.Tournaments.Edges.Count);
 
         var tournamentNames = response.Data.Tournaments.Nodes?.Select(t => t.Name).ToList();
@@ -222,7 +240,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         // Assert
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
-        Assert.Equal(14, response.Data.Tournaments.TotalCount);
+        Assert.Equal(15, response.Data.Tournaments.TotalCount);
         Assert.Equal(10, response.Data.Tournaments.Edges.Count);
 
         var springTournament = response.Data.Tournaments.Nodes?.FirstOrDefault(t => t.Name == "Spring Invitational");
@@ -248,7 +266,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         // Assert
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
-        Assert.Equal(14, response.Data.Tournaments.TotalCount);
+        Assert.Equal(15, response.Data.Tournaments.TotalCount);
         Assert.Equal(10, response.Data.Tournaments.Edges.Count);
 
         var springTournament = response.Data.Tournaments.Nodes?.FirstOrDefault(t => t.Name == "Spring Invitational");
@@ -278,7 +296,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         // Assert
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
-        Assert.Equal(14, response.Data.Tournaments.TotalCount);
+        Assert.Equal(15, response.Data.Tournaments.TotalCount);
         Assert.Equal(10, response.Data.Tournaments.Edges.Count);
 
         foreach (var tournament in response.Data.Tournaments.Nodes!)
@@ -302,7 +320,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         // Assert
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
-        Assert.Equal(14, response.Data.Tournaments.TotalCount);
+        Assert.Equal(15, response.Data.Tournaments.TotalCount);
         Assert.Equal(10, response.Data.Tournaments.Edges.Count);
 
         var tournamentNames = response.Data.Tournaments.Nodes?.Select(t => t.Name).ToList();
@@ -323,7 +341,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
 
-        Assert.Equal(14, response.Data.Tournaments.TotalCount);
+        Assert.Equal(15, response.Data.Tournaments.TotalCount);
         Assert.Equal(10, response.Data.Tournaments.Edges.Count);
 
         var tournamentNames = response.Data.Tournaments.Nodes?.Select(t => t.Name).ToList();

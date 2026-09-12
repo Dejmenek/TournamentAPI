@@ -20,14 +20,18 @@ public static partial class Mutations
                 bracket {
                   id
                   tournamentId
-                  matches {
-                    id
-                    round
-                    participantAId
-                    participantBId
-                    scoreA
-                    scoreB
-                    winnerId
+                  matchesByBracket(first: 10) {
+                    totalCount
+                    edges {
+                      node {
+                        id
+                        bracketId
+                        round
+                        player1Id
+                        player2Id
+                        winnerId
+                      }
+                    }
                   }
                 }
               }

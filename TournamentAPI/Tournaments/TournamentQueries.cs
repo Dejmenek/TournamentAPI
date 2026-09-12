@@ -3,6 +3,7 @@ using HotChocolate.Types.Pagination;
 using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
+using TournamentAPI.Extensions;
 
 namespace TournamentAPI.Tournaments;
 
@@ -24,14 +25,11 @@ public static partial class TournamentQueries
     {
         var page = await context.Tournaments
             .AsNoTracking()
-            .With(query, DefaultOrder)
+            .With(query, s => s.DefaultTournamentOrder())
             .ToPageAsync(pagingArgs, cancellationToken);
 
         return page;
     }
-
-    private static SortDefinition<Tournament> DefaultOrder(SortDefinition<Tournament> sort)
-        => sort.IfEmpty(o => o.AddAscending(t => t.Id)).AddAscending(t => t.Id);
 
     [UseFirstOrDefault]
     public static IQueryable<Tournament>? GetTournamentById(

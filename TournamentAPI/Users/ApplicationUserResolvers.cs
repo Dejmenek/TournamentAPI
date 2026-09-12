@@ -1,5 +1,8 @@
+using GreenDonut.Data;
 using HotChocolate.Resolvers;
+using HotChocolate.Types.Pagination;
 using TournamentAPI.Data.Models;
+using TournamentAPI.Tournaments;
 
 namespace TournamentAPI.Users;
 
@@ -27,6 +30,28 @@ public static partial class ApplicationUserResolvers
 
     public static string? GetEmail([Parent] ApplicationUser user, IResolverContext ctx)
         => user.IsEmailPublic || IsViewingOwnAccount(ctx, user) ? user.Email : null;
+
+    [UseConnection(IncludeTotalCount = true)]
+    [UseFiltering]
+    [UseSorting]
+    public static async Task<PageConnection<Tournament>> GetPlayedTournaments(
+        [Parent(requires: nameof(ApplicationUser.Id))] ApplicationUser user,
+        PagingArguments pagingArgs,
+        QueryContext<Tournament> query,
+        UserTournamentsService userTournamentsService,
+        CancellationToken cancellationToken)
+        => await userTournamentsService.GetPlayedTournamentsAsync(user.Id, pagingArgs, query, cancellationToken);
+
+    [UseConnection(IncludeTotalCount = true)]
+    [UseFiltering]
+    [UseSorting]
+    public static async Task<PageConnection<Tournament>> GetWonTournaments(
+        [Parent(requires: nameof(ApplicationUser.Id))] ApplicationUser user,
+        PagingArguments pagingArgs,
+        QueryContext<Tournament> query,
+        UserTournamentsService userTournamentsService,
+        CancellationToken cancellationToken)
+        => await userTournamentsService.GetWonTournamentsAsync(user.Id, pagingArgs, query, cancellationToken);
 
     private static bool IsViewingOwnAccount(IResolverContext ctx, ApplicationUser user)
     {
