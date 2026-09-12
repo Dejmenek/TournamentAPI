@@ -1,3 +1,4 @@
+using GreenDonut.Data;
 using HotChocolate.Authorization;
 using HotChocolate.Resolvers;
 using Microsoft.EntityFrameworkCore;
@@ -14,10 +15,10 @@ namespace TournamentAPI.Participants;
 public static partial class ParticipantMutations
 {
     [UseFirstOrDefault]
-    [UseProjection]
     [Authorize]
     public static async Task<IQueryable<Tournament>?> AddParticipant(
         AddParticipantInput input,
+        QueryContext<Tournament> query,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
         IResolverContext resolverContext,
@@ -64,7 +65,7 @@ public static partial class ParticipantMutations
         try
         {
             await context.SaveChangesAsync(token);
-            return context.Tournaments.AsNoTracking().Where(t => t.Id == input.TournamentId);
+            return context.Tournaments.AsNoTracking().Where(t => t.Id == input.TournamentId).With(query);
         }
         catch (DbUpdateException ex) when (ex.IsUniqueConstraintViolation(TournamentParticipant.SlotNumberUniqueIndexName))
         {
