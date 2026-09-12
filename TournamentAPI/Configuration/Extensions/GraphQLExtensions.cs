@@ -27,7 +27,7 @@ internal static class GraphQLExtensions
             .AddQueryConventions()
             .AddPagingArguments()
             .AddProjections()
-            .AddFiltering(x => x.AddDefaults())
+            .AddFiltering(x => x.AddDefaults().MaxAllowedFilterOperations(32))
             .AddSorting()
             .AddMaxExecutionDepthRule(10)
             .ModifyCostOptions(options =>
