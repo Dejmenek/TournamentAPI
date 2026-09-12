@@ -138,6 +138,24 @@ public class TournamentQueryTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task GetTournamentById_WithOwnerTournamentHistory_IsReachableViaOwnerField()
+    {
+        // wonTournaments/playedTournaments live on the shared ApplicationUser type, so they
+        // should be reachable through tournament.owner, not just through getMe.
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithOwnerTournamentHistory,
+            new { id = 3 });
+
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data?.TournamentById?.Owner?.WonTournaments);
+
+        var wonTournamentNames = response.Data.TournamentById.Owner.WonTournaments.Nodes?.Select(t => t.Name).ToList();
+        Assert.Contains("Winter Championship 2024", wonTournamentNames);
+    }
+
+    [Fact]
     public async Task GetTournaments_ReturnsAllTournamentsWithTotalCount()
     {
         // Act
