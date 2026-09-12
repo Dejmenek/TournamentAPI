@@ -21,6 +21,16 @@
           "AspNetCore.HealthChecks.UI.Core": "9.0.0"
         }
       },
+      "GreenDonut.Data.EntityFramework": {
+        "type": "Direct",
+        "requested": "[16.6.4, )",
+        "resolved": "16.6.4",
+        "contentHash": "+FjI3XBfdhvDeef+XqAKb5+OQ0IxeR4tocvJZd19zAtvwc3rtDtFTJ7BvSyIMp7TLh3s+XHBI9Rf1D8pBSb+QQ==",
+        "dependencies": {
+          "GreenDonut.Data": "16.6.4",
+          "Microsoft.EntityFrameworkCore": "9.0.4"
+        }
+      },
       "Hangfire.AspNetCore": {
         "type": "Direct",
         "requested": "[1.8.25, )",
@@ -89,6 +99,12 @@
           "HotChocolate.Types": "16.6.4",
           "OpenTelemetry.Api": "1.15.3"
         }
+      },
+      "HotChocolate.Types.Analyzers": {
+        "type": "Direct",
+        "requested": "[16.6.4, )",
+        "resolved": "16.6.4",
+        "contentHash": "bigjWuAkEQvxoQCrUzAvowiqS7YrTciape6++hB9YpA2cFH5RQnG+xyTo/MvWCN5jSvnW4izvdae9mhxtfhZZA=="
       },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {
         "type": "Direct",
@@ -350,15 +366,6 @@
         "dependencies": {
           "GreenDonut.Abstractions": "16.6.4",
           "GreenDonut.Data.Primitives": "16.6.4"
-        }
-      },
-      "GreenDonut.Data.EntityFramework": {
-        "type": "Transitive",
-        "resolved": "16.6.4",
-        "contentHash": "+FjI3XBfdhvDeef+XqAKb5+OQ0IxeR4tocvJZd19zAtvwc3rtDtFTJ7BvSyIMp7TLh3s+XHBI9Rf1D8pBSb+QQ==",
-        "dependencies": {
-          "GreenDonut.Data": "16.6.4",
-          "Microsoft.EntityFrameworkCore": "9.0.4"
         }
       },
       "GreenDonut.Data.Primitives": {

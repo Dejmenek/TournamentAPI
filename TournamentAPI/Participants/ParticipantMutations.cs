@@ -10,13 +10,13 @@ using TournamentAPI.Users;
 
 namespace TournamentAPI.Participants;
 
-[ExtendObjectType(typeof(Mutation))]
-public class ParticipantMutations
+[MutationType]
+public static partial class ParticipantMutations
 {
     [UseFirstOrDefault]
     [UseProjection]
     [Authorize]
-    public async Task<IQueryable<Tournament>?> AddParticipant(
+    public static async Task<IQueryable<Tournament>?> AddParticipant(
         AddParticipantInput input,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,

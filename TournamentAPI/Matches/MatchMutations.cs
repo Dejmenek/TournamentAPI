@@ -8,11 +8,11 @@ using TournamentAPI.Tournaments;
 
 namespace TournamentAPI.Matches;
 
-[ExtendObjectType(typeof(Mutation))]
-public class MatchMutations
+[MutationType]
+public static partial class MatchMutations
 {
     [Authorize]
-    public async Task<bool?> Play(
+    public static async Task<bool?> Play(
         int matchId,
         int winnerId,
         ClaimsPrincipal userClaims,

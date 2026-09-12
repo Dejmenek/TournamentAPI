@@ -9,13 +9,13 @@ using TournamentAPI.Tournaments;
 
 namespace TournamentAPI.Brackets;
 
-[ExtendObjectType(typeof(Mutation))]
-public class BracketMutations
+[MutationType]
+public static partial class BracketMutations
 {
     [UseFirstOrDefault]
     [UseProjection]
     [Authorize]
-    public async Task<IQueryable<Bracket>?> GenerateBracket(
+    public static async Task<IQueryable<Bracket>?> GenerateBracket(
         int tournamentId,
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
@@ -55,7 +55,7 @@ public class BracketMutations
     [UseFirstOrDefault]
     [UseProjection]
     [Authorize]
-    public async Task<IQueryable<Bracket>?> UpdateRound(
+    public static async Task<IQueryable<Bracket>?> UpdateRound(
         int bracketId,
         int roundNumber,
         ClaimsPrincipal userClaims,

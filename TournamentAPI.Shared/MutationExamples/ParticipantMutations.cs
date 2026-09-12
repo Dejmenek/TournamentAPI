@@ -46,14 +46,19 @@ public static partial class Mutations
                   ownerId
                   startDate
                   status
-                  participants {
-                    participantId
-                    tournamentId
-                    participant {
-                      email
-                      firstName
-                      id
-                      lastName
+                  participants(first: 10) {
+                    totalCount
+                    edges {
+                      node {
+                        participantId
+                        tournamentId
+                        participant {
+                          email
+                          firstName
+                          id
+                          lastName
+                        }
+                      }
                     }
                   }
                 }

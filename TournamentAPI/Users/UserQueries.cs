@@ -8,11 +8,11 @@ using TournamentAPI.Extensions;
 
 namespace TournamentAPI.Users;
 
-[ExtendObjectType(typeof(Query))]
-public class UserQueries
+[QueryType]
+public static partial class UserQueries
 {
     [Authorize]
-    public async Task<ApplicationUser?> GetMe(
+    public static async Task<ApplicationUser?> GetMe(
         ClaimsPrincipal claimsPrincipal,
         ApplicationDbContext context,
         IResolverContext resolverContext,

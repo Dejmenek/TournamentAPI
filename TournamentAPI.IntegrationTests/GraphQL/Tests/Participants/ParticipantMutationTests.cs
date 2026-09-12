@@ -577,7 +577,7 @@ public class ParticipantMutationTests : BaseIntegrationTest
         Assert.NotNull(response.Data.AddParticipant);
         Assert.NotNull(response.Data.AddParticipant.Tournament);
         Assert.NotNull(response.Data.AddParticipant.Tournament.Participants);
-        Assert.All(response.Data.AddParticipant.Tournament.Participants, p => Assert.NotNull(p.Participant));
+        Assert.All(response.Data.AddParticipant.Tournament.Participants.Nodes!, p => Assert.NotNull(p.Participant));
     }
 
     [Fact]

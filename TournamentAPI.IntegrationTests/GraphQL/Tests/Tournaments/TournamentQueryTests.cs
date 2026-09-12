@@ -75,7 +75,7 @@ public class TournamentQueryTests : BaseIntegrationTest
             new { id = 3 });
 
         Assert.False(response.HasErrors);
-        var henry = response.Data!.TournamentById!.Participants!
+        var henry = response.Data!.TournamentById!.Participants!.Nodes!
             .Select(p => p.Participant)
             .First(p => p!.Id == 8);
         Assert.Null(henry!.Email);
@@ -228,12 +228,12 @@ public class TournamentQueryTests : BaseIntegrationTest
         var springTournament = response.Data.Tournaments.Nodes?.FirstOrDefault(t => t.Name == "Spring Invitational");
         Assert.NotNull(springTournament);
         Assert.NotNull(springTournament.Participants);
-        Assert.Equal(2, springTournament.Participants.Count);
+        Assert.Equal(2, springTournament.Participants.TotalCount);
 
         var summerTournament = response.Data.Tournaments.Nodes?.FirstOrDefault(t => t.Name == "Summer Cup");
         Assert.NotNull(summerTournament);
         Assert.NotNull(summerTournament.Participants);
-        Assert.Equal(2, summerTournament.Participants.Count);
+        Assert.Equal(2, summerTournament.Participants.TotalCount);
     }
 
     [Fact]
@@ -262,8 +262,8 @@ public class TournamentQueryTests : BaseIntegrationTest
         var winterTournament = response.Data.Tournaments.Nodes?.FirstOrDefault(t => t.Name == "Winter Championship 2024");
         Assert.NotNull(winterTournament);
         Assert.NotNull(winterTournament.Bracket);
-        Assert.NotNull(winterTournament.Bracket.Matches);
-        Assert.Equal(7, winterTournament.Bracket.Matches.Count);
+        Assert.NotNull(winterTournament.Bracket.MatchesByBracket);
+        Assert.Equal(7, winterTournament.Bracket.MatchesByBracket.TotalCount);
     }
 
     [Fact]
@@ -442,8 +442,8 @@ public class TournamentQueryTests : BaseIntegrationTest
 
         var bracket = response.Data.TournamentById.Bracket;
         Assert.NotNull(bracket);
-        Assert.NotNull(bracket.Matches);
-        Assert.Equal(7, bracket.Matches.Count);
+        Assert.NotNull(bracket.MatchesByBracket);
+        Assert.Equal(7, bracket.MatchesByBracket.TotalCount);
     }
 
     [Fact]
@@ -467,7 +467,7 @@ public class TournamentQueryTests : BaseIntegrationTest
 
         var participants = response.Data.TournamentById.Participants;
         Assert.NotNull(participants);
-        Assert.Equal(2, participants.Count);
+        Assert.Equal(2, participants.TotalCount);
     }
 
     [Fact]

@@ -36,7 +36,22 @@ public class TournamentNode
     public bool IsActive { get; set; }
     public ApplicationUserNode? Owner { get; set; }
     public BracketNode? Bracket { get; set; }
-    public List<TournamentParticipantNode>? Participants { get; set; }
+    public ParticipantsConnection? Participants { get; set; }
+}
+
+public class ParticipantsConnection
+{
+    public int? TotalCount { get; set; }
+    public PageInfo? PageInfo { get; set; }
+    public List<ParticipantEdge>? Edges { get; set; }
+
+    public List<TournamentParticipantNode>? Nodes => Edges?.Select(e => e.Node).ToList();
+}
+
+public class ParticipantEdge
+{
+    public string? Cursor { get; set; }
+    public TournamentParticipantNode Node { get; set; } = null!;
 }
 
 public class TournamentParticipantNode
@@ -60,7 +75,22 @@ public class BracketNode
 {
     public int Id { get; set; }
     public int TournamentId { get; set; }
-    public List<MatchNode>? Matches { get; set; }
+    public MatchesByBracketConnection? MatchesByBracket { get; set; }
+}
+
+public class MatchesByBracketConnection
+{
+    public int? TotalCount { get; set; }
+    public PageInfo? PageInfo { get; set; }
+    public List<MatchEdge>? Edges { get; set; }
+
+    public List<MatchNode>? Nodes => Edges?.Select(e => e.Node).ToList();
+}
+
+public class MatchEdge
+{
+    public string? Cursor { get; set; }
+    public MatchNode Node { get; set; } = null!;
 }
 
 public class MatchNode
@@ -169,11 +199,6 @@ public class UpdateRoundResponse
 public class UpdateRoundResult
 {
     public BracketNode? Bracket { get; set; }
-}
-
-public class MatchesForRoundResponse
-{
-    public List<MatchNode>? MatchesForRound { get; set; }
 }
 
 public class LoginResponse

@@ -13,7 +13,7 @@ public class MatchQueryTests : BaseIntegrationTest
         // Act
         using var client = CreateClient();
 
-        var response = await client.ExecuteQueryAsync<MatchesForRoundResponse>(
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
             Shared.QueryExamples.Queries.Match.GetMatchesForRoundWithBasicFields,
             new
             {
@@ -24,7 +24,9 @@ public class MatchQueryTests : BaseIntegrationTest
         // Assert
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data);
-        Assert.NotNull(response.Data.MatchesForRound);
+        Assert.NotNull(response.Data.TournamentById);
+        Assert.NotNull(response.Data.TournamentById.Bracket);
+        Assert.NotNull(response.Data.TournamentById.Bracket.MatchesByBracket);
     }
 
     [Fact]
@@ -33,7 +35,7 @@ public class MatchQueryTests : BaseIntegrationTest
         // Act
         using var client = CreateClient();
 
-        var response = await client.ExecuteQueryAsync<MatchesForRoundResponse>(
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
             Shared.QueryExamples.Queries.Match.GetMatchesForRoundWithPlayerDetails,
             new
             {
@@ -44,9 +46,11 @@ public class MatchQueryTests : BaseIntegrationTest
         // Assert
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data);
-        Assert.NotNull(response.Data.MatchesForRound);
+        Assert.NotNull(response.Data.TournamentById);
+        Assert.NotNull(response.Data.TournamentById.Bracket);
+        Assert.NotNull(response.Data.TournamentById.Bracket.MatchesByBracket);
 
-        foreach (var match in response.Data.MatchesForRound!)
+        foreach (var match in response.Data.TournamentById.Bracket.MatchesByBracket.Nodes!)
         {
             Assert.NotNull(match.Player1);
             if (match.Player2Id.HasValue)
