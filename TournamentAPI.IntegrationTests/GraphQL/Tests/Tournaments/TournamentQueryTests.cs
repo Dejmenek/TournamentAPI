@@ -149,7 +149,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         // Assert
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
-        Assert.Equal(14, response.Data.Tournaments.TotalCount);
+        Assert.Equal(15, response.Data.Tournaments.TotalCount);
         Assert.Equal(10, response.Data.Tournaments.Edges.Count);
 
         var tournamentNames = response.Data.Tournaments.Nodes?.Select(t => t.Name).ToList();
@@ -222,7 +222,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         // Assert
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
-        Assert.Equal(14, response.Data.Tournaments.TotalCount);
+        Assert.Equal(15, response.Data.Tournaments.TotalCount);
         Assert.Equal(10, response.Data.Tournaments.Edges.Count);
 
         var springTournament = response.Data.Tournaments.Nodes?.FirstOrDefault(t => t.Name == "Spring Invitational");
@@ -248,7 +248,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         // Assert
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
-        Assert.Equal(14, response.Data.Tournaments.TotalCount);
+        Assert.Equal(15, response.Data.Tournaments.TotalCount);
         Assert.Equal(10, response.Data.Tournaments.Edges.Count);
 
         var springTournament = response.Data.Tournaments.Nodes?.FirstOrDefault(t => t.Name == "Spring Invitational");
@@ -278,7 +278,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         // Assert
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
-        Assert.Equal(14, response.Data.Tournaments.TotalCount);
+        Assert.Equal(15, response.Data.Tournaments.TotalCount);
         Assert.Equal(10, response.Data.Tournaments.Edges.Count);
 
         foreach (var tournament in response.Data.Tournaments.Nodes!)
@@ -302,7 +302,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         // Assert
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
-        Assert.Equal(14, response.Data.Tournaments.TotalCount);
+        Assert.Equal(15, response.Data.Tournaments.TotalCount);
         Assert.Equal(10, response.Data.Tournaments.Edges.Count);
 
         var tournamentNames = response.Data.Tournaments.Nodes?.Select(t => t.Name).ToList();
@@ -323,7 +323,7 @@ public class TournamentQueryTests : BaseIntegrationTest
         Assert.False(response.HasErrors);
         Assert.NotNull(response.Data?.Tournaments?.Edges);
 
-        Assert.Equal(14, response.Data.Tournaments.TotalCount);
+        Assert.Equal(15, response.Data.Tournaments.TotalCount);
         Assert.Equal(10, response.Data.Tournaments.Edges.Count);
 
         var tournamentNames = response.Data.Tournaments.Nodes?.Select(t => t.Name).ToList();

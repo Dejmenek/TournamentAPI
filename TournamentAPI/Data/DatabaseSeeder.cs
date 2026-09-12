@@ -352,7 +352,38 @@ public static class DatabaseSeeder
             tournament15.Participants.Add(new TournamentParticipant { Tournament = tournament15, Participant = user3, SlotNumber = 2 });
             tournament15.Participants.Add(new TournamentParticipant { Tournament = tournament15, Participant = user4, SlotNumber = 3 });
 
-            await context.Tournaments.AddRangeAsync(tournament1, tournament2, tournament3, tournament4, tournament5, tournament6, tournament7, tournament8, tournament9, tournament10, tournament11, tournament12, tournament13, tournament14, tournament15);
+            // Tournament 16: Closed tournament with 4 participants and a full, completed bracket
+            // with a different champion than Tournament 3 (used to prove wonTournaments/playedTournaments
+            // are filtered per user, not shared across every participant of a shared tournament).
+            var tournament16 = new Tournament
+            {
+                Name = "Champions Cup",
+                StartDate = DateTime.UtcNow.AddDays(-10),
+                Status = TournamentStatus.Closed,
+                OwnerId = user2.Id,
+                Owner = user2,
+                MaxParticipants = 4,
+                Participants = new List<TournamentParticipant>(),
+                Bracket = new Bracket()
+            };
+
+            tournament16.Participants.Add(new TournamentParticipant { Tournament = tournament16, Participant = user1, SlotNumber = 1 });
+            tournament16.Participants.Add(new TournamentParticipant { Tournament = tournament16, Participant = user3, SlotNumber = 2 });
+            tournament16.Participants.Add(new TournamentParticipant { Tournament = tournament16, Participant = user5, SlotNumber = 3 });
+            tournament16.Participants.Add(new TournamentParticipant { Tournament = tournament16, Participant = user6, SlotNumber = 4 });
+
+            // Round 1 - Semi Finals (2 matches)
+            var match19 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user3.Id, WinnerId = user3.Id, Bracket = tournament16.Bracket };
+            var match20 = new Match { Round = 1, Player1Id = user5.Id, Player2Id = user6.Id, WinnerId = user6.Id, Bracket = tournament16.Bracket };
+
+            // Round 2 - Final
+            var match21 = new Match { Round = 2, Player1Id = user3.Id, Player2Id = user6.Id, WinnerId = user6.Id, Bracket = tournament16.Bracket };
+
+            tournament16.Bracket.Matches.Add(match19);
+            tournament16.Bracket.Matches.Add(match20);
+            tournament16.Bracket.Matches.Add(match21);
+
+            await context.Tournaments.AddRangeAsync(tournament1, tournament2, tournament3, tournament4, tournament5, tournament6, tournament7, tournament8, tournament9, tournament10, tournament11, tournament12, tournament13, tournament14, tournament15, tournament16);
             await context.SaveChangesAsync();
         }
     }
