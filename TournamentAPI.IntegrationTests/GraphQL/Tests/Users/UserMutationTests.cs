@@ -448,6 +448,8 @@ public class UserMutationTests : BaseIntegrationTest
 
     [Fact]
     public async Task LoginUser_RemovesOldRefreshTokens_OnReLogin()
+    [Fact]
+    public async Task LoginUser_KeepsOtherSessions_OnReLogin()
     {
         using var client = CreateClient();
         var loginVars = new { input = new { email = "alice@example.com", password = "Password123!" } };
@@ -459,8 +461,148 @@ public class UserMutationTests : BaseIntegrationTest
             Shared.MutationExamples.Mutations.Users.LoginUser, loginVars);
 
         var alice = await DbContext.Users.FirstAsync(u => u.Email == "alice@example.com");
-        var tokenCount = await DbContext.RefreshTokens.CountAsync(r => r.UserId == alice.Id);
-        Assert.Equal(1, tokenCount);
+        var activeTokenCount = await DbContext.RefreshTokens
+            .AsNoTracking()
+            .CountAsync(r => r.UserId == alice.Id && r.Revoked == null);
+        Assert.Equal(2, activeTokenCount);
+    }
+
+    [Fact]
+    public async Task LogoutUser_RevokesTokenAndClearsCookie_WhenAuthenticated()
+    {
+        using var client = CreateClient();
+
+        var loginResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email = "alice@example.com", password = "Password123!" } });
+        client.SetAuthToken(loginResponse.Data!.LoginUser!.String!);
+
+        var rawRefreshToken = client.GetRefreshTokenCookie();
+        Assert.NotNull(rawRefreshToken);
+        client.SetRefreshTokenCookie(rawRefreshToken);
+
+        var response = await client.ExecuteMutationAsync<LogoutResponse>(
+            Shared.MutationExamples.Mutations.Users.LogoutUser, new { });
+
+        Assert.False(response.HasErrors);
+        Assert.True(response.Data?.LogoutUser?.Boolean);
+
+        var alice = await DbContext.Users.FirstAsync(u => u.Email == "alice@example.com");
+        var storedToken = await DbContext.RefreshTokens
+            .AsNoTracking()
+            .SingleAsync(r => r.UserId == alice.Id);
+        Assert.NotNull(storedToken.Revoked);
+        Assert.False(storedToken.IsActive);
+
+        var cookieAfterLogout = client.GetRefreshTokenCookie();
+        Assert.NotNull(cookieAfterLogout);
+        Assert.NotEqual(rawRefreshToken, cookieAfterLogout);
+    }
+
+    [Fact]
+    public async Task LogoutUser_ReturnsInvalidError_WhenCookieIsMissing()
+    {
+        using var client = CreateClient();
+
+        var loginResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email = "alice@example.com", password = "Password123!" } });
+        client.SetAuthToken(loginResponse.Data!.LoginUser!.String!);
+
+        var response = await client.ExecuteMutationAsync<LogoutResponse>(
+            Shared.MutationExamples.Mutations.Users.LogoutUser, new { });
+
+        Assert.True(response.HasErrors);
+        var error = response.Errors!.First();
+        var expectedError = UserErrors.RefreshTokenInvalid();
+        Assert.Equal(expectedError.Code, error.Extensions!["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+    }
+
+    [Fact]
+    public async Task LogoutUser_ReturnsInvalidError_WhenTokenAlreadyRevoked()
+    {
+        var alice = await DbContext.Users.FirstAsync(u => u.Email == "alice@example.com");
+
+        var rawToken = "already-revoked-token-value";
+        var hashedToken = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(rawToken))).ToLowerInvariant();
+        var revokedToken = new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = alice.Id,
+            Token = hashedToken,
+            Created = DateTime.UtcNow.AddMinutes(-10),
+            Expires = DateTime.UtcNow.AddDays(6),
+            Revoked = DateTime.UtcNow.AddMinutes(-5)
+        };
+        DbContext.RefreshTokens.Add(revokedToken);
+        await DbContext.SaveChangesAsync();
+
+        using var client = CreateClient();
+        var loginResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email = "alice@example.com", password = "Password123!" } });
+        client.SetAuthToken(loginResponse.Data!.LoginUser!.String!);
+        client.SetRefreshTokenCookie(rawToken);
+
+        var response = await client.ExecuteMutationAsync<LogoutResponse>(
+            Shared.MutationExamples.Mutations.Users.LogoutUser, new { });
+
+        Assert.True(response.HasErrors);
+        var error = response.Errors!.First();
+        var expectedError = UserErrors.RefreshTokenInvalid();
+        Assert.Equal(expectedError.Code, error.Extensions!["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+    }
+
+    [Fact]
+    public async Task LogoutUser_ReturnsError_WhenNotAuthenticated()
+    {
+        using var client = CreateClient();
+
+        var response = await client.ExecuteMutationAsync<LogoutResponse>(
+            Shared.MutationExamples.Mutations.Users.LogoutUser, new { });
+
+        Assert.True(response.HasErrors);
+        Assert.Null(response.Data?.LogoutUser);
+    }
+
+    [Fact]
+    public async Task LogoutUser_TreatsConcurrentRevoke_AsIdempotentSuccess()
+    {
+        using var client1 = CreateClient();
+        using var client2 = CreateClient();
+
+        var loginResponse = await client1.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email = "alice@example.com", password = "Password123!" } });
+        var authToken = loginResponse.Data!.LoginUser!.String!;
+        client1.SetAuthToken(authToken);
+        client2.SetAuthToken(authToken);
+
+        var sharedRefreshToken = client1.GetRefreshTokenCookie();
+        Assert.NotNull(sharedRefreshToken);
+        client1.SetRefreshTokenCookie(sharedRefreshToken);
+        client2.SetRefreshTokenCookie(sharedRefreshToken);
+
+        var task1 = client1.ExecuteMutationAsync<LogoutResponse>(
+            Shared.MutationExamples.Mutations.Users.LogoutUser, new { });
+        var task2 = client2.ExecuteMutationAsync<LogoutResponse>(
+            Shared.MutationExamples.Mutations.Users.LogoutUser, new { });
+
+        var results = await Task.WhenAll(task1, task2);
+
+        Assert.All(results, r =>
+        {
+            Assert.False(r.HasErrors);
+            Assert.True(r.Data?.LogoutUser?.Boolean);
+        });
+
+        var alice = await DbContext.Users.FirstAsync(u => u.Email == "alice@example.com");
+        var activeTokenCount = await DbContext.RefreshTokens
+            .AsNoTracking()
+            .CountAsync(r => r.UserId == alice.Id && r.Revoked == null);
+        Assert.Equal(0, activeTokenCount);
     }
 
     [Fact]
