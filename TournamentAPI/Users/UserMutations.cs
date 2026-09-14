@@ -141,7 +141,8 @@ public static partial class UserMutations
             Id = Guid.NewGuid(),
             UserId = user.Id,
             Token = refreshTokenResult.Hashed,
-            ExpiryDateUtc = DateTime.UtcNow.AddDays(7),
+            Created = DateTime.UtcNow,
+            Expires = DateTime.UtcNow.AddDays(7),
         };
 
         if (httpContextAccessor.HttpContext == null)
@@ -157,7 +158,7 @@ public static partial class UserMutations
         context.RefreshTokens.Add(refreshToken);
         await context.SaveChangesAsync();
 
-        httpContextAccessor.HttpContext.Response.AppendRefreshTokenCookie(refreshTokenResult.Raw, refreshToken.ExpiryDateUtc);
+        httpContextAccessor.HttpContext.Response.AppendRefreshTokenCookie(refreshTokenResult.Raw, refreshToken.Expires);
 
         return accessToken;
     }
