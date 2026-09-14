@@ -56,6 +56,56 @@ public static partial class UserMutations
         return true;
     }
 
+    [Authorize]
+    public static async Task<bool?> LogoutUser(
+        SignInManager<ApplicationUser> signInManager,
+        ApplicationDbContext context,
+        IResolverContext resolverContext,
+        IHttpContextAccessor httpContextAccessor,
+        JwtService jwtService
+    )
+    {
+        await signInManager.SignOutAsync();
+        if (httpContextAccessor.HttpContext == null)
+        {
+            resolverContext.ReportError(UserErrors.HttpContextUnavailable());
+            return null;
+        }
+
+        var rawCookieToken = httpContextAccessor.HttpContext.Request.Cookies["refreshToken"];
+        var hashedCookieToken = jwtService.HashRefreshToken(rawCookieToken ?? string.Empty);
+
+        var existingToken = await context.RefreshTokens
+            .FirstOrDefaultAsync(r => r.Token == hashedCookieToken);
+
+        if (existingToken is null || !existingToken.IsActive)
+        {
+            resolverContext.ReportError(UserErrors.RefreshTokenInvalid());
+            return null;
+        }
+
+        existingToken.Revoked = DateTime.UtcNow;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            await context.Entry(existingToken).ReloadAsync();
+
+            if (existingToken.IsActive)
+            {
+                resolverContext.ReportError(UserErrors.RefreshTokenConflict());
+                return null;
+            }
+        }
+
+        httpContextAccessor.HttpContext.Response.ClearRefreshTokenCookie();
+
+        return true;
+    }
+
     public static async Task<string?> LoginUser(
         LoginUserInput input,
         UserManager<ApplicationUser> userManager,

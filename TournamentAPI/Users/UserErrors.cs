@@ -40,6 +40,12 @@ public static class UserErrors
             .SetCode(UserErrorCodes.UnableToSetRefreshTokenCookie)
             .Build();
 
+    public static IError HttpContextUnavailable() =>
+        ErrorBuilder.New()
+            .SetMessage("Unable to process the request because no HTTP context is available.")
+            .SetCode(UserErrorCodes.HttpContextUnavailable)
+            .Build();
+
     public static IError AccountLockedOut =>
         ErrorBuilder.New()
             .SetMessage("The account is locked out due to multiple failed login attempts.")
