@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace TournamentAPI.Data.Models;
 
 public class RefreshToken
@@ -10,5 +12,9 @@ public class RefreshToken
     public string? ReplacedByToken { get; set; }
     public int UserId { get; set; }
     public ApplicationUser User { get; set; } = null!;
+
+    [Timestamp]
+    public byte[] Version { get; set; } = null!;
+
     public bool IsActive => Revoked is null && DateTime.UtcNow < Expires;
 }

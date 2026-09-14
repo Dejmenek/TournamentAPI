@@ -205,13 +205,46 @@ public static partial class UserMutations
         }
 
         var newRefreshToken = jwtService.CreateRefreshToken();
-        refreshTokenEntity.Token = newRefreshToken.Hashed;
-        refreshTokenEntity.ExpiryDateUtc = DateTime.UtcNow.AddDays(7);
+        var refreshExpiresAt = DateTime.UtcNow.AddDays(7);
 
-        await context.SaveChangesAsync();
+        existingToken.Revoked = DateTime.UtcNow;
+        existingToken.ReplacedByToken = newRefreshToken.Hashed;
 
-        httpContextAccessor.HttpContext.Response.AppendRefreshTokenCookie(newRefreshToken.Raw, refreshTokenEntity.ExpiryDateUtc);
+        context.RefreshTokens.Add(new RefreshToken
+        {
+            Token = newRefreshToken.Hashed,
+            UserId = user.Id,
+            Created = DateTime.UtcNow,
+            Expires = refreshExpiresAt
+        });
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            resolverContext.ReportError(UserErrors.RefreshTokenConflict());
+            return null;
+        }
+
+        string accessToken = jwtService.CreateToken(user);
+        httpContextAccessor.HttpContext.Response.AppendRefreshTokenCookie(newRefreshToken.Raw, refreshExpiresAt);
 
         return accessToken;
+    }
+
+    private static async Task RevokeAllActiveTokensAsync(ApplicationDbContext context, int userId)
+    {
+        var activeTokens = await context.RefreshTokens
+            .Where(t => t.UserId == userId && t.Revoked == null)
+            .ToListAsync();
+
+        foreach (var token in activeTokens)
+        {
+            token.Revoked = DateTime.UtcNow;
+        }
+
+        await context.SaveChangesAsync();
     }
 }
