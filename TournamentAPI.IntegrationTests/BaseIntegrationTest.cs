@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
@@ -40,6 +41,15 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
     protected TestClient CreateClient()
     {
         var httpClient = Factory.CreateClient();
-        return new TestClient(httpClient);
+        var testClient = new TestClient(httpClient);
+
+        var configuration = Factory.Services.GetRequiredService<IConfiguration>();
+        var apiKey = configuration["ApiKey:Value"];
+        if (!string.IsNullOrEmpty(apiKey))
+        {
+            testClient.SetApiKey(apiKey);
+        }
+
+        return testClient;
     }
 }

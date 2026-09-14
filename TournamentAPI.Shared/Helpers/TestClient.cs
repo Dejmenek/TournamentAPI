@@ -6,9 +6,12 @@ using System.Text.Json;
 namespace TournamentAPI.Shared.Helpers;
 public class TestClient : IDisposable
 {
+    private const string ApiKeyHeaderName = "X-API-Key";
+
     private readonly HttpClient _client;
     private HttpResponseMessage? _lastResponse;
     public HttpClient HttpClient => _client;
+    public HttpStatusCode? LastStatusCode => _lastResponse?.StatusCode;
 
     public TestClient(HttpClient client)
     {
@@ -24,6 +27,17 @@ public class TestClient : IDisposable
     public void ClearAuthToken()
     {
         _client.DefaultRequestHeaders.Authorization = null;
+    }
+
+    public void SetApiKey(string apiKey)
+    {
+        _client.DefaultRequestHeaders.Remove(ApiKeyHeaderName);
+        _client.DefaultRequestHeaders.Add(ApiKeyHeaderName, apiKey);
+    }
+
+    public void ClearApiKey()
+    {
+        _client.DefaultRequestHeaders.Remove(ApiKeyHeaderName);
     }
 
     public string? GetRefreshTokenCookie()
