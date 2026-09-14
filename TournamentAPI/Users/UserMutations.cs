@@ -151,10 +151,6 @@ public static partial class UserMutations
             return null;
         }
 
-        await context.RefreshTokens
-            .Where(r => r.UserId == user.Id)
-            .ExecuteDeleteAsync();
-
         context.RefreshTokens.Add(refreshToken);
         await context.SaveChangesAsync();
 
