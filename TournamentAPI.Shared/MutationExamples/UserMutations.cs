@@ -27,6 +27,14 @@ public static partial class Mutations
             }
             """;
 
+        public const string LogoutUser = """
+            mutation LogoutUser {
+              logoutUser {
+                boolean
+              }
+            }
+            """;
+
         public const string UpdateEmailVisibility = """
             mutation UpdateEmailVisibility($input: UpdateEmailVisibilityInput!) {
               updateEmailVisibility(input: $input) {
