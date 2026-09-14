@@ -427,7 +427,7 @@ public class UserMutationTests : BaseIntegrationTest
             Id = Guid.NewGuid(),
             UserId = alice.Id,
             Token = hashedToken,
-            ExpiryDateUtc = DateTime.UtcNow.AddDays(-1)
+            Expires = DateTime.UtcNow.AddDays(-1)
         };
         DbContext.RefreshTokens.Add(expiredToken);
         await DbContext.SaveChangesAsync();
@@ -447,7 +447,94 @@ public class UserMutationTests : BaseIntegrationTest
     }
 
     [Fact]
-    public async Task LoginUser_RemovesOldRefreshTokens_OnReLogin()
+    public async Task RefreshToken_ReturnsConflictError_WhenRotationRaces()
+    {
+        using var client1 = CreateClient();
+        using var client2 = CreateClient();
+
+        await client1.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email = "alice@example.com", password = "Password123!" } });
+
+        var sharedRefreshToken = client1.GetRefreshTokenCookie();
+        Assert.NotNull(sharedRefreshToken);
+        client1.SetRefreshTokenCookie(sharedRefreshToken);
+        client2.SetRefreshTokenCookie(sharedRefreshToken);
+
+        var task1 = client1.ExecuteMutationAsync<RefreshTokenResponse>(
+            Shared.MutationExamples.Mutations.Users.RefreshToken, new { });
+        var task2 = client2.ExecuteMutationAsync<RefreshTokenResponse>(
+            Shared.MutationExamples.Mutations.Users.RefreshToken, new { });
+
+        var results = await Task.WhenAll(task1, task2);
+
+        var successResponse = results.FirstOrDefault(r => !r.HasErrors);
+        var failureResponse = results.FirstOrDefault(r => r.HasErrors);
+
+        Assert.NotNull(successResponse);
+        Assert.NotNull(successResponse.Data?.RefreshToken?.String);
+        Assert.NotNull(failureResponse);
+        Assert.NotNull(failureResponse.Errors);
+
+        var error = failureResponse.Errors!.First();
+        var expectedError = UserErrors.RefreshTokenConflict();
+        Assert.Equal(expectedError.Code, error.Extensions!["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+
+        var alice = await DbContext.Users.FirstAsync(u => u.Email == "alice@example.com");
+        var activeTokenCount = await DbContext.RefreshTokens
+            .AsNoTracking()
+            .CountAsync(r => r.UserId == alice.Id && r.Revoked == null);
+        Assert.Equal(1, activeTokenCount);
+    }
+
+    [Fact]
+    public async Task RefreshToken_RevokesAllActiveSessions_WhenRevokedTokenIsReused()
+    {
+        var alice = await DbContext.Users.FirstAsync(u => u.Email == "alice@example.com");
+
+        var reusedRawToken = "already-rotated-token-value";
+        var reusedHashedToken = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(reusedRawToken))).ToLowerInvariant();
+        var revokedToken = new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = alice.Id,
+            Token = reusedHashedToken,
+            Created = DateTime.UtcNow.AddMinutes(-10),
+            Expires = DateTime.UtcNow.AddDays(6),
+            Revoked = DateTime.UtcNow.AddMinutes(-5)
+        };
+
+        var otherActiveToken = new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = alice.Id,
+            Token = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("legit-active-session"))).ToLowerInvariant(),
+            Created = DateTime.UtcNow.AddMinutes(-5),
+            Expires = DateTime.UtcNow.AddDays(7)
+        };
+
+        DbContext.RefreshTokens.AddRange(revokedToken, otherActiveToken);
+        await DbContext.SaveChangesAsync();
+
+        using var client = CreateClient();
+        client.SetRefreshTokenCookie(reusedRawToken);
+
+        var response = await client.ExecuteMutationAsync<RefreshTokenResponse>(
+            Shared.MutationExamples.Mutations.Users.RefreshToken, new { });
+
+        Assert.True(response.HasErrors);
+        var error = response.Errors!.First();
+        var expectedError = UserErrors.RefreshTokenReused();
+        Assert.Equal(expectedError.Code, error.Extensions!["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+
+        var activeTokenCount = await DbContext.RefreshTokens
+            .AsNoTracking()
+            .CountAsync(r => r.UserId == alice.Id && r.Revoked == null);
+        Assert.Equal(0, activeTokenCount);
+    }
+
     [Fact]
     public async Task LoginUser_KeepsOtherSessions_OnReLogin()
     {
