@@ -178,14 +178,21 @@ public static partial class UserMutations
         var existingToken = await context.RefreshTokens
             .FirstOrDefaultAsync(r => r.Token == hashedCookieToken);
 
-        if (refreshTokenEntity is null)
+        if (existingToken is null)
         {
             resolverContext.ReportError(UserErrors.RefreshTokenInvalid());
             return null;
         }
 
-        if (refreshTokenEntity.ExpiryDateUtc < DateTime.UtcNow)
+        if (!existingToken.IsActive)
         {
+            if (existingToken.Revoked is not null)
+            {
+                await RevokeAllActiveTokensAsync(context, existingToken.UserId);
+                resolverContext.ReportError(UserErrors.RefreshTokenReused());
+                return null;
+            }
+
             resolverContext.ReportError(UserErrors.RefreshTokenExpired());
             return null;
         }
