@@ -175,8 +175,7 @@ public static partial class UserMutations
         var rawCookieToken = httpContextAccessor.HttpContext.Request.Cookies["refreshToken"];
         var hashedCookieToken = jwtService.HashRefreshToken(rawCookieToken ?? string.Empty);
 
-        var refreshTokenEntity = await context.RefreshTokens
-            .Include(r => r.User)
+        var existingToken = await context.RefreshTokens
             .FirstOrDefaultAsync(r => r.Token == hashedCookieToken);
 
         if (refreshTokenEntity is null)
@@ -191,7 +190,13 @@ public static partial class UserMutations
             return null;
         }
 
-        string accessToken = jwtService.CreateToken(refreshTokenEntity.User);
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == existingToken.UserId);
+        if (user is null)
+        {
+            resolverContext.ReportError(UserErrors.UserNotFound(existingToken.UserId));
+            return null;
+        }
+
         var newRefreshToken = jwtService.CreateRefreshToken();
         refreshTokenEntity.Token = newRefreshToken.Hashed;
         refreshTokenEntity.ExpiryDateUtc = DateTime.UtcNow.AddDays(7);
