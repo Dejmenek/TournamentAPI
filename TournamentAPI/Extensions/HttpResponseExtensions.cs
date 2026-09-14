@@ -15,4 +15,16 @@ public static class HttpResponseExtensions
                 Expires = expiry
             });
     }
+
+    public static void ClearRefreshTokenCookie(this HttpResponse response)
+    {
+        response.Cookies.Delete(
+            "refreshToken",
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Lax
+            });
+    }
 }
