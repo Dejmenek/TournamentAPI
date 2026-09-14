@@ -7,6 +7,8 @@ public static class UserErrorCodes
     public const string RegistrationFailed = "User.RegistrationFailed";
     public const string RefreshTokenExpired = "User.RefreshTokenExpired";
     public const string RefreshTokenInvalid = "User.RefreshTokenInvalid";
+    public const string RefreshTokenConflict = "User.RefreshTokenConflict";
+    public const string RefreshTokenReused = "User.RefreshTokenReused";
     public const string UnableToSetRefreshTokenCookie = "User.UnableToSetRefreshTokenCookie";
     public const string HttpContextUnavailable = "User.HttpContextUnavailable";
     public const string AccountLockedOut = "User.AccountLockedOut";

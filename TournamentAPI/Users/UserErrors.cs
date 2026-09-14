@@ -34,6 +34,18 @@ public static class UserErrors
             .SetCode(UserErrorCodes.RefreshTokenInvalid)
             .Build();
 
+    public static IError RefreshTokenConflict() =>
+        ErrorBuilder.New()
+            .SetMessage("The refresh token was already used to obtain a new token. Please try refreshing again.")
+            .SetCode(UserErrorCodes.RefreshTokenConflict)
+            .Build();
+
+    public static IError RefreshTokenReused() =>
+        ErrorBuilder.New()
+            .SetMessage("This refresh token has already been used. All active sessions have been revoked as a precaution.")
+            .SetCode(UserErrorCodes.RefreshTokenReused)
+            .Build();
+
     public static IError UnableToSetRefreshTokenCookie() =>
         ErrorBuilder.New()
             .SetMessage("Unable to set refresh token cookie.")
