@@ -233,6 +233,16 @@ public class RefreshTokenResult
     public string? String { get; set; }
 }
 
+public class LogoutResponse
+{
+    public LogoutUserResult? LogoutUser { get; set; }
+}
+
+public class LogoutUserResult
+{
+    public bool? Boolean { get; set; }
+}
+
 public class MeResponse
 {
     public UserNode? Me { get; set; }
