@@ -12,6 +12,7 @@ internal static class GraphQLExtensions
 
         services
             .AddGraphQLServer()
+            .AddHttpResponseFormatter<CustomHttpResponseFormatter>()
             .AddTournamentApiTypes()
             .ModifyRequestOptions(options =>
             {
