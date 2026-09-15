@@ -15,6 +15,8 @@ public static partial class MatchMutations
     public static async Task<bool?> Play(
         int matchId,
         int winnerId,
+        int player1Score,
+        int player2Score,
         ClaimsPrincipal userClaims,
         IResolverContext resolverContext,
         ApplicationDbContext context,
@@ -44,7 +46,15 @@ public static partial class MatchMutations
         if (resolverContext.TryReportError(MatchValidations.ValidateWinnerIsParticipant(match, winnerId)))
             return null;
 
+        if (resolverContext.TryReportError(MatchValidations.ValidateScoresAreNonNegative(match.Id, player1Score, player2Score)))
+            return null;
+
+        if (resolverContext.TryReportError(MatchValidations.ValidateWinnerHasHigherScore(match, winnerId, player1Score, player2Score)))
+            return null;
+
         match.WinnerId = winnerId;
+        match.Player1Score = player1Score;
+        match.Player2Score = player2Score;
 
         try
         {
