@@ -379,5 +379,135 @@ public class MatchMutationTests : BaseIntegrationTest
         Assert.Equal(player1Score, match.Player1Score);
         Assert.Equal(player2Score, match.Player2Score);
     }
+
+    [Fact]
+    public async Task Play_ReturnsNegativeScoreError_WhenScoreIsNegative()
+    {
+        // Arrange
+        var email = "carol@example.com";
+        var password = "Password123!";
+        var matchId = 9;
+        var winnerId = 5;
+        var player1Score = -1;
+        var player2Score = 1;
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                matchId = matchId,
+                winnerId = winnerId,
+                player1Score = player1Score,
+                player2Score = player2Score
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
+            Shared.MutationExamples.Mutations.Match.Play,
+            variables);
+
+        // Assert
+        Assert.True(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.Play);
+        Assert.Null(response.Data.Play.Boolean);
+        Assert.NotNull(response.Errors);
+
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = MatchErrors.NegativeScore(matchId, player1Score, player2Score);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["MatchId"]?.ToString(), error.Extensions["MatchId"]?.ToString());
+        Assert.Equal(expectedError.Extensions!["Player1Score"]?.ToString(), error.Extensions["Player1Score"]?.ToString());
+        Assert.Equal(expectedError.Extensions!["Player2Score"]?.ToString(), error.Extensions["Player2Score"]?.ToString());
+
+        var match = await DbContext.Matches.AsNoTracking().FirstOrDefaultAsync(m => m.Id == matchId);
+
+        Assert.NotNull(match);
+        Assert.Null(match.WinnerId);
+    }
+
+    [Fact]
+    public async Task Play_ReturnsWinnerScoreMismatchError_WhenWinnerScoreIsNotHigher()
+    {
+        // Arrange
+        var email = "carol@example.com";
+        var password = "Password123!";
+        var matchId = 9;
+        var winnerId = 5;
+        var player1Score = 2;
+        var player2Score = 2;
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                matchId = matchId,
+                winnerId = winnerId,
+                player1Score = player1Score,
+                player2Score = player2Score
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
+            Shared.MutationExamples.Mutations.Match.Play,
+            variables);
+
+        // Assert
+        Assert.True(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.Play);
+        Assert.Null(response.Data.Play.Boolean);
+        Assert.NotNull(response.Errors);
+
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = MatchErrors.WinnerScoreMismatch(matchId, winnerId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["MatchId"]?.ToString(), error.Extensions["MatchId"]?.ToString());
+        Assert.Equal(expectedError.Extensions!["WinnerId"]?.ToString(), error.Extensions["WinnerId"]?.ToString());
+
+        var match = await DbContext.Matches.AsNoTracking().FirstOrDefaultAsync(m => m.Id == matchId);
+
+        Assert.NotNull(match);
+        Assert.Null(match.WinnerId);
     }
 }
