@@ -97,4 +97,72 @@ public class MatchValidationsTests
 
         Assert.Null(error);
     }
+
+    [Fact]
+    public void ValidateScoresAreNonNegative_WhenPlayer1ScoreIsNegative_ReturnsError()
+    {
+        IError? error = MatchValidations.ValidateScoresAreNonNegative(1, -1, 2);
+
+        Assert.NotNull(error);
+        Assert.Equal(MatchErrorCodes.NegativeScore, error.Code);
+    }
+
+    [Fact]
+    public void ValidateScoresAreNonNegative_WhenPlayer2ScoreIsNegative_ReturnsError()
+    {
+        IError? error = MatchValidations.ValidateScoresAreNonNegative(1, 2, -1);
+
+        Assert.NotNull(error);
+        Assert.Equal(MatchErrorCodes.NegativeScore, error.Code);
+    }
+
+    [Fact]
+    public void ValidateScoresAreNonNegative_WhenBothScoresAreNonNegative_ReturnsNull()
+    {
+        IError? error = MatchValidations.ValidateScoresAreNonNegative(1, 3, 1);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateWinnerHasHigherScore_WhenScoresAreTied_ReturnsError()
+    {
+        var match = new Match { Id = 1, Player1Id = 2, Player2Id = 3 };
+
+        IError? error = MatchValidations.ValidateWinnerHasHigherScore(match, 2, 1, 1);
+
+        Assert.NotNull(error);
+        Assert.Equal(MatchErrorCodes.WinnerScoreMismatch, error.Code);
+    }
+
+    [Fact]
+    public void ValidateWinnerHasHigherScore_WhenWinnerScoreIsLower_ReturnsError()
+    {
+        var match = new Match { Id = 1, Player1Id = 2, Player2Id = 3 };
+
+        IError? error = MatchValidations.ValidateWinnerHasHigherScore(match, 2, 1, 3);
+
+        Assert.NotNull(error);
+        Assert.Equal(MatchErrorCodes.WinnerScoreMismatch, error.Code);
+    }
+
+    [Fact]
+    public void ValidateWinnerHasHigherScore_WhenPlayer1IsWinnerWithHigherScore_ReturnsNull()
+    {
+        var match = new Match { Id = 1, Player1Id = 2, Player2Id = 3 };
+
+        IError? error = MatchValidations.ValidateWinnerHasHigherScore(match, 2, 3, 1);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateWinnerHasHigherScore_WhenPlayer2IsWinnerWithHigherScore_ReturnsNull()
+    {
+        var match = new Match { Id = 1, Player1Id = 2, Player2Id = 3 };
+
+        IError? error = MatchValidations.ValidateWinnerHasHigherScore(match, 3, 1, 3);
+
+        Assert.Null(error);
+    }
 }
