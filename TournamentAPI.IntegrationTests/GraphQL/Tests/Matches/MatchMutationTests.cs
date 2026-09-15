@@ -18,6 +18,8 @@ public class MatchMutationTests : BaseIntegrationTest
         var password = "Password123!";
         var matchId = 10;
         var winnerId = 8;
+        var player1Score = 1;
+        var player2Score = 3;
         using var client1 = CreateClient();
         using var client2 = CreateClient();
 
@@ -39,7 +41,9 @@ public class MatchMutationTests : BaseIntegrationTest
             input = new
             {
                 matchId = matchId,
-                winnerId = winnerId
+                winnerId = winnerId,
+                player1Score = player1Score,
+                player2Score = player2Score
             }
         };
 
@@ -102,7 +106,9 @@ public class MatchMutationTests : BaseIntegrationTest
             input = new
             {
                 matchId = matchId,
-                winnerId = 1
+                winnerId = 1,
+                player1Score = 3,
+                player2Score = 1
             }
         };
 
@@ -139,6 +145,8 @@ public class MatchMutationTests : BaseIntegrationTest
         var tournamentId = 4;
         var matchId = 9;
         var winnerId = 5;
+        var player1Score = 3;
+        var player2Score = 1;
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
@@ -158,7 +166,9 @@ public class MatchMutationTests : BaseIntegrationTest
             input = new
             {
                 matchId = matchId,
-                winnerId = winnerId
+                winnerId = winnerId,
+                player1Score = player1Score,
+                player2Score = player2Score
             }
         };
 
@@ -200,6 +210,8 @@ public class MatchMutationTests : BaseIntegrationTest
         var password = "Password123!";
         var matchId = 8;
         var winnerId = 2;
+        var player1Score = 3;
+        var player2Score = 1;
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
@@ -219,7 +231,9 @@ public class MatchMutationTests : BaseIntegrationTest
             input = new
             {
                 matchId = matchId,
-                winnerId = winnerId
+                winnerId = winnerId,
+                player1Score = player1Score,
+                player2Score = player2Score
             }
         };
 
@@ -255,6 +269,8 @@ public class MatchMutationTests : BaseIntegrationTest
         var password = "Password123!";
         var matchId = 10;
         var winnerId = 2;
+        var player1Score = 3;
+        var player2Score = 1;
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
@@ -274,7 +290,9 @@ public class MatchMutationTests : BaseIntegrationTest
             input = new
             {
                 matchId = matchId,
-                winnerId = winnerId
+                winnerId = winnerId,
+                player1Score = player1Score,
+                player2Score = player2Score
             }
         };
 
@@ -316,6 +334,8 @@ public class MatchMutationTests : BaseIntegrationTest
         var password = "Password123!";
         var matchId = 9;
         var winnerId = 5;
+        var player1Score = 3;
+        var player2Score = 1;
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
@@ -335,7 +355,9 @@ public class MatchMutationTests : BaseIntegrationTest
             input = new
             {
                 matchId = matchId,
-                winnerId = winnerId
+                winnerId = winnerId,
+                player1Score = player1Score,
+                player2Score = player2Score
             }
         };
 
@@ -354,5 +376,8 @@ public class MatchMutationTests : BaseIntegrationTest
 
         Assert.NotNull(match);
         Assert.Equal(winnerId, match.WinnerId);
+        Assert.Equal(player1Score, match.Player1Score);
+        Assert.Equal(player2Score, match.Player2Score);
+    }
     }
 }
