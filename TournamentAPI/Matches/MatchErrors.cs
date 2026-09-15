@@ -30,4 +30,21 @@ public static class MatchErrors
             .SetCode(MatchErrorCodes.TournamentNotClosed)
             .SetExtension("TournamentId", tournamentId)
             .Build();
+
+    public static IError NegativeScore(int matchId, int player1Score, int player2Score) =>
+        ErrorBuilder.New()
+            .SetMessage("Match scores cannot be negative.")
+            .SetCode(MatchErrorCodes.NegativeScore)
+            .SetExtension("MatchId", matchId)
+            .SetExtension("Player1Score", player1Score)
+            .SetExtension("Player2Score", player2Score)
+            .Build();
+
+    public static IError WinnerScoreMismatch(int matchId, int winnerId) =>
+        ErrorBuilder.New()
+            .SetMessage("The declared winner's score must be strictly greater than the opponent's score.")
+            .SetCode(MatchErrorCodes.WinnerScoreMismatch)
+            .SetExtension("MatchId", matchId)
+            .SetExtension("WinnerId", winnerId)
+            .Build();
 }
