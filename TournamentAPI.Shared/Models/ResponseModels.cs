@@ -103,6 +103,8 @@ public class MatchNode
     public int Player1Id { get; set; }
     public int? Player2Id { get; set; }
     public int? WinnerId { get; set; }
+    public int Player1Score { get; set; }
+    public int Player2Score { get; set; }
     public ApplicationUserNode? Player1 { get; set; }
     public ApplicationUserNode? Player2 { get; set; }
     public ApplicationUserNode? Winner { get; set; }
