@@ -6,6 +6,7 @@ using TournamentAPI.Shared.Models;
 using TournamentAPI.Tournaments;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Brackets;
+
 public class BracketMutationTests : BaseIntegrationTest
 {
     public BracketMutationTests(IntegrationTestWebAppFactory factory) : base(factory)
@@ -258,11 +259,11 @@ public class BracketMutationTests : BaseIntegrationTest
     [Fact]
     public async Task GenerateBracket_ReturnsBracketAlreadyExistsError_WhenBracketAlreadyExists()
     {
-        // Arrange
-        var email = "alice@example.com";
+        // Arrange: tournament 17 (bracket 7) is Closed and already has a bracket, but its final
+        // hasn't been played yet, so it stays Closed rather than Completed.
+        var email = "david@example.com";
         var password = "Password123!";
-        var tournamentCreateBracketId = 3;
-        var bracketId = 1;
+        var tournamentCreateBracketId = 17;
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
@@ -811,11 +812,11 @@ public class BracketMutationTests : BaseIntegrationTest
     [Fact]
     public async Task UpdateRound_ReturnsNoMatchesInRoundError_WhenNoMatchesInRound()
     {
-        // Arrange
-        var email = "alice@example.com";
+        // Arrange: tournament 17 (bracket 7) only has rounds 1 and 2 generated, so round 3 has no matches.
+        var email = "david@example.com";
         var password = "Password123!";
-        var bracketId = 1;
-        var roundNumber = 4;
+        var bracketId = 7;
+        var roundNumber = 3;
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
@@ -1037,10 +1038,10 @@ public class BracketMutationTests : BaseIntegrationTest
     [Fact]
     public async Task UpdateRound_ReturnsNextRoundAlreadyExistsError_WhenNextRoundAlreadyExists()
     {
-        // Arrange
-        var email = "alice@example.com";
+        // Arrange: tournament 17 (bracket 7) already has round 2 generated from round 1's winners.
+        var email = "david@example.com";
         var password = "Password123!";
-        var bracketId = 1;
+        var bracketId = 7;
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
@@ -1092,17 +1093,17 @@ public class BracketMutationTests : BaseIntegrationTest
             .Where(m => m.BracketId == bracketId && m.Round == 2)
             .ToListAsync();
 
-        Assert.NotEmpty(matchesForNextRound);
-        Assert.Equal(2, matchesForNextRound.Count);
+        Assert.Single(matchesForNextRound);
     }
 
     [Fact]
-    public async Task UpdateRound_ReturnsBracketAlreadyHasWinnerError_WhenBracketAlreadyHasWinner()
+    public async Task UpdateRound_ReturnsRoundUpdateNotAllowedError_WhenTournamentIsAlreadyCompleted()
     {
         // Arrange
         var email = "alice@example.com";
         var password = "Password123!";
         var bracketId = 1;
+        var tournamentId = 3;
         using var client = CreateClient();
 
         var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
@@ -1144,10 +1145,10 @@ public class BracketMutationTests : BaseIntegrationTest
         Assert.True(error.Extensions.ContainsKey("code"));
         Assert.NotNull(error.Message);
 
-        var expectedError = BracketErrors.BracketAlreadyHasWinner(bracketId);
+        var expectedError = BracketErrors.RoundUpdateNotAllowed(tournamentId);
         Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
         Assert.Equal(expectedError.Message, error.Message);
-        Assert.Equal(expectedError.Extensions!["BracketId"]?.ToString(), error.Extensions["BracketId"]?.ToString());
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
 
         var matchesForNextRound = await DbContext.Matches
             .AsNoTracking()
@@ -1155,5 +1156,113 @@ public class BracketMutationTests : BaseIntegrationTest
             .ToListAsync();
 
         Assert.Empty(matchesForNextRound);
+    }
+
+    [Fact]
+    public async Task Play_MarksTournamentCompletedAndSetsChampion_WhenFinalMatchIsPlayed()
+    {
+        // Arrange: tournament 8 ("Event") has exactly 2 participants and no bracket yet, so generating
+        // it produces a single round-1 match, which is by definition the final.
+        var email = "bob@example.com";
+        var password = "Password123!";
+        var tournamentId = 8;
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        await client.ExecuteMutationAsync<GenerateBracketResponse>(
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
+            new { input = new { tournamentId } });
+
+        var finalMatch = await DbContext.Matches.AsNoTracking().SingleAsync(m => m.Bracket.TournamentId == tournamentId);
+
+        var variables = new
+        {
+            input = new
+            {
+                matchId = finalMatch.Id,
+                winnerId = finalMatch.Player1Id,
+                player1Score = 3,
+                player2Score = 1
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
+            Shared.MutationExamples.Mutations.Match.Play,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+
+        var tournamentAfter = await DbContext.Tournaments.AsNoTracking().SingleAsync(t => t.Id == tournamentId);
+
+        Assert.Equal(TournamentStatus.Completed, tournamentAfter.Status);
+        Assert.Equal(finalMatch.Player1Id, tournamentAfter.ChampionId);
+    }
+
+    [Fact]
+    public async Task Play_DoesNotChangeTournamentCompletionState_WhenMatchIsNotTheFinal()
+    {
+        // Arrange: tournament 10 ("Trio Tournament") has 3 participants, so generating it produces a
+        // round of 2 matches (one real, one auto-resolved bye) - neither one is the final on its own.
+        var email = "bob@example.com";
+        var password = "Password123!";
+        var tournamentId = 10;
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        await client.ExecuteMutationAsync<GenerateBracketResponse>(
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
+            new { input = new { tournamentId } });
+
+        var realMatch = await DbContext.Matches
+            .AsNoTracking()
+            .SingleAsync(m => m.Bracket.TournamentId == tournamentId && m.Status == MatchStatus.Scheduled);
+
+        var variables = new
+        {
+            input = new
+            {
+                matchId = realMatch.Id,
+                winnerId = realMatch.Player1Id,
+                player1Score = 3,
+                player2Score = 1
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
+            Shared.MutationExamples.Mutations.Match.Play,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+
+        var tournamentAfter = await DbContext.Tournaments.AsNoTracking().SingleAsync(t => t.Id == tournamentId);
+
+        Assert.Equal(TournamentStatus.Closed, tournamentAfter.Status);
+        Assert.Null(tournamentAfter.ChampionId);
     }
 }
