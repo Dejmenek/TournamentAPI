@@ -511,4 +511,48 @@ public class TournamentQueryTests : BaseIntegrationTest
         Assert.Equal("OPEN", response.Data.TournamentById.Status);
         Assert.False(response.Data.TournamentById.IsActive);
     }
+
+    [Fact]
+    public async Task GetTournamentById_WithChampion_ReturnsCompletedStatusAndChampion_ForCompletedTournament()
+    {
+        // Arrange: tournament 3 ("Winter Championship 2024") is seeded as Completed with alice as champion.
+        var tournamentId = 3;
+
+        // Act
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithChampion,
+            new { id = tournamentId });
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data?.TournamentById);
+        Assert.Equal("COMPLETED", response.Data.TournamentById.Status);
+        Assert.NotNull(response.Data.TournamentById.ChampionId);
+        Assert.NotNull(response.Data.TournamentById.Champion);
+        Assert.Equal(response.Data.TournamentById.ChampionId, response.Data.TournamentById.Champion.Id);
+        Assert.Equal("Alice", response.Data.TournamentById.Champion.FirstName);
+    }
+
+    [Fact]
+    public async Task GetTournamentById_WithChampion_ReturnsNullChampion_ForInProgressTournament()
+    {
+        // Arrange: tournament 4 ("Autumn Battle") is Closed with a bracket in progress, not Completed.
+        var tournamentId = 4;
+
+        // Act
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithChampion,
+            new { id = tournamentId });
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data?.TournamentById);
+        Assert.Equal("CLOSED", response.Data.TournamentById.Status);
+        Assert.Null(response.Data.TournamentById.ChampionId);
+        Assert.Null(response.Data.TournamentById.Champion);
+    }
 }
