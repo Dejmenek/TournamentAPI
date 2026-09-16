@@ -26,7 +26,7 @@ public static class BracketMutationValidations
         => matchesInRound.Count == 0 ? BracketErrors.NoMatchesInRound(roundNumber) : null;
 
     public static IError? ValidateAllMatchesCompleted(ICollection<Match> matchesInRound, int roundNumber)
-        => matchesInRound.Any(m => m.WinnerId == null) ? BracketErrors.NotAllMatchesPlayed(roundNumber) : null;
+        => matchesInRound.Any(m => m.Status != MatchStatus.Played) ? BracketErrors.NotAllMatchesPlayed(roundNumber) : null;
 
     public static IError? ValidateNotFinalRound(IList<int> winners, int bracketId)
         => winners.Count < 2 ? BracketErrors.BracketAlreadyHasWinner(bracketId) : null;
