@@ -52,12 +52,37 @@ public static partial class MatchMutations
         if (resolverContext.TryReportError(MatchValidations.ValidateWinnerHasHigherScore(match, winnerId, player1Score, player2Score)))
             return null;
 
+        var isReplay = match.Status == MatchStatus.NeedsReplay;
+        var previousStatus = match.Status;
+        var previousWinnerId = match.WinnerId;
+        var previousPlayer1Id = match.Player1Id;
+        var previousPlayer2Id = match.Player2Id;
+        var previousPlayer1Score = match.Player1Score;
+        var previousPlayer2Score = match.Player2Score;
+
         match.WinnerId = winnerId;
         match.Player1Score = player1Score;
         match.Player2Score = player2Score;
+        match.Status = MatchStatus.Played;
 
         try
         {
+            if (isReplay)
+            {
+                await MatchCorrectionService.ApplyCorrectionAsync(
+                    context,
+                    match,
+                    previousStatus,
+                    previousWinnerId,
+                    previousPlayer1Id,
+                    previousPlayer2Id,
+                    previousPlayer1Score,
+                    previousPlayer2Score,
+                    userId,
+                    Guid.NewGuid(),
+                    token);
+            }
+
             await context.SaveChangesAsync(token);
 
             return true;
