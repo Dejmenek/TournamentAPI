@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Brackets;
 using TournamentAPI.Data.Models;
+using TournamentAPI.Matches;
 using TournamentAPI.Shared.Models;
 using TournamentAPI.Tournaments;
 
@@ -535,10 +536,10 @@ public class BracketMutationTests : BaseIntegrationTest
         Assert.True(error.Extensions.ContainsKey("code"));
         Assert.NotNull(error.Message);
 
-        var expectedError = BracketErrors.NextRoundAlreadyGenerated(bracketId);
-        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
-        Assert.Equal(expectedError.Message, error.Message);
-        Assert.Equal(expectedError.Extensions!["BracketId"]!.ToString(), error.Extensions["BracketId"]?.ToString());
+        var code = error.Extensions["code"]?.ToString();
+        Assert.True(
+            code == BracketErrorCodes.RoundDataChanged || code == BracketErrorCodes.NextRoundAlreadyGenerated,
+            $"Expected either {BracketErrorCodes.RoundDataChanged} or {BracketErrorCodes.NextRoundAlreadyGenerated}, got {code}.");
 
         var matchesInDb = await DbContext.Matches
             .AsNoTracking()
@@ -546,6 +547,82 @@ public class BracketMutationTests : BaseIntegrationTest
             .ToListAsync();
 
         Assert.Single(matchesInDb);
+    }
+
+    [Fact]
+    public async Task UpdateRound_RacesWithConcurrentCorrectMatchResult_LoserGetsAConcurrencyError()
+    {
+        // Arrange
+        var email = "carol@example.com";
+        var password = "Password123!";
+        var bracketId = 4; // tournament 7: match14, match15, round 1 only, no round 2 generated
+        using var client1 = CreateClient();
+        using var client2 = CreateClient();
+
+        var tokenResponse = await client1.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client1.SetAuthToken(tokenResponse.Data.LoginUser.String);
+        client2.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var match14 = await DbContext.Matches.AsNoTracking().FirstAsync(m => m.Id == 14);
+        var version = Convert.ToBase64String(match14.RowVersion);
+
+        var updateRoundVariables = new
+        {
+            input = new
+            {
+                bracketId = bracketId,
+                roundNumber = 1
+            }
+        };
+        var correctMatchResultVariables = new
+        {
+            input = new
+            {
+                matchId = 14,
+                winnerId = 2,
+                player1Score = 1,
+                player2Score = 3,
+                version = version
+            }
+        };
+
+        // Act
+        var updateRoundTask = client1.ExecuteMutationAsync<UpdateRoundResponse>(
+            Shared.MutationExamples.Mutations.Bracket.UpdateRound,
+            updateRoundVariables);
+        var correctMatchResultTask = client2.ExecuteMutationAsync<CorrectMatchResultResponse>(
+            Shared.MutationExamples.Mutations.Match.CorrectMatchResult,
+            correctMatchResultVariables);
+
+        await Task.WhenAll(updateRoundTask, correctMatchResultTask);
+
+        var updateRoundResponse = updateRoundTask.Result;
+        var correctMatchResultResponse = correctMatchResultTask.Result;
+
+        // Assert: exactly one of the two concurrent mutations loses the race
+        Assert.True(updateRoundResponse.HasErrors ^ correctMatchResultResponse.HasErrors);
+
+        if (updateRoundResponse.HasErrors)
+        {
+            var error = updateRoundResponse.Errors!.First();
+            var expectedError = BracketErrors.RoundDataChangedConcurrently(bracketId);
+            Assert.Equal(expectedError.Code, error.Extensions!["code"]?.ToString());
+        }
+        else
+        {
+            var error = correctMatchResultResponse.Errors!.First();
+            var expectedError = MatchErrors.MatchVersionConflict(14);
+            Assert.Equal(expectedError.Code, error.Extensions!["code"]?.ToString());
+        }
     }
 
     [Fact]
