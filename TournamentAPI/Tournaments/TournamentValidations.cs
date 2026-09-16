@@ -34,9 +34,15 @@ public static class TournamentValidations
         => startDate < now.Add(MinimumStartDateLeadTime) ? TournamentErrors.StartDateTooSoon(startDate) : null;
 
     public static IError? ValidateTournamentCanBeDeleted(Tournament tournament)
-        => tournament.Status == TournamentStatus.Closed && tournament.Bracket != null
+        => (tournament.Status == TournamentStatus.Closed || tournament.Status == TournamentStatus.Completed) && tournament.Bracket != null
             ? TournamentErrors.CannotDeleteTournamentWithBracket(tournament.Id)
             : null;
+
+    public static IError? ValidateStatusIsNotCompleted(TournamentStatus requestedStatus)
+        => requestedStatus == TournamentStatus.Completed ? TournamentErrors.TournamentStatusCannotBeSetManually() : null;
+
+    public static IError? ValidateTournamentIsNotCompleted(Tournament tournament)
+        => tournament.Status == TournamentStatus.Completed ? TournamentErrors.CannotChangeCompletedTournamentStatus(tournament.Id) : null;
 
     public static IError? ValidateTournamentCanBeReopened(int tournamentId, bool bracketExists, TournamentStatus newStatus, DateTime startDate, DateTime now)
     {

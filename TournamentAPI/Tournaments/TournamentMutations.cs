@@ -91,6 +91,9 @@ public static partial class TournamentMutations
         if (resolverContext.TryReportError(TournamentValidations.ValidateStartDateHasMinimumLeadTime(input.StartDate, DateTime.UtcNow)))
             return null;
 
+        if (resolverContext.TryReportError(TournamentValidations.ValidateStatusIsNotCompleted(input.Status)))
+            return null;
+
         var tournament = new Tournament
         {
             Name = input.Name,
@@ -170,6 +173,12 @@ public static partial class TournamentMutations
 
         if (input.Status != null)
         {
+            if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotCompleted(tournament)))
+                return null;
+
+            if (resolverContext.TryReportError(TournamentValidations.ValidateStatusIsNotCompleted(input.Status.Value)))
+                return null;
+
             var bracketExists = await context.Brackets.AnyAsync(b => b.TournamentId == tournament.Id, token);
 
             if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentCanBeReopened(tournament.Id, bracketExists, input.Status.Value, tournament.StartDate, DateTime.UtcNow)))
