@@ -19,6 +19,14 @@ public static partial class TournamentResolvers
         CancellationToken cancellationToken)
         => await applicationUserService.GetApplicationUserByIdAsync(tournament.OwnerId, cancellationToken);
 
+    public static async Task<ApplicationUser?> GetChampion(
+        [Parent(requires: nameof(Tournament.ChampionId))] Tournament tournament,
+        ApplicationUserService applicationUserService,
+        CancellationToken cancellationToken)
+        => tournament.ChampionId is null
+            ? null
+            : await applicationUserService.GetApplicationUserByIdAsync(tournament.ChampionId.Value, cancellationToken);
+
     public static async Task<Bracket?> GetBracket(
         [Parent(requires: nameof(Tournament.Id))] Tournament tournament,
         BracketLookupService bracketLookupService,

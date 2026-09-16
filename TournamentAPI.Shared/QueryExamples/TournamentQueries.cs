@@ -344,6 +344,22 @@ public static partial class Queries
         }
         """;
 
+        public const string GetByIdWithChampion = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            id
+            name
+            status
+            championId
+            champion {
+              id
+              firstName
+              lastName
+            }
+          }
+        }
+        """;
+
         public const string GetByIdWithBracketAndMatches = """
         query($id: Int!) {
           tournamentById(id: $id) {

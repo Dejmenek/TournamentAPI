@@ -14,4 +14,6 @@ public static class TournamentErrorCodes
     public const string CannotReopenTournamentWithBracket = "Tournament.CannotReopenWithBracket";
     public const string CannotReopenTournamentAfterStartDate = "Tournament.CannotReopenAfterStartDate";
     public const string CannotDeleteTournamentWithBracket = "Tournament.CannotDeleteWithBracket";
+    public const string StatusCannotBeSetManually = "Tournament.StatusCannotBeSetManually";
+    public const string CannotChangeCompletedStatus = "Tournament.CannotChangeCompletedStatus";
 }

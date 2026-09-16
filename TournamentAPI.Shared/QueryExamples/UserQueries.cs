@@ -41,6 +41,16 @@ public static partial class Queries
                     }
                   }
                 }
+                wonMatches(first: 10) {
+                  totalCount
+                  edges {
+                    node {
+                      id
+                      round
+                      bracketId
+                    }
+                  }
+                }
               }
             }
             """;

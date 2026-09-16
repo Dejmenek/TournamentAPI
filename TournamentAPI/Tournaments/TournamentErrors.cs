@@ -89,4 +89,17 @@ public static class TournamentErrors
             .SetCode(TournamentErrorCodes.CannotDeleteTournamentWithBracket)
             .SetExtension("TournamentId", tournamentId)
             .Build();
+
+    public static IError TournamentStatusCannotBeSetManually() =>
+        ErrorBuilder.New()
+            .SetMessage("Tournament status cannot be manually set to Completed; it is set automatically once the final match is decided.")
+            .SetCode(TournamentErrorCodes.StatusCannotBeSetManually)
+            .Build();
+
+    public static IError CannotChangeCompletedTournamentStatus(int tournamentId) =>
+        ErrorBuilder.New()
+            .SetMessage("Tournament status cannot be changed once the tournament is Completed.")
+            .SetCode(TournamentErrorCodes.CannotChangeCompletedStatus)
+            .SetExtension("TournamentId", tournamentId)
+            .Build();
 }

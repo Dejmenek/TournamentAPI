@@ -14,6 +14,8 @@ public class ApplicationUser : IdentityUser<int>
     [GraphQLIgnore]
     public ICollection<Tournament> OwnedTournaments { get; set; } = new List<Tournament>();
     [GraphQLIgnore]
+    public ICollection<Tournament> WonTournaments { get; set; } = new List<Tournament>();
+    [GraphQLIgnore]
     public ICollection<Match> MatchesAsPlayer1 { get; set; } = new List<Match>();
     [GraphQLIgnore]
     public ICollection<Match> MatchesAsPlayer2 { get; set; } = new List<Match>();

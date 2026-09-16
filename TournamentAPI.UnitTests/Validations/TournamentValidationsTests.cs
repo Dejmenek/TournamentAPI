@@ -289,4 +289,79 @@ public class TournamentValidationsTests
         Assert.NotNull(error);
         Assert.Equal(TournamentErrorCodes.CannotReopenTournamentAfterStartDate, error.Code);
     }
+
+    [Theory]
+    [InlineData(TournamentStatus.Closed)]
+    [InlineData(TournamentStatus.Completed)]
+    public void ValidateTournamentCanBeDeleted_WhenStatusHasBracket_ReturnsError(TournamentStatus status)
+    {
+        var tournament = new Tournament { Id = 1, Status = status, Bracket = new Bracket { Id = 1 } };
+
+        IError? error = TournamentValidations.ValidateTournamentCanBeDeleted(tournament);
+
+        Assert.NotNull(error);
+        Assert.Equal(TournamentErrorCodes.CannotDeleteTournamentWithBracket, error.Code);
+    }
+
+    [Fact]
+    public void ValidateTournamentCanBeDeleted_WhenOpenWithBracket_ReturnsNull()
+    {
+        var tournament = new Tournament { Id = 1, Status = TournamentStatus.Open, Bracket = new Bracket { Id = 1 } };
+
+        IError? error = TournamentValidations.ValidateTournamentCanBeDeleted(tournament);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateTournamentCanBeDeleted_WhenClosedWithoutBracket_ReturnsNull()
+    {
+        var tournament = new Tournament { Id = 1, Status = TournamentStatus.Closed, Bracket = null };
+
+        IError? error = TournamentValidations.ValidateTournamentCanBeDeleted(tournament);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateStatusIsNotCompleted_WhenCompleted_ReturnsError()
+    {
+        IError? error = TournamentValidations.ValidateStatusIsNotCompleted(TournamentStatus.Completed);
+
+        Assert.NotNull(error);
+        Assert.Equal(TournamentErrorCodes.StatusCannotBeSetManually, error.Code);
+    }
+
+    [Theory]
+    [InlineData(TournamentStatus.Open)]
+    [InlineData(TournamentStatus.Closed)]
+    public void ValidateStatusIsNotCompleted_WhenNotCompleted_ReturnsNull(TournamentStatus status)
+    {
+        IError? error = TournamentValidations.ValidateStatusIsNotCompleted(status);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateTournamentIsNotCompleted_WhenCompleted_ReturnsError()
+    {
+        var tournament = new Tournament { Id = 1, Status = TournamentStatus.Completed };
+
+        IError? error = TournamentValidations.ValidateTournamentIsNotCompleted(tournament);
+
+        Assert.NotNull(error);
+        Assert.Equal(TournamentErrorCodes.CannotChangeCompletedStatus, error.Code);
+    }
+
+    [Theory]
+    [InlineData(TournamentStatus.Open)]
+    [InlineData(TournamentStatus.Closed)]
+    public void ValidateTournamentIsNotCompleted_WhenNotCompleted_ReturnsNull(TournamentStatus status)
+    {
+        var tournament = new Tournament { Id = 1, Status = status };
+
+        IError? error = TournamentValidations.ValidateTournamentIsNotCompleted(tournament);
+
+        Assert.Null(error);
+    }
 }

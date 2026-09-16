@@ -6,7 +6,7 @@ namespace TournamentAPI.Matches;
 
 public static class MatchCorrectionService
 {
-    public static async Task ApplyCorrectionAsync(
+    public static async Task<Match> ApplyCorrectionAsync(
         ApplicationDbContext context,
         Match match,
         MatchStatus previousStatus,
@@ -25,9 +25,9 @@ public static class MatchCorrectionService
             correlationId, triggeredByMatchId: null, performedByUserId, notes: null));
 
         if (previousWinnerId == match.WinnerId)
-            return;
+            return match;
 
-        await PropagateAsync(context, match, previousWinnerId, performedByUserId, correlationId, token);
+        return await PropagateAsync(context, match, previousWinnerId, performedByUserId, correlationId, token);
     }
 
     public static async Task RecordIdempotentDuplicateAsync(
@@ -49,7 +49,7 @@ public static class MatchCorrectionService
         await context.SaveChangesAsync(token);
     }
 
-    private static async Task PropagateAsync(
+    private static async Task<Match> PropagateAsync(
         ApplicationDbContext context,
         Match sourceMatch,
         int? sourceMatchPreviousWinnerId,
@@ -79,7 +79,7 @@ public static class MatchCorrectionService
                 currentRoundMatchIds, nextRoundMatchIds, upstreamMatch.Id);
 
             if (downstreamMatchId is null)
-                return;
+                return upstreamMatch;
 
             var downstream = nextRoundMatches.Single(m => m.Id == downstreamMatchId);
 
@@ -121,7 +121,7 @@ public static class MatchCorrectionService
                     correlationId, upstreamMatch.Id, performedByUserId,
                     notes: "Participant swapped after upstream correction; match not yet played."));
 
-                return;
+                return downstream;
             }
 
             downstream.Status = MatchStatus.NeedsReplay;
@@ -132,7 +132,7 @@ public static class MatchCorrectionService
                 correlationId, upstreamMatch.Id, performedByUserId,
                 notes: "Invalidated by upstream correction."));
 
-            return;
+            return downstream;
         }
     }
 

@@ -47,6 +47,16 @@ public class MatchValidationsTests
     }
 
     [Fact]
+    public void ValidateTournamentIsClosed_WhenTournamentIsCompleted_ReturnsNull()
+    {
+        var tournament = new Tournament { Id = 1, Status = TournamentStatus.Completed };
+
+        IError? error = MatchValidations.ValidateTournamentIsClosed(tournament);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
     public void ValidateMatchNotPlayed_WhenMatchIsPlayed_ReturnsError()
     {
         var match = new Match { Id = 1, WinnerId = 5, Status = MatchStatus.Played };

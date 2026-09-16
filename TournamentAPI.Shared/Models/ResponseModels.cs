@@ -34,7 +34,9 @@ public class TournamentNode
     public int OwnerId { get; set; }
     public int MaxParticipants { get; set; }
     public bool IsActive { get; set; }
+    public int? ChampionId { get; set; }
     public ApplicationUserNode? Owner { get; set; }
+    public ApplicationUserNode? Champion { get; set; }
     public BracketNode? Bracket { get; set; }
     public ParticipantsConnection? Participants { get; set; }
 }
@@ -271,6 +273,7 @@ public class UserNode
     public bool IsEmailPublic { get; set; }
     public TournamentsConnection? WonTournaments { get; set; }
     public TournamentsConnection? PlayedTournaments { get; set; }
+    public MatchesByBracketConnection? WonMatches { get; set; }
 }
 
 public class UpdateEmailVisibilityResponse

@@ -10,6 +10,7 @@ public class Tournament : ISoftDeletable
     public TournamentStatus Status { get; set; }
     public int OwnerId { get; set; }
     public int MaxParticipants { get; set; }
+    public int? ChampionId { get; set; }
 
     [GraphQLIgnore]
     public bool IsDeleted { get; set; }
@@ -18,6 +19,8 @@ public class Tournament : ISoftDeletable
     public Bracket? Bracket { get; set; }
     [GraphQLIgnore]
     public ApplicationUser Owner { get; set; } = null!;
+    [GraphQLIgnore]
+    public ApplicationUser? Champion { get; set; }
     [GraphQLIgnore]
     public ICollection<TournamentParticipant> Participants { get; set; } = new List<TournamentParticipant>();
 

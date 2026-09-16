@@ -1764,4 +1764,244 @@ public class TournamentMutationTests : BaseIntegrationTest
         Assert.Equal(3, participantsInDb.Count);
         Assert.Equal(3, participantsInDb.Select(tp => tp.SlotNumber).Distinct().Count());
     }
+
+    [Fact]
+    public async Task CreateTournament_ReturnsStatusCannotBeSetManuallyError_WhenStatusIsCompleted()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                name = "Should Not Be Created",
+                startDate = DateTime.UtcNow.AddDays(7).ToString("o"),
+                status = TournamentStatus.Completed.ToString().ToUpper(),
+                maxParticipants = 8
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<CreateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.CreateTournamentWithOwnerReturn,
+            variables);
+
+        // Assert
+        Assert.True(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.CreateTournament);
+        Assert.Null(response.Data.CreateTournament.Tournament);
+        Assert.NotNull(response.Errors);
+
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.TournamentStatusCannotBeSetManually();
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+
+        var tournamentInDb = await DbContext.Tournaments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Name == "Should Not Be Created");
+
+        Assert.Null(tournamentInDb);
+    }
+
+    [Fact]
+    public async Task UpdateTournament_ReturnsStatusCannotBeSetManuallyError_WhenSettingStatusToCompleted()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToUpdateId = 1; // Open tournament, not yet Completed
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToUpdateId,
+                status = TournamentStatus.Completed.ToString().ToUpper()
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            variables);
+
+        // Assert
+        Assert.True(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.UpdateTournament);
+        Assert.Null(response.Data.UpdateTournament.Tournament);
+        Assert.NotNull(response.Errors);
+
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.TournamentStatusCannotBeSetManually();
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+
+        var tournamentInDb = await DbContext.Tournaments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tournamentToUpdateId);
+
+        Assert.NotNull(tournamentInDb);
+        Assert.Equal(TournamentStatus.Open, tournamentInDb.Status);
+    }
+
+    [Fact]
+    public async Task UpdateTournament_ReturnsCannotChangeCompletedStatusError_WhenTournamentIsAlreadyCompleted()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToUpdateId = 3; // already Completed
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToUpdateId,
+                status = TournamentStatus.Closed.ToString().ToUpper()
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            variables);
+
+        // Assert
+        Assert.True(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.UpdateTournament);
+        Assert.Null(response.Data.UpdateTournament.Tournament);
+        Assert.NotNull(response.Errors);
+
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.CannotChangeCompletedTournamentStatus(tournamentToUpdateId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
+
+        var tournamentInDb = await DbContext.Tournaments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tournamentToUpdateId);
+
+        Assert.NotNull(tournamentInDb);
+        Assert.Equal(TournamentStatus.Completed, tournamentInDb.Status);
+    }
+
+    [Fact]
+    public async Task DeleteTournament_ReturnsCannotDeleteWithBracketError_WhenTournamentIsCompleted()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        var tournamentToDeleteId = 3; // Completed tournament with an existing bracket
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToDeleteId
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<DeleteTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.DeleteTournament,
+            variables);
+
+        // Assert
+        Assert.True(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.DeleteTournament);
+        Assert.Null(response.Data.DeleteTournament.Boolean);
+        Assert.NotNull(response.Errors);
+
+        var error = response.Errors.First();
+        Assert.NotNull(error);
+        Assert.NotNull(error.Extensions);
+        Assert.True(error.Extensions.ContainsKey("code"));
+        Assert.NotNull(error.Message);
+
+        var expectedError = TournamentErrors.CannotDeleteTournamentWithBracket(tournamentToDeleteId);
+        Assert.Equal(expectedError.Code, error.Extensions["code"]?.ToString());
+        Assert.Equal(expectedError.Message, error.Message);
+        Assert.Equal(expectedError.Extensions!["TournamentId"]?.ToString(), error.Extensions["TournamentId"]?.ToString());
+
+        var tournamentInDb = await DbContext.Tournaments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tournamentToDeleteId);
+
+        Assert.NotNull(tournamentInDb);
+    }
 }

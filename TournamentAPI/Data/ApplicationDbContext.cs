@@ -46,6 +46,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasForeignKey(t => t.OwnerId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<Tournament>()
+            .HasOne(t => t.Champion)
+            .WithMany(u => u.WonTournaments)
+            .HasForeignKey(t => t.ChampionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Entity<Bracket>()
             .HasOne(b => b.Tournament)
             .WithOne(t => t.Bracket)

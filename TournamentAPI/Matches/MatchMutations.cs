@@ -2,6 +2,7 @@ using HotChocolate.Authorization;
 using HotChocolate.Resolvers;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using TournamentAPI.Brackets;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Extensions;
@@ -68,9 +69,11 @@ public static partial class MatchMutations
 
         try
         {
+            var frontierMatch = match;
+
             if (isReplay)
             {
-                await MatchCorrectionService.ApplyCorrectionAsync(
+                frontierMatch = await MatchCorrectionService.ApplyCorrectionAsync(
                     context,
                     match,
                     previousStatus,
@@ -83,6 +86,8 @@ public static partial class MatchMutations
                     Guid.NewGuid(),
                     token);
             }
+
+            await BracketCompletionService.SyncChampionAsync(context, tournament, match.BracketId, frontierMatch.Round, token);
 
             await context.SaveChangesAsync(token);
 
@@ -162,7 +167,7 @@ public static partial class MatchMutations
 
         try
         {
-            await MatchCorrectionService.ApplyCorrectionAsync(
+            var frontierMatch = await MatchCorrectionService.ApplyCorrectionAsync(
                 context,
                 match,
                 previousStatus,
@@ -174,6 +179,8 @@ public static partial class MatchMutations
                 userId,
                 Guid.NewGuid(),
                 token);
+
+            await BracketCompletionService.SyncChampionAsync(context, tournament, match.BracketId, frontierMatch.Round, token);
 
             await context.SaveChangesAsync(token);
 
