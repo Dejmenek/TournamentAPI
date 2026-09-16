@@ -23,4 +23,8 @@ public static partial class MatchResolvers
         ApplicationUserService applicationUserService,
         CancellationToken cancellationToken)
         => match.WinnerId is null ? null : await applicationUserService.GetApplicationUserByIdAsync(match.WinnerId.Value, cancellationToken);
+
+    public static string GetVersion(
+        [Parent(requires: nameof(Match.RowVersion))] Match match)
+        => MatchVersionCodec.Encode(match.RowVersion);
 }

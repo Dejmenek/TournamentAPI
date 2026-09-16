@@ -30,4 +30,56 @@ public static class MatchErrors
             .SetCode(MatchErrorCodes.TournamentNotClosed)
             .SetExtension("TournamentId", tournamentId)
             .Build();
+
+    public static IError NegativeScore(int matchId, int player1Score, int player2Score) =>
+        ErrorBuilder.New()
+            .SetMessage("Match scores cannot be negative.")
+            .SetCode(MatchErrorCodes.NegativeScore)
+            .SetExtension("MatchId", matchId)
+            .SetExtension("Player1Score", player1Score)
+            .SetExtension("Player2Score", player2Score)
+            .Build();
+
+    public static IError WinnerScoreMismatch(int matchId, int winnerId) =>
+        ErrorBuilder.New()
+            .SetMessage("The declared winner's score must be strictly greater than the opponent's score.")
+            .SetCode(MatchErrorCodes.WinnerScoreMismatch)
+            .SetExtension("MatchId", matchId)
+            .SetExtension("WinnerId", winnerId)
+            .Build();
+
+    public static IError MatchNotYetPlayed(int matchId) =>
+        ErrorBuilder.New()
+            .SetMessage("Match has not been played yet. Use Play instead.")
+            .SetCode(MatchErrorCodes.MatchNotYetPlayed)
+            .SetExtension("MatchId", matchId)
+            .Build();
+
+    public static IError MatchNeedsReplay(int matchId) =>
+        ErrorBuilder.New()
+            .SetMessage("Match was invalidated by an upstream correction. Replay it via Play first.")
+            .SetCode(MatchErrorCodes.MatchNeedsReplay)
+            .SetExtension("MatchId", matchId)
+            .Build();
+
+    public static IError InvalidVersionToken(int matchId) =>
+        ErrorBuilder.New()
+            .SetMessage("The supplied version token is invalid.")
+            .SetCode(MatchErrorCodes.InvalidVersionToken)
+            .SetExtension("MatchId", matchId)
+            .Build();
+
+    public static IError MatchVersionConflict(int matchId) =>
+        ErrorBuilder.New()
+            .SetMessage("Match was modified since the supplied version was read.")
+            .SetCode(MatchErrorCodes.MatchVersionConflict)
+            .SetExtension("MatchId", matchId)
+            .Build();
+
+    public static IError MatchCorrectionFailed(int matchId) =>
+        ErrorBuilder.New()
+            .SetMessage("Match correction failed.")
+            .SetCode(MatchErrorCodes.MatchCorrectionFailed)
+            .SetExtension("MatchId", matchId)
+            .Build();
 }

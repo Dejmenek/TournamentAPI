@@ -90,6 +90,7 @@ internal static class BenchmarkDatabaseSeeder
                         Player1Id = selectedUsers[j * 2].Id,
                         Player2Id = j * 2 + 1 < selectedUsers.Count ? selectedUsers[j * 2 + 1].Id : null,
                         WinnerId = random.Next(2) == 0 ? selectedUsers[j * 2].Id : (j * 2 + 1 < selectedUsers.Count ? selectedUsers[j * 2 + 1].Id : selectedUsers[j * 2].Id),
+                        Status = MatchStatus.Played,
                         Bracket = tournament.Bracket
                     };
                     tournament.Bracket.Matches.Add(match);

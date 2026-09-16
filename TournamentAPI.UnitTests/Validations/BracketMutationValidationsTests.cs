@@ -161,8 +161,8 @@ public class BracketMutationValidationsTests
     {
         var matches = new List<Match>
         {
-            new() { WinnerId = 1 },
-            new() { WinnerId = null }
+            new() { WinnerId = 1, Status = MatchStatus.Played },
+            new() { WinnerId = null, Status = MatchStatus.Scheduled }
         };
 
         IError? error = BracketMutationValidations.ValidateAllMatchesCompleted(matches, 1);
@@ -176,13 +176,28 @@ public class BracketMutationValidationsTests
     {
         var matches = new List<Match>
         {
-            new() { WinnerId = 1 },
-            new() { WinnerId = 2 }
+            new() { WinnerId = 1, Status = MatchStatus.Played },
+            new() { WinnerId = 2, Status = MatchStatus.Played }
         };
 
         IError? error = BracketMutationValidations.ValidateAllMatchesCompleted(matches, 1);
 
         Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateAllMatchesCompleted_WhenAMatchNeedsReplay_ReturnsError()
+    {
+        var matches = new List<Match>
+        {
+            new() { WinnerId = 1, Status = MatchStatus.Played },
+            new() { WinnerId = 2, Status = MatchStatus.NeedsReplay }
+        };
+
+        IError? error = BracketMutationValidations.ValidateAllMatchesCompleted(matches, 1);
+
+        Assert.NotNull(error);
+        Assert.Equal(BracketErrorCodes.NotAllMatchesPlayed, error.Code);
     }
 
     [Theory]

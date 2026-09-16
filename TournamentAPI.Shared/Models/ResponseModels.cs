@@ -103,6 +103,10 @@ public class MatchNode
     public int Player1Id { get; set; }
     public int? Player2Id { get; set; }
     public int? WinnerId { get; set; }
+    public int Player1Score { get; set; }
+    public int Player2Score { get; set; }
+    public string? Status { get; set; }
+    public string? Version { get; set; }
     public ApplicationUserNode? Player1 { get; set; }
     public ApplicationUserNode? Player2 { get; set; }
     public ApplicationUserNode? Winner { get; set; }
@@ -189,6 +193,16 @@ public class PlayMatchResponse
 }
 
 public class PlayMatchResult
+{
+    public bool? Boolean { get; set; }
+}
+
+public class CorrectMatchResultResponse
+{
+    public CorrectMatchResultResult? CorrectMatchResult { get; set; }
+}
+
+public class CorrectMatchResultResult
 {
     public bool? Boolean { get; set; }
 }

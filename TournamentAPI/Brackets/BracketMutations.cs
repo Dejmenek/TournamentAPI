@@ -87,10 +87,20 @@ public static partial class BracketMutations
 
         var newMatches = BracketService.CreateNextRoundMatches(bracket.Id, roundNumber, winners);
 
+        foreach (var match in matchesInRound)
+        {
+            context.Entry(match).Property(m => m.WinnerId).IsModified = true;
+        }
+
         try
         {
             context.Matches.AddRange(newMatches);
             await context.SaveChangesAsync(token);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            resolverContext.ReportError(BracketErrors.RoundDataChangedConcurrently(bracketId));
+            return null;
         }
         catch (DbUpdateException ex) when (ex.IsUniqueConstraintViolation())
         {

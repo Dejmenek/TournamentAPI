@@ -16,6 +16,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<Bracket> Brackets { get; set; }
     public DbSet<Match> Matches { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<MatchCorrectionAudit> MatchCorrectionAudits { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -115,5 +116,31 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasOne(e => e.User)
             .WithMany()
             .HasForeignKey(e => e.UserId);
+
+        builder.Entity<MatchCorrectionAudit>().HasKey(e => e.Id);
+
+        builder.Entity<MatchCorrectionAudit>()
+            .HasOne<Match>()
+            .WithMany()
+            .HasForeignKey(e => e.MatchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<MatchCorrectionAudit>()
+            .HasOne<Match>()
+            .WithMany()
+            .HasForeignKey(e => e.TriggeredByMatchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<MatchCorrectionAudit>()
+            .HasOne<ApplicationUser>()
+            .WithMany()
+            .HasForeignKey(e => e.PerformedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<MatchCorrectionAudit>()
+            .HasIndex(e => e.MatchId);
+
+        builder.Entity<MatchCorrectionAudit>()
+            .HasIndex(e => e.CorrelationId);
     }
 }

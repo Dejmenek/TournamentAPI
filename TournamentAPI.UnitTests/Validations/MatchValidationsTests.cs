@@ -47,9 +47,9 @@ public class MatchValidationsTests
     }
 
     [Fact]
-    public void ValidateMatchNotPlayed_WhenMatchAlreadyHasWinner_ReturnsError()
+    public void ValidateMatchNotPlayed_WhenMatchIsPlayed_ReturnsError()
     {
-        var match = new Match { Id = 1, WinnerId = 5 };
+        var match = new Match { Id = 1, WinnerId = 5, Status = MatchStatus.Played };
 
         IError? error = MatchValidations.ValidateMatchNotPlayed(match);
 
@@ -58,11 +58,83 @@ public class MatchValidationsTests
     }
 
     [Fact]
-    public void ValidateMatchNotPlayed_WhenMatchHasNoWinner_ReturnsNull()
+    public void ValidateMatchNotPlayed_WhenMatchIsScheduled_ReturnsNull()
     {
-        var match = new Match { Id = 1, WinnerId = null };
+        var match = new Match { Id = 1, WinnerId = null, Status = MatchStatus.Scheduled };
 
         IError? error = MatchValidations.ValidateMatchNotPlayed(match);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateMatchNotPlayed_WhenMatchNeedsReplay_ReturnsNull()
+    {
+        var match = new Match { Id = 1, WinnerId = 5, Status = MatchStatus.NeedsReplay };
+
+        IError? error = MatchValidations.ValidateMatchNotPlayed(match);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateMatchNotScheduled_WhenMatchIsScheduled_ReturnsError()
+    {
+        var match = new Match { Id = 1, Status = MatchStatus.Scheduled };
+
+        IError? error = MatchValidations.ValidateMatchNotScheduled(match);
+
+        Assert.NotNull(error);
+        Assert.Equal(MatchErrorCodes.MatchNotYetPlayed, error.Code);
+    }
+
+    [Fact]
+    public void ValidateMatchNotScheduled_WhenMatchIsPlayed_ReturnsNull()
+    {
+        var match = new Match { Id = 1, Status = MatchStatus.Played };
+
+        IError? error = MatchValidations.ValidateMatchNotScheduled(match);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateMatchNotScheduled_WhenMatchNeedsReplay_ReturnsNull()
+    {
+        var match = new Match { Id = 1, Status = MatchStatus.NeedsReplay };
+
+        IError? error = MatchValidations.ValidateMatchNotScheduled(match);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateMatchNotNeedsReplay_WhenMatchNeedsReplay_ReturnsError()
+    {
+        var match = new Match { Id = 1, Status = MatchStatus.NeedsReplay };
+
+        IError? error = MatchValidations.ValidateMatchNotNeedsReplay(match);
+
+        Assert.NotNull(error);
+        Assert.Equal(MatchErrorCodes.MatchNeedsReplay, error.Code);
+    }
+
+    [Fact]
+    public void ValidateMatchNotNeedsReplay_WhenMatchIsScheduled_ReturnsNull()
+    {
+        var match = new Match { Id = 1, Status = MatchStatus.Scheduled };
+
+        IError? error = MatchValidations.ValidateMatchNotNeedsReplay(match);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateMatchNotNeedsReplay_WhenMatchIsPlayed_ReturnsNull()
+    {
+        var match = new Match { Id = 1, Status = MatchStatus.Played };
+
+        IError? error = MatchValidations.ValidateMatchNotNeedsReplay(match);
 
         Assert.Null(error);
     }
@@ -94,6 +166,74 @@ public class MatchValidationsTests
         var match = new Match { Id = 1, Player1Id = 2, Player2Id = 3 };
 
         IError? error = MatchValidations.ValidateWinnerIsParticipant(match, 3);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateScoresAreNonNegative_WhenPlayer1ScoreIsNegative_ReturnsError()
+    {
+        IError? error = MatchValidations.ValidateScoresAreNonNegative(1, -1, 2);
+
+        Assert.NotNull(error);
+        Assert.Equal(MatchErrorCodes.NegativeScore, error.Code);
+    }
+
+    [Fact]
+    public void ValidateScoresAreNonNegative_WhenPlayer2ScoreIsNegative_ReturnsError()
+    {
+        IError? error = MatchValidations.ValidateScoresAreNonNegative(1, 2, -1);
+
+        Assert.NotNull(error);
+        Assert.Equal(MatchErrorCodes.NegativeScore, error.Code);
+    }
+
+    [Fact]
+    public void ValidateScoresAreNonNegative_WhenBothScoresAreNonNegative_ReturnsNull()
+    {
+        IError? error = MatchValidations.ValidateScoresAreNonNegative(1, 3, 1);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateWinnerHasHigherScore_WhenScoresAreTied_ReturnsError()
+    {
+        var match = new Match { Id = 1, Player1Id = 2, Player2Id = 3 };
+
+        IError? error = MatchValidations.ValidateWinnerHasHigherScore(match, 2, 1, 1);
+
+        Assert.NotNull(error);
+        Assert.Equal(MatchErrorCodes.WinnerScoreMismatch, error.Code);
+    }
+
+    [Fact]
+    public void ValidateWinnerHasHigherScore_WhenWinnerScoreIsLower_ReturnsError()
+    {
+        var match = new Match { Id = 1, Player1Id = 2, Player2Id = 3 };
+
+        IError? error = MatchValidations.ValidateWinnerHasHigherScore(match, 2, 1, 3);
+
+        Assert.NotNull(error);
+        Assert.Equal(MatchErrorCodes.WinnerScoreMismatch, error.Code);
+    }
+
+    [Fact]
+    public void ValidateWinnerHasHigherScore_WhenPlayer1IsWinnerWithHigherScore_ReturnsNull()
+    {
+        var match = new Match { Id = 1, Player1Id = 2, Player2Id = 3 };
+
+        IError? error = MatchValidations.ValidateWinnerHasHigherScore(match, 2, 3, 1);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateWinnerHasHigherScore_WhenPlayer2IsWinnerWithHigherScore_ReturnsNull()
+    {
+        var match = new Match { Id = 1, Player1Id = 2, Player2Id = 3 };
+
+        IError? error = MatchValidations.ValidateWinnerHasHigherScore(match, 3, 1, 3);
 
         Assert.Null(error);
     }

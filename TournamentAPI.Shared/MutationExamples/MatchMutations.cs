@@ -10,5 +10,13 @@ public static partial class Mutations
               }
             }
             """;
+
+        public const string CorrectMatchResult = """
+            mutation CorrectMatchResult($input: CorrectMatchResultInput!) {
+              correctMatchResult(input: $input) {
+                boolean
+              }
+            }
+            """;
     }
 }

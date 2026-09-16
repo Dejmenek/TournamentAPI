@@ -12,4 +12,5 @@ public static class BracketErrorCodes
     public const string BracketAlreadyHasWinner = "Bracket.AlreadyHasWinner";
     public const string NextRoundAlreadyGenerated = "Bracket.NextRoundAlreadyGenerated";
     public const string RoundUpdateNotAllowed = "Bracket.RoundUpdateNotAllowed";
+    public const string RoundDataChanged = "Bracket.RoundDataChanged";
 }

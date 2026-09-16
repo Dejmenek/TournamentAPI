@@ -64,4 +64,11 @@ public static class BracketErrors
             .SetCode(BracketErrorCodes.RoundUpdateNotAllowed)
             .SetExtension("TournamentId", tournamentId)
             .Build();
+
+    public static IError RoundDataChangedConcurrently(int bracketId) =>
+        ErrorBuilder.New()
+            .SetMessage("Round data changed since it was read. Please retry.")
+            .SetCode(BracketErrorCodes.RoundDataChanged)
+            .SetExtension("BracketId", bracketId)
+            .Build();
 }

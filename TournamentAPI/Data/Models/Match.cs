@@ -11,6 +11,9 @@ public class Match : ISoftDeletable
     public int Player1Id { get; set; }
     public int? Player2Id { get; set; }
     public int? WinnerId { get; set; }
+    public int Player1Score { get; set; }
+    public int Player2Score { get; set; }
+    public MatchStatus Status { get; set; }
 
     [GraphQLIgnore]
     public bool IsDeleted { get; set; }
@@ -29,5 +32,6 @@ public class Match : ISoftDeletable
 
     [Timestamp]
     [GraphQLIgnore]
-    public byte[] Version { get; set; } = null!;
+    [IsProjected(true)]
+    public byte[] RowVersion { get; set; } = null!;
 }

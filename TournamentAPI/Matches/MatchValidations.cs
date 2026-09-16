@@ -11,8 +11,24 @@ public static class MatchValidations
         => tournament.Status != TournamentStatus.Closed ? MatchErrors.TournamentNotClosed(tournament.Id) : null;
 
     public static IError? ValidateMatchNotPlayed(Match match)
-        => match.WinnerId != null ? MatchErrors.MatchAlreadyPlayed(match.Id) : null;
+        => match.Status == MatchStatus.Played ? MatchErrors.MatchAlreadyPlayed(match.Id) : null;
+
+    public static IError? ValidateMatchNotScheduled(Match match)
+        => match.Status == MatchStatus.Scheduled ? MatchErrors.MatchNotYetPlayed(match.Id) : null;
+
+    public static IError? ValidateMatchNotNeedsReplay(Match match)
+        => match.Status == MatchStatus.NeedsReplay ? MatchErrors.MatchNeedsReplay(match.Id) : null;
 
     public static IError? ValidateWinnerIsParticipant(Match match, int winnerId)
         => winnerId != match.Player1Id && winnerId != match.Player2Id ? MatchErrors.InvalidMatchWinner(match.Id, winnerId) : null;
+
+    public static IError? ValidateScoresAreNonNegative(int matchId, int player1Score, int player2Score)
+        => player1Score < 0 || player2Score < 0 ? MatchErrors.NegativeScore(matchId, player1Score, player2Score) : null;
+
+    public static IError? ValidateWinnerHasHigherScore(Match match, int winnerId, int player1Score, int player2Score)
+    {
+        var winnerScore = winnerId == match.Player1Id ? player1Score : player2Score;
+        var opponentScore = winnerId == match.Player1Id ? player2Score : player1Score;
+        return winnerScore <= opponentScore ? MatchErrors.WinnerScoreMismatch(match.Id, winnerId) : null;
+    }
 }
