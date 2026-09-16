@@ -64,5 +64,29 @@ public static partial class Queries
               }
             }
             """;
+
+        public const string GetMatchesForRoundWithStatusAndVersion = """
+            query GetMatchesForRound($tournamentId: Int!, $roundNumber: Int! ) {
+              tournamentById(id: $tournamentId) {
+                bracket {
+                  matchesByBracket(first: 10, where: { round: { eq: $roundNumber } }) {
+                    totalCount
+                    edges {
+                      node {
+                        bracketId
+                        id
+                        player1Id
+                        player2Id
+                        round
+                        winnerId
+                        status
+                        version
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
     }
 }
