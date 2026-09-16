@@ -96,17 +96,17 @@ public static class DatabaseSeeder
             tournament3.Participants.Add(new TournamentParticipant { Tournament = tournament3, Participant = user8, SlotNumber = 8 });
 
             // Round 1 - Quarter Finals (4 matches)
-            var match1 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user2.Id, WinnerId = user1.Id, Bracket = tournament3.Bracket };
-            var match2 = new Match { Round = 1, Player1Id = user3.Id, Player2Id = user4.Id, WinnerId = user4.Id, Bracket = tournament3.Bracket };
-            var match3 = new Match { Round = 1, Player1Id = user5.Id, Player2Id = user6.Id, WinnerId = user5.Id, Bracket = tournament3.Bracket };
-            var match4 = new Match { Round = 1, Player1Id = user7.Id, Player2Id = user8.Id, WinnerId = user7.Id, Bracket = tournament3.Bracket };
+            var match1 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user2.Id, WinnerId = user1.Id, Status = MatchStatus.Played, Bracket = tournament3.Bracket };
+            var match2 = new Match { Round = 1, Player1Id = user3.Id, Player2Id = user4.Id, WinnerId = user4.Id, Status = MatchStatus.Played, Bracket = tournament3.Bracket };
+            var match3 = new Match { Round = 1, Player1Id = user5.Id, Player2Id = user6.Id, WinnerId = user5.Id, Status = MatchStatus.Played, Bracket = tournament3.Bracket };
+            var match4 = new Match { Round = 1, Player1Id = user7.Id, Player2Id = user8.Id, WinnerId = user7.Id, Status = MatchStatus.Played, Bracket = tournament3.Bracket };
 
             // Round 2 - Semi Finals (2 matches)
-            var match5 = new Match { Round = 2, Player1Id = user1.Id, Player2Id = user4.Id, WinnerId = user1.Id, Bracket = tournament3.Bracket };
-            var match6 = new Match { Round = 2, Player1Id = user5.Id, Player2Id = user7.Id, WinnerId = user5.Id, Bracket = tournament3.Bracket };
+            var match5 = new Match { Round = 2, Player1Id = user1.Id, Player2Id = user4.Id, WinnerId = user1.Id, Status = MatchStatus.Played, Bracket = tournament3.Bracket };
+            var match6 = new Match { Round = 2, Player1Id = user5.Id, Player2Id = user7.Id, WinnerId = user5.Id, Status = MatchStatus.Played, Bracket = tournament3.Bracket };
 
             // Round 3 - Finals (1 match)
-            var match7 = new Match { Round = 3, Player1Id = user1.Id, Player2Id = user5.Id, WinnerId = user1.Id, Bracket = tournament3.Bracket };
+            var match7 = new Match { Round = 3, Player1Id = user1.Id, Player2Id = user5.Id, WinnerId = user1.Id, Status = MatchStatus.Played, Bracket = tournament3.Bracket };
 
             tournament3.Bracket.Matches.Add(match1);
             tournament3.Bracket.Matches.Add(match2);
@@ -140,9 +140,9 @@ public static class DatabaseSeeder
             tournament4.Participants.Add(new TournamentParticipant { Tournament = tournament4, Participant = user8, SlotNumber = 6 });
 
             // Round 1 - Semi Finals (2 matches, one completed, one in progress)
-            var match8 = new Match { Round = 1, Player1Id = user2.Id, Player2Id = user3.Id, WinnerId = user3.Id, Bracket = tournament4.Bracket };
-            var match9 = new Match { Round = 1, Player1Id = user5.Id, Player2Id = user6.Id, WinnerId = null, Bracket = tournament4.Bracket };
-            var match10 = new Match { Round = 1, Player1Id = user7.Id, Player2Id = user8.Id, WinnerId = null, Bracket = tournament4.Bracket };
+            var match8 = new Match { Round = 1, Player1Id = user2.Id, Player2Id = user3.Id, WinnerId = user3.Id, Status = MatchStatus.Played, Bracket = tournament4.Bracket };
+            var match9 = new Match { Round = 1, Player1Id = user5.Id, Player2Id = user6.Id, WinnerId = null, Status = MatchStatus.Scheduled, Bracket = tournament4.Bracket };
+            var match10 = new Match { Round = 1, Player1Id = user7.Id, Player2Id = user8.Id, WinnerId = null, Status = MatchStatus.Scheduled, Bracket = tournament4.Bracket };
 
             tournament4.Bracket.Matches.Add(match8);
             tournament4.Bracket.Matches.Add(match9);
@@ -171,9 +171,9 @@ public static class DatabaseSeeder
             tournament5.Participants.Add(new TournamentParticipant { Tournament = tournament5, Participant = user8, SlotNumber = 5 });
 
             // Round 1 - First round with bye (3 matches, one player gets bye)
-            var match11 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user3.Id, WinnerId = user1.Id, Bracket = tournament5.Bracket };
-            var match12 = new Match { Round = 1, Player1Id = user4.Id, Player2Id = user6.Id, WinnerId = user6.Id, Bracket = tournament5.Bracket };
-            var match13 = new Match { Round = 1, Player1Id = user8.Id, Player2Id = null, WinnerId = user8.Id, Bracket = tournament5.Bracket }; // Bye
+            var match11 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user3.Id, WinnerId = user1.Id, Status = MatchStatus.Played, Bracket = tournament5.Bracket };
+            var match12 = new Match { Round = 1, Player1Id = user4.Id, Player2Id = user6.Id, WinnerId = user6.Id, Status = MatchStatus.Played, Bracket = tournament5.Bracket };
+            var match13 = new Match { Round = 1, Player1Id = user8.Id, Player2Id = null, WinnerId = user8.Id, Status = MatchStatus.Played, Bracket = tournament5.Bracket }; // Bye
 
             tournament5.Bracket.Matches.Add(match11);
             tournament5.Bracket.Matches.Add(match12);
@@ -217,8 +217,8 @@ public static class DatabaseSeeder
             tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user7, SlotNumber = 3 });
             tournament7.Participants.Add(new TournamentParticipant { Tournament = tournament7, Participant = user8, SlotNumber = 4 });
 
-            var match14 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user2.Id, WinnerId = user1.Id, Bracket = tournament7.Bracket };
-            var match15 = new Match { Round = 1, Player1Id = user7.Id, Player2Id = user8.Id, WinnerId = user7.Id, Bracket = tournament7.Bracket };
+            var match14 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user2.Id, WinnerId = user1.Id, Status = MatchStatus.Played, Bracket = tournament7.Bracket };
+            var match15 = new Match { Round = 1, Player1Id = user7.Id, Player2Id = user8.Id, WinnerId = user7.Id, Status = MatchStatus.Played, Bracket = tournament7.Bracket };
 
             tournament7.Bracket.Matches.Add(match14);
             tournament7.Bracket.Matches.Add(match15);
@@ -300,8 +300,8 @@ public static class DatabaseSeeder
             tournament12.Participants.Add(new TournamentParticipant { Tournament = tournament12, Participant = user3, SlotNumber = 3 });
             tournament12.Participants.Add(new TournamentParticipant { Tournament = tournament12, Participant = user4, SlotNumber = 4 });
 
-            var match16 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user2.Id, WinnerId = user2.Id, Bracket = tournament12.Bracket };
-            var match17 = new Match { Round = 1, Player1Id = user3.Id, Player2Id = user4.Id, WinnerId = user4.Id, Bracket = tournament12.Bracket };
+            var match16 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user2.Id, WinnerId = user2.Id, Status = MatchStatus.Played, Bracket = tournament12.Bracket };
+            var match17 = new Match { Round = 1, Player1Id = user3.Id, Player2Id = user4.Id, WinnerId = user4.Id, Status = MatchStatus.Played, Bracket = tournament12.Bracket };
 
             tournament12.Bracket.Matches.Add(match16);
             tournament12.Bracket.Matches.Add(match17);
@@ -373,11 +373,11 @@ public static class DatabaseSeeder
             tournament16.Participants.Add(new TournamentParticipant { Tournament = tournament16, Participant = user6, SlotNumber = 4 });
 
             // Round 1 - Semi Finals (2 matches)
-            var match19 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user3.Id, WinnerId = user3.Id, Bracket = tournament16.Bracket };
-            var match20 = new Match { Round = 1, Player1Id = user5.Id, Player2Id = user6.Id, WinnerId = user6.Id, Bracket = tournament16.Bracket };
+            var match19 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user3.Id, WinnerId = user3.Id, Status = MatchStatus.Played, Bracket = tournament16.Bracket };
+            var match20 = new Match { Round = 1, Player1Id = user5.Id, Player2Id = user6.Id, WinnerId = user6.Id, Status = MatchStatus.Played, Bracket = tournament16.Bracket };
 
             // Round 2 - Final
-            var match21 = new Match { Round = 2, Player1Id = user3.Id, Player2Id = user6.Id, WinnerId = user6.Id, Bracket = tournament16.Bracket };
+            var match21 = new Match { Round = 2, Player1Id = user3.Id, Player2Id = user6.Id, WinnerId = user6.Id, Status = MatchStatus.Played, Bracket = tournament16.Bracket };
 
             tournament16.Bracket.Matches.Add(match19);
             tournament16.Bracket.Matches.Add(match20);
