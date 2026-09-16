@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TournamentAPI.Data.Models;
 using TournamentAPI.Matches;
 using TournamentAPI.Shared.Models;
 using TournamentAPI.Tournaments;
@@ -8,6 +9,68 @@ public class MatchMutationTests : BaseIntegrationTest
 {
     public MatchMutationTests(IntegrationTestWebAppFactory factory) : base(factory)
     {
+    }
+
+    [Fact]
+    public async Task Play_ReplayingNeedsReplayMatch_WithSameStaleWinner_NoCascade_WritesOneAuditRow()
+    {
+        // Arrange: correct match2 (tournament 3: carol vs david, winner david -> carol), which
+        // swaps match5's Player2 slot (david -> carol) but leaves match5's stale winner (alice,
+        // Player1) as a still-valid participant, so replaying match5 with that same stale winner
+        // is a legitimate no-op correction rather than an InvalidMatchWinner failure.
+        var email = "alice@example.com";
+        var password = "Password123!";
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email, password } });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var match2 = await DbContext.Matches.AsNoTracking().FirstAsync(m => m.Id == 2);
+        var version = Convert.ToBase64String(match2.RowVersion);
+
+        await client.ExecuteMutationAsync<CorrectMatchResultResponse>(
+            Shared.MutationExamples.Mutations.Match.CorrectMatchResult,
+            new { input = new { matchId = 2, winnerId = 3, player1Score = 3, player2Score = 1, version } });
+
+        var match5BeforeReplay = await DbContext.Matches.AsNoTracking().FirstAsync(m => m.Id == 5);
+        Assert.Equal(MatchStatus.NeedsReplay, match5BeforeReplay.Status);
+        Assert.Equal(1, match5BeforeReplay.WinnerId);
+
+        var auditCountBeforeReplay = await DbContext.MatchCorrectionAudits.AsNoTracking().CountAsync(a => a.MatchId == 5);
+
+        var variables = new
+        {
+            input = new
+            {
+                matchId = 5,
+                winnerId = 1, // alice, the same stale winner
+                player1Score = 3,
+                player2Score = 1
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
+            Shared.MutationExamples.Mutations.Match.Play,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.True(response.Data.Play.Boolean);
+
+        var match5 = await DbContext.Matches.AsNoTracking().FirstAsync(m => m.Id == 5);
+        Assert.Equal(1, match5.WinnerId);
+        Assert.Equal(MatchStatus.Played, match5.Status);
+
+        var match7 = await DbContext.Matches.AsNoTracking().FirstAsync(m => m.Id == 7);
+        Assert.Equal(1, match7.Player1Id);
+        Assert.Equal(5, match7.Player2Id);
+        Assert.Equal(MatchStatus.Played, match7.Status);
+
+        var auditCountAfterReplay = await DbContext.MatchCorrectionAudits.AsNoTracking().CountAsync(a => a.MatchId == 5);
+        Assert.Equal(auditCountBeforeReplay + 1, auditCountAfterReplay);
     }
 
     [Fact]
