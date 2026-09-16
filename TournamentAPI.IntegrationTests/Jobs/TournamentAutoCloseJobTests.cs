@@ -41,6 +41,32 @@ public class TournamentAutoCloseJobTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task RunAsync_LeavesCompletedTournamentsUntouched_EvenPastStartDate()
+    {
+        // Arrange: tournament 3 is seeded as Completed; the job's filter only ever targets Open
+        // tournaments, so a Completed one past its StartDate must never be touched by it.
+        var completedTournamentId = 3;
+
+        var tournament = await DbContext.Tournaments.FirstAsync(t => t.Id == completedTournamentId);
+        tournament.StartDate = DateTime.UtcNow.AddMinutes(-10);
+        await DbContext.SaveChangesAsync();
+
+        using var scope = Factory.Services.CreateScope();
+        var job = scope.ServiceProvider.GetRequiredService<TournamentAutoCloseJob>();
+
+        // Act
+        await job.RunAsync(CancellationToken.None);
+
+        // Assert
+        var tournamentAfter = await DbContext.Tournaments
+            .AsNoTracking()
+            .FirstAsync(t => t.Id == completedTournamentId);
+
+        Assert.Equal(TournamentStatus.Completed, tournamentAfter.Status);
+        Assert.NotNull(tournamentAfter.ChampionId);
+    }
+
+    [Fact]
     public async Task RunAsync_WhenNothingIsDue_IsANoOp()
     {
         // Arrange
