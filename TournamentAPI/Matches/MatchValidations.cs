@@ -8,7 +8,7 @@ public static class MatchValidations
         => match == null ? MatchErrors.MatchNotFound(matchId) : null;
 
     public static IError? ValidateTournamentIsClosed(Tournament tournament)
-        => tournament.Status != TournamentStatus.Closed ? MatchErrors.TournamentNotClosed(tournament.Id) : null;
+        => tournament.Status is TournamentStatus.Closed or TournamentStatus.Completed ? null : MatchErrors.TournamentNotClosed(tournament.Id);
 
     public static IError? ValidateMatchNotPlayed(Match match)
         => match.Status == MatchStatus.Played ? MatchErrors.MatchAlreadyPlayed(match.Id) : null;
