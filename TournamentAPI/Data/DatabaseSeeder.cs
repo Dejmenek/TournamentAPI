@@ -75,9 +75,11 @@ public static class DatabaseSeeder
             {
                 Name = "Winter Championship 2024",
                 StartDate = DateTime.UtcNow.AddDays(-30),
-                Status = TournamentStatus.Closed,
+                Status = TournamentStatus.Completed,
                 OwnerId = user1.Id,
                 Owner = user1,
+                ChampionId = user1.Id,
+                Champion = user1,
                 MaxParticipants = 8,
                 Participants = new List<TournamentParticipant>(),
                 Bracket = new Bracket
@@ -359,9 +361,11 @@ public static class DatabaseSeeder
             {
                 Name = "Champions Cup",
                 StartDate = DateTime.UtcNow.AddDays(-10),
-                Status = TournamentStatus.Closed,
+                Status = TournamentStatus.Completed,
                 OwnerId = user2.Id,
                 Owner = user2,
+                ChampionId = user6.Id,
+                Champion = user6,
                 MaxParticipants = 4,
                 Participants = new List<TournamentParticipant>(),
                 Bracket = new Bracket()
@@ -383,7 +387,42 @@ public static class DatabaseSeeder
             tournament16.Bracket.Matches.Add(match20);
             tournament16.Bracket.Matches.Add(match21);
 
-            await context.Tournaments.AddRangeAsync(tournament1, tournament2, tournament3, tournament4, tournament5, tournament6, tournament7, tournament8, tournament9, tournament10, tournament11, tournament12, tournament13, tournament14, tournament15, tournament16);
+            // Tournament 17: Closed tournament with 4 participants and a two-round bracket where round 1
+            // is fully played and round 2 (the final) has already been generated but not yet played.
+            // Used as a fixture for bracket-validation tests that need an existing, in-progress bracket
+            // without the tournament being Completed.
+            var tournament17 = new Tournament
+            {
+                Name = "Bracket Validation Fixture",
+                StartDate = DateTime.UtcNow.AddDays(-5),
+                Status = TournamentStatus.Closed,
+                OwnerId = user4.Id,
+                Owner = user4,
+                MaxParticipants = 4,
+                Participants = new List<TournamentParticipant>(),
+                Bracket = new Bracket
+                {
+                    Matches = new List<Match>()
+                }
+            };
+
+            tournament17.Participants.Add(new TournamentParticipant { Tournament = tournament17, Participant = user1, SlotNumber = 1 });
+            tournament17.Participants.Add(new TournamentParticipant { Tournament = tournament17, Participant = user2, SlotNumber = 2 });
+            tournament17.Participants.Add(new TournamentParticipant { Tournament = tournament17, Participant = user3, SlotNumber = 3 });
+            tournament17.Participants.Add(new TournamentParticipant { Tournament = tournament17, Participant = user4, SlotNumber = 4 });
+
+            // Round 1 (2 matches, both played)
+            var match22 = new Match { Round = 1, Player1Id = user1.Id, Player2Id = user2.Id, WinnerId = user1.Id, Status = MatchStatus.Played, Bracket = tournament17.Bracket };
+            var match23 = new Match { Round = 1, Player1Id = user3.Id, Player2Id = user4.Id, WinnerId = user3.Id, Status = MatchStatus.Played, Bracket = tournament17.Bracket };
+
+            // Round 2 - Final (already generated, not yet played)
+            var match24 = new Match { Round = 2, Player1Id = user1.Id, Player2Id = user3.Id, WinnerId = null, Status = MatchStatus.Scheduled, Bracket = tournament17.Bracket };
+
+            tournament17.Bracket.Matches.Add(match22);
+            tournament17.Bracket.Matches.Add(match23);
+            tournament17.Bracket.Matches.Add(match24);
+
+            await context.Tournaments.AddRangeAsync(tournament1, tournament2, tournament3, tournament4, tournament5, tournament6, tournament7, tournament8, tournament9, tournament10, tournament11, tournament12, tournament13, tournament14, tournament15, tournament16, tournament17);
             await context.SaveChangesAsync();
         }
     }
