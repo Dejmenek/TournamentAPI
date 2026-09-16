@@ -2,6 +2,7 @@ using GreenDonut.Data;
 using HotChocolate.Resolvers;
 using HotChocolate.Types.Pagination;
 using TournamentAPI.Data.Models;
+using TournamentAPI.Matches;
 using TournamentAPI.Tournaments;
 
 namespace TournamentAPI.Users;
@@ -52,6 +53,17 @@ public static partial class ApplicationUserResolvers
         UserTournamentsService userTournamentsService,
         CancellationToken cancellationToken)
         => await userTournamentsService.GetWonTournamentsAsync(user.Id, pagingArgs, query, cancellationToken);
+
+    [UseConnection(IncludeTotalCount = true)]
+    [UseFiltering]
+    [UseSorting]
+    public static async Task<PageConnection<Match>> GetWonMatches(
+        [Parent(requires: nameof(ApplicationUser.Id))] ApplicationUser user,
+        PagingArguments pagingArgs,
+        QueryContext<Match> query,
+        MatchService matchService,
+        CancellationToken cancellationToken)
+        => await matchService.GetWonMatchesByUserAsync(user.Id, pagingArgs, query, cancellationToken);
 
     private static bool IsViewingOwnAccount(IResolverContext ctx, ApplicationUser user)
     {
