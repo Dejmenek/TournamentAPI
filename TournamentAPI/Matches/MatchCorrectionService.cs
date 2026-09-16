@@ -1,0 +1,173 @@
+using Microsoft.EntityFrameworkCore;
+using TournamentAPI.Data;
+using TournamentAPI.Data.Models;
+
+namespace TournamentAPI.Matches;
+
+public static class MatchCorrectionService
+{
+    public static async Task ApplyCorrectionAsync(
+        ApplicationDbContext context,
+        Match match,
+        MatchStatus previousStatus,
+        int? previousWinnerId,
+        int previousPlayer1Id,
+        int? previousPlayer2Id,
+        int previousPlayer1Score,
+        int previousPlayer2Score,
+        int performedByUserId,
+        Guid correlationId,
+        CancellationToken token)
+    {
+        context.MatchCorrectionAudits.Add(BuildAuditRow(
+            match,
+            previousStatus, previousWinnerId, previousPlayer1Id, previousPlayer2Id, previousPlayer1Score, previousPlayer2Score,
+            correlationId, triggeredByMatchId: null, performedByUserId, notes: null));
+
+        if (previousWinnerId == match.WinnerId)
+            return;
+
+        await PropagateAsync(context, match, previousWinnerId, performedByUserId, correlationId, token);
+    }
+
+    public static async Task RecordIdempotentDuplicateAsync(
+        ApplicationDbContext context,
+        Match currentCommittedState,
+        int performedByUserId,
+        CancellationToken token)
+    {
+        context.MatchCorrectionAudits.Add(BuildAuditRow(
+            currentCommittedState,
+            currentCommittedState.Status, currentCommittedState.WinnerId,
+            currentCommittedState.Player1Id, currentCommittedState.Player2Id,
+            currentCommittedState.Player1Score, currentCommittedState.Player2Score,
+            correlationId: Guid.NewGuid(),
+            triggeredByMatchId: null,
+            performedByUserId,
+            notes: "Idempotent duplicate: retried request matched already-committed state."));
+
+        await context.SaveChangesAsync(token);
+    }
+
+    private static async Task PropagateAsync(
+        ApplicationDbContext context,
+        Match sourceMatch,
+        int? sourceMatchPreviousWinnerId,
+        int performedByUserId,
+        Guid correlationId,
+        CancellationToken token)
+    {
+        var upstreamMatch = sourceMatch;
+        var upstreamPreviousWinnerId = sourceMatchPreviousWinnerId;
+
+        while (true)
+        {
+            var currentRoundMatchIds = await context.Matches
+                .Where(m => m.BracketId == upstreamMatch.BracketId && m.Round == upstreamMatch.Round)
+                .OrderBy(m => m.Id)
+                .Select(m => m.Id)
+                .ToListAsync(token);
+
+            var nextRoundMatches = await context.Matches
+                .Where(m => m.BracketId == upstreamMatch.BracketId && m.Round == upstreamMatch.Round + 1)
+                .OrderBy(m => m.Id)
+                .ToListAsync(token);
+
+            var nextRoundMatchIds = nextRoundMatches.Select(m => m.Id).ToList();
+
+            var downstreamMatchId = MatchCascadePositionCalculator.GetDownstreamMatchId(
+                currentRoundMatchIds, nextRoundMatchIds, upstreamMatch.Id);
+
+            if (downstreamMatchId is null)
+                return;
+
+            var downstream = nextRoundMatches.Single(m => m.Id == downstreamMatchId);
+
+            var previousStatus = downstream.Status;
+            var previousWinnerId = downstream.WinnerId;
+            var previousPlayer1Id = downstream.Player1Id;
+            var previousPlayer2Id = downstream.Player2Id;
+            var previousPlayer1Score = downstream.Player1Score;
+            var previousPlayer2Score = downstream.Player2Score;
+
+            var newParticipantId = upstreamMatch.WinnerId!.Value;
+
+            if (downstream.Player1Id == upstreamPreviousWinnerId)
+                downstream.Player1Id = newParticipantId;
+            else if (downstream.Player2Id == upstreamPreviousWinnerId)
+                downstream.Player2Id = newParticipantId;
+
+            if (downstream.Player2Id is null)
+            {
+                downstream.WinnerId = downstream.Player1Id;
+                downstream.Status = MatchStatus.Played;
+
+                context.MatchCorrectionAudits.Add(BuildAuditRow(
+                    downstream,
+                    previousStatus, previousWinnerId, previousPlayer1Id, previousPlayer2Id, previousPlayer1Score, previousPlayer2Score,
+                    correlationId, upstreamMatch.Id, performedByUserId,
+                    notes: "Auto-advanced bye after upstream correction."));
+
+                upstreamMatch = downstream;
+                upstreamPreviousWinnerId = previousWinnerId;
+                continue;
+            }
+
+            if (downstream.Status == MatchStatus.Scheduled)
+            {
+                context.MatchCorrectionAudits.Add(BuildAuditRow(
+                    downstream,
+                    previousStatus, previousWinnerId, previousPlayer1Id, previousPlayer2Id, previousPlayer1Score, previousPlayer2Score,
+                    correlationId, upstreamMatch.Id, performedByUserId,
+                    notes: "Participant swapped after upstream correction; match not yet played."));
+
+                return;
+            }
+
+            downstream.Status = MatchStatus.NeedsReplay;
+
+            context.MatchCorrectionAudits.Add(BuildAuditRow(
+                downstream,
+                previousStatus, previousWinnerId, previousPlayer1Id, previousPlayer2Id, previousPlayer1Score, previousPlayer2Score,
+                correlationId, upstreamMatch.Id, performedByUserId,
+                notes: "Invalidated by upstream correction."));
+
+            return;
+        }
+    }
+
+    private static MatchCorrectionAudit BuildAuditRow(
+        Match match,
+        MatchStatus previousStatus,
+        int? previousWinnerId,
+        int previousPlayer1Id,
+        int? previousPlayer2Id,
+        int previousPlayer1Score,
+        int previousPlayer2Score,
+        Guid correlationId,
+        int? triggeredByMatchId,
+        int performedByUserId,
+        string? notes)
+        => new()
+        {
+            Id = Guid.NewGuid(),
+            MatchId = match.Id,
+            CorrelationId = correlationId,
+            TriggeredByMatchId = triggeredByMatchId,
+            PreviousStatus = previousStatus,
+            NewStatus = match.Status,
+            PreviousWinnerId = previousWinnerId,
+            NewWinnerId = match.WinnerId,
+            PreviousPlayer1Id = previousPlayer1Id,
+            NewPlayer1Id = match.Player1Id,
+            PreviousPlayer2Id = previousPlayer2Id,
+            NewPlayer2Id = match.Player2Id,
+            PreviousPlayer1Score = previousPlayer1Score,
+            NewPlayer1Score = match.Player1Score,
+            PreviousPlayer2Score = previousPlayer2Score,
+            NewPlayer2Score = match.Player2Score,
+            PerformedByUserId = performedByUserId,
+            PerformedAtUtc = DateTime.UtcNow,
+            Notes = notes
+        };
+}
