@@ -69,9 +69,11 @@ public static partial class MatchMutations
 
         try
         {
+            var frontierMatch = match;
+
             if (isReplay)
             {
-                await MatchCorrectionService.ApplyCorrectionAsync(
+                frontierMatch = await MatchCorrectionService.ApplyCorrectionAsync(
                     context,
                     match,
                     previousStatus,
@@ -165,7 +167,7 @@ public static partial class MatchMutations
 
         try
         {
-            await MatchCorrectionService.ApplyCorrectionAsync(
+            var frontierMatch = await MatchCorrectionService.ApplyCorrectionAsync(
                 context,
                 match,
                 previousStatus,
