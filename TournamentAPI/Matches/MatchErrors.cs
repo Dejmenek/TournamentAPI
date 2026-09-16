@@ -47,4 +47,39 @@ public static class MatchErrors
             .SetExtension("MatchId", matchId)
             .SetExtension("WinnerId", winnerId)
             .Build();
+
+    public static IError MatchNotYetPlayed(int matchId) =>
+        ErrorBuilder.New()
+            .SetMessage("Match has not been played yet. Use Play instead.")
+            .SetCode(MatchErrorCodes.MatchNotYetPlayed)
+            .SetExtension("MatchId", matchId)
+            .Build();
+
+    public static IError MatchNeedsReplay(int matchId) =>
+        ErrorBuilder.New()
+            .SetMessage("Match was invalidated by an upstream correction. Replay it via Play first.")
+            .SetCode(MatchErrorCodes.MatchNeedsReplay)
+            .SetExtension("MatchId", matchId)
+            .Build();
+
+    public static IError InvalidVersionToken(int matchId) =>
+        ErrorBuilder.New()
+            .SetMessage("The supplied version token is invalid.")
+            .SetCode(MatchErrorCodes.InvalidVersionToken)
+            .SetExtension("MatchId", matchId)
+            .Build();
+
+    public static IError MatchVersionConflict(int matchId) =>
+        ErrorBuilder.New()
+            .SetMessage("Match was modified since the supplied version was read.")
+            .SetCode(MatchErrorCodes.MatchVersionConflict)
+            .SetExtension("MatchId", matchId)
+            .Build();
+
+    public static IError MatchCorrectionFailed(int matchId) =>
+        ErrorBuilder.New()
+            .SetMessage("Match correction failed.")
+            .SetCode(MatchErrorCodes.MatchCorrectionFailed)
+            .SetExtension("MatchId", matchId)
+            .Build();
 }

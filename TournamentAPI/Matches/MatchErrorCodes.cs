@@ -8,4 +8,9 @@ public static class MatchErrorCodes
     public const string TournamentNotClosed = "Match.TournamentNotClosed";
     public const string NegativeScore = "Match.NegativeScore";
     public const string WinnerScoreMismatch = "Match.WinnerScoreMismatch";
+    public const string MatchNotYetPlayed = "Match.NotYetPlayed";
+    public const string MatchNeedsReplay = "Match.NeedsReplay";
+    public const string InvalidVersionToken = "Match.InvalidVersionToken";
+    public const string MatchVersionConflict = "Match.VersionConflict";
+    public const string MatchCorrectionFailed = "Match.CorrectionFailed";
 }
