@@ -56,7 +56,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasOne(b => b.Tournament)
             .WithOne(t => t.Bracket)
             .HasForeignKey<Bracket>(b => b.TournamentId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.ClientNoAction);
 
         builder.Entity<Tournament>().HasQueryFilter(t => !t.IsDeleted);
 
@@ -81,7 +81,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasOne(tp => tp.Tournament)
             .WithMany(t => t.Participants)
             .HasForeignKey(tp => tp.TournamentId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.ClientNoAction);
 
         builder.Entity<TournamentParticipant>()
             .HasOne(tp => tp.Participant)
@@ -107,7 +107,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasOne(m => m.Bracket)
             .WithMany(b => b.Matches)
             .HasForeignKey(m => m.BracketId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.ClientNoAction);
 
         builder.Entity<Match>()
             .HasIndex(m => new { m.BracketId, m.Round, m.Player1Id, m.Player2Id })
