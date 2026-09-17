@@ -16,7 +16,11 @@ internal static class TelemetryExtensions
                 tracing.AddHttpClientInstrumentation();
                 tracing.AddAspNetCoreInstrumentation();
                 tracing.AddHotChocolateInstrumentation();
-                tracing.AddConsoleExporter();
+                tracing.AddOtlpExporter(o =>
+                {
+                    o.Endpoint = new Uri("http://localhost:4318/v1/traces");
+                    o.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+                });
             })
             .WithMetrics(metrics =>
             {
@@ -24,7 +28,7 @@ internal static class TelemetryExtensions
                 metrics.AddAspNetCoreInstrumentation();
                 metrics.AddOtlpExporter(o =>
                 {
-                    o.Endpoint = new Uri("http://localhost:5431/api/v1/otlp/v1/metrics");
+                    o.Endpoint = new Uri("http://localhost:4318/v1/metrics");
                     o.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
                 });
             });

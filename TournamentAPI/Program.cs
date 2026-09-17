@@ -49,7 +49,7 @@ builder.Services.AddSerilog((_, loggerConfiguration) =>
         .WriteTo.Console()
         .WriteTo.OpenTelemetry(opt =>
         {
-            opt.Endpoint = new Uri("http://localhost:3100/otlp").ToString();
+            opt.Endpoint = new Uri("http://localhost:4318").ToString();
             opt.Protocol = OtlpProtocol.HttpProtobuf;
             opt.ResourceAttributes = new Dictionary<string, object>
             {
