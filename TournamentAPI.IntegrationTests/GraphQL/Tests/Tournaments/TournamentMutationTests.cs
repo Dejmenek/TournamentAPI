@@ -281,6 +281,74 @@ public class TournamentMutationTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task DeleteTournament_SoftDeletesTournamentAndParticipants_WhenTournamentHasParticipants()
+    {
+        // Arrange
+        var email = "bob@example.com";
+        var password = "Password123!";
+        var tournamentToDeleteId = 8; // closed, owned by bob, has participants, no bracket
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new
+            {
+                input = new
+                {
+                    email = email,
+                    password = password
+                }
+            });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var participantsBeforeDelete = await DbContext.TournamentParticipants
+            .AsNoTracking()
+            .Where(tp => tp.TournamentId == tournamentToDeleteId)
+            .ToListAsync();
+        Assert.NotEmpty(participantsBeforeDelete);
+
+        var variables = new
+        {
+            input = new
+            {
+                tournamentId = tournamentToDeleteId
+            }
+        };
+
+        // Act
+        var response = await client.ExecuteMutationAsync<DeleteTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.DeleteTournament,
+            variables);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        Assert.NotNull(response.Data);
+        Assert.NotNull(response.Data.DeleteTournament);
+        Assert.NotNull(response.Data.DeleteTournament.Boolean);
+        Assert.True(response.Data.DeleteTournament.Boolean);
+
+        var tournamentViaFilteredQuery = await DbContext.Tournaments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tournamentToDeleteId);
+        Assert.Null(tournamentViaFilteredQuery);
+
+        var tournamentInDb = await DbContext.Tournaments
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tournamentToDeleteId);
+        Assert.NotNull(tournamentInDb);
+        Assert.True(tournamentInDb.IsDeleted);
+
+        var participantsAfterDelete = await DbContext.TournamentParticipants
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(tp => tp.TournamentId == tournamentToDeleteId)
+            .ToListAsync();
+        Assert.Equal(participantsBeforeDelete.Count, participantsAfterDelete.Count);
+        Assert.All(participantsAfterDelete, tp => Assert.True(tp.IsDeleted));
+    }
+
+    [Fact]
     public async Task DeleteTournament_ReturnsNotFoundError_WhenTournamentDoesNotExist()
     {
         // Arrange
