@@ -1,5 +1,6 @@
 using TournamentAPI.Data;
 using TournamentAPI.EventListeners;
+using TournamentAPI.Metrics;
 
 namespace TournamentAPI.Configuration.Extensions;
 
@@ -19,9 +20,13 @@ internal static class GraphQLExtensions
                 options.ExecutionTimeout = TimeSpan.FromSeconds(30);
             })
             .DisableIntrospection(!isDevelopment)
+            .AddApplicationService<ILogger<HttpRequestInterceptor>>()
             .AddHttpRequestInterceptor<HttpRequestInterceptor>()
             .AddApplicationService<ILogger<ExecutionEventListener>>()
+            .AddApplicationService<GraphQLMetrics>()
             .AddDiagnosticEventListener<ExecutionEventListener>()
+            .AddApplicationService<ILogger<UnhandledExceptionErrorFilter>>()
+            .AddErrorFilter<UnhandledExceptionErrorFilter>()
             .AddAuthorization()
             .RegisterDbContextFactory<ApplicationDbContext>()
             .AddMutationConventions()
