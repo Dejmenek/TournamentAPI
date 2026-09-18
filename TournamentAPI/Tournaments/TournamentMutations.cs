@@ -204,7 +204,10 @@ public static partial class TournamentMutations
             if (previousStatus != TournamentStatus.Open && tournament.Status == TournamentStatus.Open)
                 tournamentMetrics.TournamentOpened();
             else if (previousStatus == TournamentStatus.Open && tournament.Status != TournamentStatus.Open)
+            {
                 tournamentMetrics.TournamentClosed();
+                tournamentMetrics.IncrementTournamentsClosed("manual");
+            }
         }
 
         await context.SaveChangesAsync(token);
@@ -246,6 +249,8 @@ public static partial class TournamentMutations
 
         if (wasOpen)
             tournamentMetrics.TournamentClosed();
+
+        tournamentMetrics.IncrementTournamentsDeleted();
 
         return true;
     }

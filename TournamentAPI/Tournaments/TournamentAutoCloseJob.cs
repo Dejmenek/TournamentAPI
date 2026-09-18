@@ -46,6 +46,8 @@ public class TournamentAutoCloseJob
         for (var i = 0; i < closedCount; i++)
             _tournamentMetrics.TournamentClosed();
 
+        _tournamentMetrics.IncrementTournamentsClosed("auto", closedCount);
+
         _logger.LogInformation("Auto-closed {Count} tournament(s) past StartDate.", closedCount);
     }
 }
