@@ -11,6 +11,7 @@ internal static class MetricsExtensions
         services.AddSingleton<MatchMetrics>();
         services.AddSingleton<ParticipantMetrics>();
         services.AddSingleton<UserMetrics>();
+        services.AddSingleton<GraphQLMetrics>();
 
         return services;
     }

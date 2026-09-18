@@ -7,10 +7,12 @@ namespace TournamentAPI.EventListeners;
 public sealed class ExecutionEventListener : ExecutionDiagnosticEventListener
 {
     private readonly ILogger<ExecutionEventListener> _logger;
+    private readonly GraphQLMetrics _graphQLMetrics;
 
-    public ExecutionEventListener(ILogger<ExecutionEventListener> logger)
+    public ExecutionEventListener(ILogger<ExecutionEventListener> logger, GraphQLMetrics graphQLMetrics)
     {
         _logger = logger;
+        _graphQLMetrics = graphQLMetrics;
     }
 
     public override IDisposable ExecuteRequest(RequestContext context)
@@ -25,6 +27,8 @@ public sealed class ExecutionEventListener : ExecutionDiagnosticEventListener
             var operationType = context.TryGetOperation(out var operation) ? operation.Kind.ToString() : "Unknown";
             var requestId = context.ContextData.TryGetValue("requestId", out var reqId) ? reqId : "Unknown";
             var userId = context.ContextData.TryGetValue("userId", out var uid) ? uid : "Anonymous";
+
+            _graphQLMetrics.RecordRequestDuration(stopwatch.Elapsed.TotalSeconds, operationType, operationName);
 
             _logger.LogInformation(
                 "GraphQL request started: {RequestId} | Operation: {OperationType} | User: {UserId}",
@@ -44,7 +48,7 @@ public sealed class ExecutionEventListener : ExecutionDiagnosticEventListener
                 {
                     if (errorsProperty.GetValue(context.Result) is IEnumerable<IError> errors)
                     {
-                        var errorList = errors.ToList();
+                    _graphQLMetrics.RecordError(operationName, errorCode);
                         errorCount = errorList.Count;
                         errorCodes = [.. errorList.Select(e => e.Code ?? "UNKNOWN_ERROR")];
                     }
