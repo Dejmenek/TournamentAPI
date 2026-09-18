@@ -50,6 +50,8 @@ builder.Services.AddScoped<TournamentAutoCloseJob>();
 
 builder.Services.AddSerilog((_, loggerConfiguration) =>
     loggerConfiguration
+        .ReadFrom.Configuration(builder.Configuration)
+        .Enrich.FromLogContext()
         .WriteTo.Console()
         .WriteTo.OpenTelemetry(opt =>
         {
