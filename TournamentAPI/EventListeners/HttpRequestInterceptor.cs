@@ -8,6 +8,13 @@ namespace TournamentAPI.EventListeners;
 
 public class HttpRequestInterceptor : DefaultHttpRequestInterceptor
 {
+    private readonly ILogger<HttpRequestInterceptor> _logger;
+
+    public HttpRequestInterceptor(ILogger<HttpRequestInterceptor> logger)
+    {
+        _logger = logger;
+    }
+
     public override async ValueTask OnCreateAsync(
         HttpContext context,
         IRequestExecutor requestExecutor,
@@ -17,6 +24,9 @@ public class HttpRequestInterceptor : DefaultHttpRequestInterceptor
         var apiKeyResult = await context.AuthenticateAsync(ApiKeyAuthenticationOptions.DefaultScheme);
         if (!apiKeyResult.Succeeded)
         {
+            var clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            _logger.LogWarning("Rejected GraphQL request from {ClientIp}: invalid or missing API key", clientIp);
+
             throw new GraphQLException(
                   ErrorBuilder.New()
                       .SetMessage("A valid API key is required.")
@@ -25,14 +35,11 @@ public class HttpRequestInterceptor : DefaultHttpRequestInterceptor
         }
 
         var userId = context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-        var requestId = Guid.NewGuid().ToString();
 
         if (userId != null)
         {
             requestBuilder.AddGlobalState("userId", userId);
         }
-
-        requestBuilder.AddGlobalState("requestId", requestId);
 
         await base.OnCreateAsync(context, requestExecutor, requestBuilder, cancellationToken);
     }
