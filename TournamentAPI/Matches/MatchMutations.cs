@@ -24,6 +24,8 @@ public static partial class MatchMutations
         ClaimsPrincipal userClaims,
         IResolverContext resolverContext,
         ApplicationDbContext context,
+        MatchCorrectionService matchCorrectionService,
+        BracketCompletionService bracketCompletionService,
         MatchMetrics matchMetrics,
         CancellationToken token)
     {
@@ -76,7 +78,7 @@ public static partial class MatchMutations
 
             if (isReplay)
             {
-                frontierMatch = await MatchCorrectionService.ApplyCorrectionAsync(
+                frontierMatch = await matchCorrectionService.ApplyCorrectionAsync(
                     context,
                     match,
                     previousStatus,
@@ -90,7 +92,7 @@ public static partial class MatchMutations
                     token);
             }
 
-            await BracketCompletionService.SyncChampionAsync(context, tournament, match.BracketId, frontierMatch.Round, token);
+            await bracketCompletionService.SyncChampionAsync(context, tournament, match.BracketId, frontierMatch.Round, token);
 
             await context.SaveChangesAsync(token);
 
@@ -115,6 +117,9 @@ public static partial class MatchMutations
         ClaimsPrincipal userClaims,
         IResolverContext resolverContext,
         ApplicationDbContext context,
+        ILoggerFactory loggerFactory,
+        MatchCorrectionService matchCorrectionService,
+        BracketCompletionService bracketCompletionService,
         MatchMetrics matchMetrics,
         CancellationToken token)
     {
@@ -178,7 +183,7 @@ public static partial class MatchMutations
 
         try
         {
-            var frontierMatch = await MatchCorrectionService.ApplyCorrectionAsync(
+            var frontierMatch = await matchCorrectionService.ApplyCorrectionAsync(
                 context,
                 match,
                 previousStatus,
@@ -191,7 +196,7 @@ public static partial class MatchMutations
                 Guid.NewGuid(),
                 token);
 
-            await BracketCompletionService.SyncChampionAsync(context, tournament, match.BracketId, frontierMatch.Round, token);
+            await bracketCompletionService.SyncChampionAsync(context, tournament, match.BracketId, frontierMatch.Round, token);
 
             await context.SaveChangesAsync(token);
 
@@ -212,10 +217,11 @@ public static partial class MatchMutations
                 && currentState.Player1Score == player1Score
                 && currentState.Player2Score == player2Score)
             {
-                await MatchCorrectionService.RecordIdempotentDuplicateAsync(context, currentState, userId, token);
+                await matchCorrectionService.RecordIdempotentDuplicateAsync(context, currentState, userId, token);
                 return true;
             }
 
+            logger.LogWarning("Match {MatchId} correction rejected due to a version conflict", matchId);
             resolverContext.ReportError(MatchErrors.MatchVersionConflict(matchId));
             return null;
         }

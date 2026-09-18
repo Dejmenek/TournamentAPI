@@ -23,6 +23,8 @@ public static partial class BracketMutations
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
         IResolverContext resolverContext,
+        BracketService bracketService,
+        BracketMetrics bracketMetrics,
         CancellationToken token)
     {
         using var _ = resolverContext.PushEntityContext("Tournament", tournamentId);
@@ -43,7 +45,7 @@ public static partial class BracketMutations
         if (resolverContext.TryReportError(BracketMutationValidations.ValidateEnoughParticipants(tournament.Participants.Count, tournamentId))) return null;
 
         var participantIds = tournament.Participants.Select(p => p.ParticipantId).ToList();
-        var bracket = BracketService.CreateBracket(tournamentId, participantIds);
+        var bracket = bracketService.CreateBracket(tournamentId, participantIds);
 
         try
         {
@@ -71,6 +73,7 @@ public static partial class BracketMutations
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
         IResolverContext resolverContext,
+        BracketService bracketService,
         CancellationToken token)
     {
         using var _ = resolverContext.PushEntityContext("Bracket", bracketId);
@@ -99,7 +102,7 @@ public static partial class BracketMutations
 
         if (resolverContext.TryReportError(BracketMutationValidations.ValidateNotFinalRound(winners, bracketId))) return null;
 
-        var newMatches = BracketService.CreateNextRoundMatches(bracket.Id, roundNumber, winners);
+        var newMatches = bracketService.CreateNextRoundMatches(bracket.Id, roundNumber, winners);
 
         foreach (var match in matchesInRound)
         {
