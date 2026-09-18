@@ -52,9 +52,12 @@ public static partial class BracketMutations
         }
         catch (DbUpdateException ex) when (ex.IsUniqueConstraintViolation())
         {
+            bracketMetrics.GenerationFailed();
             resolverContext.ReportError(BracketErrors.BracketAlreadyExistsForTournament(tournament.Id));
             return null;
         }
+
+        bracketMetrics.GenerationSucceeded();
 
         return context.Brackets.AsNoTracking().Where(b => b.Id == bracket.Id).With(query);
     }

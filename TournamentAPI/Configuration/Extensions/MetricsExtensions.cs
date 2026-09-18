@@ -7,6 +7,7 @@ internal static class MetricsExtensions
     internal static IServiceCollection AddApplicationMetrics(this IServiceCollection services)
     {
         services.AddSingleton<TournamentMetrics>();
+        services.AddSingleton<BracketMetrics>();
         services.AddSingleton<UserMetrics>();
 
         return services;
