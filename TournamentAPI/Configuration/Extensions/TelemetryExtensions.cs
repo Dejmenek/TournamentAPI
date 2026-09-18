@@ -2,6 +2,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using TournamentAPI.Metrics;
+using TournamentAPI.Tracing;
 
 namespace TournamentAPI.Configuration.Extensions;
 
@@ -13,6 +14,7 @@ internal static class TelemetryExtensions
             .ConfigureResource(resource => resource.AddService("TournamentAPI"))
             .WithTracing(tracing =>
             {
+                tracing.AddSource(TournamentActivitySource.Name);
                 tracing.AddHttpClientInstrumentation();
                 tracing.AddAspNetCoreInstrumentation();
                 tracing.AddHotChocolateInstrumentation();
