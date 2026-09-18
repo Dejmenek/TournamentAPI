@@ -7,6 +7,7 @@ using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Extensions;
 using TournamentAPI.Tournaments;
+using TournamentAPI.Tracing;
 
 namespace TournamentAPI.Matches;
 
@@ -112,6 +113,11 @@ public static partial class MatchMutations
         ApplicationDbContext context,
         CancellationToken token)
     {
+        using var activity = TournamentActivitySource.Instance.StartActivity("Match.CorrectMatchResult");
+        activity?.SetTag("match.id", matchId);
+
+        var logger = loggerFactory.CreateLogger(typeof(MatchMutations).FullName!);
+
         var userId = userClaims.GetUserId();
 
         var match = await context.Matches

@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
+using TournamentAPI.Metrics;
+using TournamentAPI.Tracing;
 
 namespace TournamentAPI.Matches;
 
@@ -22,6 +24,10 @@ public class MatchCorrectionService(
         Guid correlationId,
         CancellationToken token)
     {
+        using var activity = TournamentActivitySource.Instance.StartActivity("MatchCorrectionService.ApplyCorrection");
+        activity?.SetTag("match.id", match.Id);
+        activity?.SetTag("correlation.id", correlationId.ToString());
+
         context.MatchCorrectionAudits.Add(BuildAuditRow(
             match,
             previousStatus, previousWinnerId, previousPlayer1Id, previousPlayer2Id, previousPlayer1Score, previousPlayer2Score,
@@ -79,6 +85,10 @@ public class MatchCorrectionService(
 
         while (true)
         {
+            using var stepActivity = TournamentActivitySource.Instance.StartActivity("MatchCorrectionService.Propagate.Step");
+            stepActivity?.SetTag("match.id", upstreamMatch.Id);
+            stepActivity?.SetTag("round", upstreamMatch.Round);
+
             var currentRoundMatchIds = await context.Matches
                 .Where(m => m.BracketId == upstreamMatch.BracketId && m.Round == upstreamMatch.Round)
                 .OrderBy(m => m.Id)
@@ -97,6 +107,8 @@ public class MatchCorrectionService(
 
             if (downstreamMatchId is null)
                 return upstreamMatch;
+
+            stepActivity?.SetTag("downstream_match.id", downstreamMatchId);
 
             var downstream = nextRoundMatches.Single(m => m.Id == downstreamMatchId);
 

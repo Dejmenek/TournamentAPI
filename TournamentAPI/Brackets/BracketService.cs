@@ -1,4 +1,5 @@
 using TournamentAPI.Data.Models;
+using TournamentAPI.Tracing;
 
 namespace TournamentAPI.Brackets;
 
@@ -6,6 +7,10 @@ public class BracketService(ILogger<BracketService> logger)
 {
     public Bracket CreateBracket(int tournamentId, IList<int> participantIds)
     {
+        using var activity = TournamentActivitySource.Instance.StartActivity("BracketService.CreateBracket");
+        activity?.SetTag("tournament.id", tournamentId);
+        activity?.SetTag("bracket.participant_count", participantIds.Count);
+
         var bracket = new Bracket
         {
             TournamentId = tournamentId,
@@ -40,6 +45,10 @@ public class BracketService(ILogger<BracketService> logger)
 
     public IList<Match> CreateNextRoundMatches(int bracketId, int roundNumber, IList<int> winners)
     {
+        using var activity = TournamentActivitySource.Instance.StartActivity("BracketService.CreateNextRoundMatches");
+        activity?.SetTag("bracket.id", bracketId);
+        activity?.SetTag("bracket.round", roundNumber + 1);
+
         var matches = new List<Match>();
 
         for (int i = 0; i < winners.Count; i += 2)

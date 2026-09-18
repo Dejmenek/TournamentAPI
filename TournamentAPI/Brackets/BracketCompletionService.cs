@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
+using TournamentAPI.Tracing;
 
 namespace TournamentAPI.Brackets;
 
@@ -13,6 +14,9 @@ public class BracketCompletionService(ILogger<BracketCompletionService> logger)
         int frontierRound,
         CancellationToken token)
     {
+        using var activity = TournamentActivitySource.Instance.StartActivity("BracketCompletionService.SyncChampion");
+        activity?.SetTag("bracket.id", bracketId);
+
         var hasLaterRound = await context.Matches
             .AnyAsync(m => m.BracketId == bracketId && m.Round > frontierRound, token);
 

@@ -6,7 +6,9 @@ using System.Security.Claims;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Extensions;
+using TournamentAPI.Metrics;
 using TournamentAPI.Tournaments;
+using TournamentAPI.Tracing;
 
 namespace TournamentAPI.Brackets;
 
@@ -23,6 +25,10 @@ public static partial class BracketMutations
         IResolverContext resolverContext,
         CancellationToken token)
     {
+        using var _ = resolverContext.PushEntityContext("Tournament", tournamentId);
+        using var activity = TournamentActivitySource.Instance.StartActivity("Bracket.GenerateBracket");
+        activity?.SetTag("tournament.id", tournamentId);
+
         var userId = userClaims.GetUserId();
 
         var tournament = await context.Tournaments
@@ -64,6 +70,11 @@ public static partial class BracketMutations
         IResolverContext resolverContext,
         CancellationToken token)
     {
+        using var _ = resolverContext.PushEntityContext("Bracket", bracketId);
+        using var activity = TournamentActivitySource.Instance.StartActivity("Bracket.UpdateRound");
+        activity?.SetTag("bracket.id", bracketId);
+        activity?.SetTag("bracket.round", roundNumber);
+
         var userId = userClaims.GetUserId();
 
         var bracket = await context.Brackets
