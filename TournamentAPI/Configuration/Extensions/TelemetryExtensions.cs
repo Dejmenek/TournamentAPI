@@ -25,6 +25,11 @@ internal static class TelemetryExtensions
             .WithMetrics(metrics =>
             {
                 metrics.AddMeter(MetricConstants.TournamentMeterName);
+                metrics.AddMeter(MetricConstants.BracketMeterName);
+                metrics.AddMeter(MetricConstants.MatchMeterName);
+                metrics.AddMeter(MetricConstants.ParticipantMeterName);
+                metrics.AddMeter(MetricConstants.UserMeterName);
+                metrics.AddMeter(MetricConstants.GraphQLMeterName);
                 metrics.AddAspNetCoreInstrumentation();
                 metrics.AddOtlpExporter(o =>
                 {
