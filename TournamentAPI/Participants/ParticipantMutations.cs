@@ -26,6 +26,8 @@ public static partial class ParticipantMutations
         ParticipantMetrics participantMetrics,
         CancellationToken token)
     {
+        using var _ = resolverContext.PushEntityContext("Tournament", input.TournamentId);
+
         var userId = userClaims.GetUserId();
 
         var tournament = await context.Tournaments

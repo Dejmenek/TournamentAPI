@@ -39,6 +39,8 @@ public static partial class MatchMutations
         if (resolverContext.TryReportError(MatchValidations.ValidateMatchExists(match, matchId)))
             return null;
 
+        using var _ = resolverContext.PushEntityContext("Match", matchId);
+
         var tournament = match!.Bracket.Tournament;
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament.OwnerId, userId, tournament.Id)))
@@ -137,6 +139,8 @@ public static partial class MatchMutations
 
         if (resolverContext.TryReportError(MatchValidations.ValidateMatchExists(match, matchId)))
             return null;
+
+        using var _ = resolverContext.PushEntityContext("Match", matchId);
 
         var tournament = match!.Bracket.Tournament;
 

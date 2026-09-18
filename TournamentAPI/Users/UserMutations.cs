@@ -24,6 +24,8 @@ public static partial class UserMutations
     {
         var userId = userClaims.GetUserId();
 
+        using var _ = resolverContext.PushEntityContext("User", userId);
+
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId, token);
 
         if (resolverContext.TryReportError(UserValidations.ValidateUserExists(user, userId)))
@@ -55,7 +57,9 @@ public static partial class UserMutations
             return null;
         }
 
+        using var _ = resolverContext.PushEntityContext("User", user.Id);
         userMetrics.UserRegistered();
+
         return true;
     }
 
@@ -86,6 +90,8 @@ public static partial class UserMutations
             resolverContext.ReportError(UserErrors.RefreshTokenInvalid());
             return null;
         }
+
+        using var _ = resolverContext.PushEntityContext("User", existingToken.UserId);
 
         existingToken.Revoked = DateTime.UtcNow;
 
@@ -129,6 +135,9 @@ public static partial class UserMutations
             userMetrics.LoginFailed();
             logger.LogWarning("Login failed: no account found for the given email");
             return null;
+        }
+
+        using var _ = resolverContext.PushEntityContext("User", user!.Id);
 
         var canSignIn = await signInManager.CheckPasswordSignInAsync(user!, input.Password, true);
 
@@ -205,6 +214,8 @@ public static partial class UserMutations
             resolverContext.ReportError(UserErrors.RefreshTokenInvalid());
             return null;
         }
+
+        using var _ = resolverContext.PushEntityContext("User", existingToken.UserId);
 
         if (!existingToken.IsActive)
         {

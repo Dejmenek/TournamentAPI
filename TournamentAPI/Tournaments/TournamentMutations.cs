@@ -22,6 +22,8 @@ public static partial class TournamentMutations
         ParticipantMetrics participantMetrics,
         CancellationToken token)
     {
+        using var _ = resolverContext.PushEntityContext("Tournament", tournamentId);
+
         var userId = userClaims.GetUserId();
 
         var tournament = await context.Tournaments
@@ -120,6 +122,8 @@ public static partial class TournamentMutations
         context.Tournaments.Add(tournament);
         await context.SaveChangesAsync(token);
 
+        using var _ = resolverContext.PushEntityContext("Tournament", tournament.Id);
+
         tournamentMetrics.IncrementTournamentsCreated();
         if (tournament.Status == TournamentStatus.Open)
             tournamentMetrics.TournamentOpened();
@@ -138,6 +142,8 @@ public static partial class TournamentMutations
         TournamentMetrics tournamentMetrics,
         CancellationToken token)
     {
+        using var _ = resolverContext.PushEntityContext("Tournament", input.TournamentId);
+
         var userId = userClaims.GetUserId();
 
         var tournament = await context.Tournaments
@@ -224,6 +230,8 @@ public static partial class TournamentMutations
         TournamentMetrics tournamentMetrics,
         CancellationToken token)
     {
+        using var _ = resolverContext.PushEntityContext("Tournament", tournamentId);
+
         var userId = userClaims.GetUserId();
 
         var tournament = await context.Tournaments
