@@ -6,6 +6,7 @@ using System.Security.Claims;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Extensions;
+using TournamentAPI.Metrics;
 using TournamentAPI.Services;
 
 namespace TournamentAPI.Users;
@@ -38,7 +39,8 @@ public static partial class UserMutations
     public static async Task<bool?> RegisterUser(
         RegisterUserInput input,
         UserManager<ApplicationUser> userManager,
-        IResolverContext resolverContext)
+        IResolverContext resolverContext,
+        UserMetrics userMetrics)
     {
         var user = new ApplicationUser
         {
@@ -53,6 +55,7 @@ public static partial class UserMutations
             return null;
         }
 
+        userMetrics.UserRegistered();
         return true;
     }
 
@@ -113,23 +116,34 @@ public static partial class UserMutations
         ApplicationDbContext context,
         IHttpContextAccessor httpContextAccessor,
         IResolverContext resolverContext,
-        JwtService jwtService)
+        JwtService jwtService,
+        ILoggerFactory loggerFactory,
+        UserMetrics userMetrics)
     {
+        var logger = loggerFactory.CreateLogger(typeof(UserMutations).FullName!);
+
         var user = await userManager.FindByEmailAsync(input.Email);
 
         if (resolverContext.TryReportError(UserValidations.ValidateCredentials(user)))
+        {
+            userMetrics.LoginFailed();
+            logger.LogWarning("Login failed: no account found for the given email");
             return null;
 
         var canSignIn = await signInManager.CheckPasswordSignInAsync(user!, input.Password, true);
 
         if (canSignIn.IsLockedOut)
         {
+            userMetrics.LoginFailed();
+            logger.LogWarning("Login failed: account {UserId} is locked out", user.Id);
             resolverContext.ReportError(UserErrors.AccountLockedOut);
             return null;
         }
 
         if (!canSignIn.Succeeded)
         {
+            userMetrics.LoginFailed();
+            logger.LogWarning("Login failed: invalid credentials for account {UserId}", user.Id);
             resolverContext.ReportError(UserErrors.InvalidCredentials());
             return null;
         }
@@ -154,6 +168,8 @@ public static partial class UserMutations
         context.RefreshTokens.Add(refreshToken);
         await context.SaveChangesAsync();
 
+        userMetrics.LoginSucceeded();
+
         httpContextAccessor.HttpContext.Response.AppendRefreshTokenCookie(refreshTokenResult.Raw, refreshToken.Expires);
 
         return accessToken;
@@ -163,11 +179,16 @@ public static partial class UserMutations
         JwtService jwtService,
         ApplicationDbContext context,
         IResolverContext resolverContext,
-        IHttpContextAccessor httpContextAccessor
+        IHttpContextAccessor httpContextAccessor,
+        ILoggerFactory loggerFactory,
+        UserMetrics userMetrics
     )
     {
+        var logger = loggerFactory.CreateLogger(typeof(UserMutations).FullName!);
+
         if (httpContextAccessor.HttpContext == null)
         {
+            userMetrics.RefreshTokenFailed("missing_cookie");
             resolverContext.ReportError(UserErrors.UnableToSetRefreshTokenCookie());
             return null;
         }
@@ -180,6 +201,7 @@ public static partial class UserMutations
 
         if (existingToken is null)
         {
+            userMetrics.RefreshTokenFailed("not_found");
             resolverContext.ReportError(UserErrors.RefreshTokenInvalid());
             return null;
         }
@@ -189,10 +211,15 @@ public static partial class UserMutations
             if (existingToken.Revoked is not null)
             {
                 await RevokeAllActiveTokensAsync(context, existingToken.UserId);
+                userMetrics.RefreshTokenFailed("reused");
+                logger.LogWarning(
+                    "Refresh token theft detected for user {UserId}: a revoked token was reused, all active tokens have been revoked",
+                    existingToken.UserId);
                 resolverContext.ReportError(UserErrors.RefreshTokenReused());
                 return null;
             }
 
+            userMetrics.RefreshTokenFailed("expired");
             resolverContext.ReportError(UserErrors.RefreshTokenExpired());
             return null;
         }
@@ -200,6 +227,7 @@ public static partial class UserMutations
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == existingToken.UserId);
         if (user is null)
         {
+            userMetrics.RefreshTokenFailed("user_not_found");
             resolverContext.ReportError(UserErrors.UserNotFound(existingToken.UserId));
             return null;
         }
@@ -224,6 +252,7 @@ public static partial class UserMutations
         }
         catch (DbUpdateConcurrencyException)
         {
+            userMetrics.RefreshTokenFailed("conflict");
             resolverContext.ReportError(UserErrors.RefreshTokenConflict());
             return null;
         }
