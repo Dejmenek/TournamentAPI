@@ -4,9 +4,9 @@ using TournamentAPI.Data.Models;
 
 namespace TournamentAPI.Brackets;
 
-public static class BracketCompletionService
+public class BracketCompletionService(ILogger<BracketCompletionService> logger)
 {
-    public static async Task SyncChampionAsync(
+    public async Task SyncChampionAsync(
         ApplicationDbContext context,
         Tournament tournament,
         int bracketId,
@@ -32,6 +32,12 @@ public static class BracketCompletionService
         {
             tournament.Status = TournamentStatus.Completed;
             tournament.ChampionId = finalMatch.WinnerId;
+
+            logger.LogInformation(
+                "Bracket {BracketId} marked complete for tournament {TournamentId}: champion is participant {ChampionId}",
+                bracketId,
+                tournament.Id,
+                finalMatch.WinnerId);
         }
         else if (tournament.Status == TournamentStatus.Completed)
         {

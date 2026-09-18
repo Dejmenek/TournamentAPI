@@ -28,6 +28,10 @@ if (builder.Environment.IsDevelopment())
 builder.Services.AddScoped<MatchService>();
 builder.Services.AddScoped<ApplicationUserService>();
 builder.Services.AddScoped<BracketLookupService>();
+builder.Services.AddScoped<BracketService>();
+builder.Services.AddScoped<BracketCompletionService>();
+builder.Services.AddScoped<MatchCascadePositionCalculator>();
+builder.Services.AddScoped<MatchCorrectionService>();
 builder.Services.AddScoped<ParticipantsService>();
 builder.Services.AddScoped<TournamentLookupService>();
 builder.Services.AddScoped<UserTournamentsService>();

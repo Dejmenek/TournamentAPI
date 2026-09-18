@@ -1,8 +1,8 @@
 namespace TournamentAPI.Matches;
 
-public static class MatchCascadePositionCalculator
+public class MatchCascadePositionCalculator(ILogger<MatchCascadePositionCalculator> logger)
 {
-    public static int? GetDownstreamMatchId(
+    public int? GetDownstreamMatchId(
         IReadOnlyList<int> currentRoundMatchIdsAscending,
         IReadOnlyList<int> nextRoundMatchIdsAscending,
         int matchId)
@@ -24,6 +24,13 @@ public static class MatchCascadePositionCalculator
         if (downstreamPosition >= nextRoundMatchIdsAscending.Count)
             return null;
 
-        return nextRoundMatchIdsAscending[downstreamPosition];
+        var downstreamMatchId = nextRoundMatchIdsAscending[downstreamPosition];
+
+        logger.LogInformation(
+            "Cascade applied: match {MatchId} maps to downstream match {DownstreamMatchId}",
+            matchId,
+            downstreamMatchId);
+
+        return downstreamMatchId;
     }
 }

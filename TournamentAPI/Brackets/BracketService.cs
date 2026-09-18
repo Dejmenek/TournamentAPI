@@ -2,9 +2,9 @@ using TournamentAPI.Data.Models;
 
 namespace TournamentAPI.Brackets;
 
-public static class BracketService
+public class BracketService(ILogger<BracketService> logger)
 {
-    public static Bracket CreateBracket(int tournamentId, IList<int> participantIds)
+    public Bracket CreateBracket(int tournamentId, IList<int> participantIds)
     {
         var bracket = new Bracket
         {
@@ -29,10 +29,16 @@ public static class BracketService
             });
         }
 
+        logger.LogInformation(
+            "Bracket generated for tournament {TournamentId}: {ParticipantCount} participants seeded into {MatchCount} first-round matches",
+            tournamentId,
+            participantIds.Count,
+            bracket.Matches.Count);
+
         return bracket;
     }
 
-    public static IList<Match> CreateNextRoundMatches(int bracketId, int roundNumber, IList<int> winners)
+    public IList<Match> CreateNextRoundMatches(int bracketId, int roundNumber, IList<int> winners)
     {
         var matches = new List<Match>();
 
@@ -56,6 +62,12 @@ public static class BracketService
                 Status = isBye ? MatchStatus.Played : MatchStatus.Scheduled
             });
         }
+
+        logger.LogInformation(
+            "Round {Round} generated for bracket {BracketId}: {MatchCount} matches",
+            roundNumber + 1,
+            bracketId,
+            matches.Count);
 
         return matches;
     }
