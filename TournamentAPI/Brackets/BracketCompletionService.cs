@@ -1,18 +1,22 @@
 using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
+using TournamentAPI.Tracing;
 
 namespace TournamentAPI.Brackets;
 
-public static class BracketCompletionService
+public class BracketCompletionService(ILogger<BracketCompletionService> logger)
 {
-    public static async Task SyncChampionAsync(
+    public async Task SyncChampionAsync(
         ApplicationDbContext context,
         Tournament tournament,
         int bracketId,
         int frontierRound,
         CancellationToken token)
     {
+        using var activity = TournamentActivitySource.Instance.StartActivity("BracketCompletionService.SyncChampion");
+        activity?.SetTag("bracket.id", bracketId);
+
         var hasLaterRound = await context.Matches
             .AnyAsync(m => m.BracketId == bracketId && m.Round > frontierRound, token);
 
@@ -32,6 +36,12 @@ public static class BracketCompletionService
         {
             tournament.Status = TournamentStatus.Completed;
             tournament.ChampionId = finalMatch.WinnerId;
+
+            logger.LogInformation(
+                "Bracket {BracketId} marked complete for tournament {TournamentId}: champion is participant {ChampionId}",
+                bracketId,
+                tournament.Id,
+                finalMatch.WinnerId);
         }
         else if (tournament.Status == TournamentStatus.Completed)
         {

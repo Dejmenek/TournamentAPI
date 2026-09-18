@@ -1,5 +1,6 @@
 using GreenDonut.Data;
 using HotChocolate.Types.Pagination;
+using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Extensions;
@@ -10,7 +11,7 @@ namespace TournamentAPI.Matches;
 public class MatchService(
     IMatchBatchingContext batchingContext,
     IUserWonMatchIdsBatchingContext wonMatchIdsBatchingContext,
-    ApplicationDbContext context)
+    IDbContextFactory<ApplicationDbContext> contextFactory)
 {
     public async Task<Page<Match>> GetMatchesByBracketAsync(
         int bracketId,
@@ -32,6 +33,8 @@ public class MatchService(
         CancellationToken cancellationToken)
     {
         var ids = await wonMatchIdsBatchingContext.WonMatchIdsByWinnerId.LoadAsync(userId, cancellationToken) ?? [];
+
+        await using var context = await contextFactory.CreateDbContextAsync(cancellationToken);
 
         var page = await context.Matches
             .Where(m => ids.Contains(m.Id))

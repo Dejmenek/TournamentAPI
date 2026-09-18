@@ -19,8 +19,11 @@ public static partial class TournamentMutations
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
         IResolverContext resolverContext,
+        ParticipantMetrics participantMetrics,
         CancellationToken token)
     {
+        using var _ = resolverContext.PushEntityContext("Tournament", tournamentId);
+
         var userId = userClaims.GetUserId();
 
         var tournament = await context.Tournaments
@@ -34,13 +37,22 @@ public static partial class TournamentMutations
             return null;
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotClosed(tournament, DateTime.UtcNow)))
+        {
+            participantMetrics.JoinAttempt("closed");
             return null;
+        }
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentNotFull(tournament)))
+        {
+            participantMetrics.JoinAttempt("full");
             return null;
+        }
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateUserNotAlreadyParticipant(tournament, userId)))
+        {
+            participantMetrics.JoinAttempt("already_joined");
             return null;
+        }
 
         var participant = new TournamentParticipant
         {
@@ -53,16 +65,20 @@ public static partial class TournamentMutations
         try
         {
             await context.SaveChangesAsync(token);
+            participantMetrics.JoinAttempt("success");
             return true;
         }
         catch (DbUpdateException ex) when (ex.IsUniqueConstraintViolation(TournamentParticipant.SlotNumberUniqueIndexName))
         {
+            participantMetrics.SlotContention();
+            participantMetrics.JoinAttempt("full");
             resolverContext.ReportError(
                 TournamentErrors.TournamentFull(tournamentId, tournament.MaxParticipants));
             return null;
         }
         catch (DbUpdateException)
         {
+            participantMetrics.JoinAttempt("already_joined");
             resolverContext.ReportError(
                 TournamentErrors.UserAlreadyParticipant(userId, tournamentId));
             return null;
@@ -106,6 +122,8 @@ public static partial class TournamentMutations
         context.Tournaments.Add(tournament);
         await context.SaveChangesAsync(token);
 
+        using var _ = resolverContext.PushEntityContext("Tournament", tournament.Id);
+
         tournamentMetrics.IncrementTournamentsCreated();
         if (tournament.Status == TournamentStatus.Open)
             tournamentMetrics.TournamentOpened();
@@ -124,6 +142,8 @@ public static partial class TournamentMutations
         TournamentMetrics tournamentMetrics,
         CancellationToken token)
     {
+        using var _ = resolverContext.PushEntityContext("Tournament", input.TournamentId);
+
         var userId = userClaims.GetUserId();
 
         var tournament = await context.Tournaments
@@ -190,7 +210,10 @@ public static partial class TournamentMutations
             if (previousStatus != TournamentStatus.Open && tournament.Status == TournamentStatus.Open)
                 tournamentMetrics.TournamentOpened();
             else if (previousStatus == TournamentStatus.Open && tournament.Status != TournamentStatus.Open)
+            {
                 tournamentMetrics.TournamentClosed();
+                tournamentMetrics.IncrementTournamentsClosed("manual");
+            }
         }
 
         await context.SaveChangesAsync(token);
@@ -207,6 +230,8 @@ public static partial class TournamentMutations
         TournamentMetrics tournamentMetrics,
         CancellationToken token)
     {
+        using var _ = resolverContext.PushEntityContext("Tournament", tournamentId);
+
         var userId = userClaims.GetUserId();
 
         var tournament = await context.Tournaments
@@ -232,6 +257,8 @@ public static partial class TournamentMutations
 
         if (wasOpen)
             tournamentMetrics.TournamentClosed();
+
+        tournamentMetrics.IncrementTournamentsDeleted();
 
         return true;
     }

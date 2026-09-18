@@ -6,7 +6,9 @@ using System.Security.Claims;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Extensions;
+using TournamentAPI.Metrics;
 using TournamentAPI.Tournaments;
+using TournamentAPI.Tracing;
 
 namespace TournamentAPI.Brackets;
 
@@ -21,8 +23,14 @@ public static partial class BracketMutations
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
         IResolverContext resolverContext,
+        BracketService bracketService,
+        BracketMetrics bracketMetrics,
         CancellationToken token)
     {
+        using var _ = resolverContext.PushEntityContext("Tournament", tournamentId);
+        using var activity = TournamentActivitySource.Instance.StartActivity("Bracket.GenerateBracket");
+        activity?.SetTag("tournament.id", tournamentId);
+
         var userId = userClaims.GetUserId();
 
         var tournament = await context.Tournaments
@@ -37,7 +45,7 @@ public static partial class BracketMutations
         if (resolverContext.TryReportError(BracketMutationValidations.ValidateEnoughParticipants(tournament.Participants.Count, tournamentId))) return null;
 
         var participantIds = tournament.Participants.Select(p => p.ParticipantId).ToList();
-        var bracket = BracketService.CreateBracket(tournamentId, participantIds);
+        var bracket = bracketService.CreateBracket(tournamentId, participantIds);
 
         try
         {
@@ -46,9 +54,12 @@ public static partial class BracketMutations
         }
         catch (DbUpdateException ex) when (ex.IsUniqueConstraintViolation())
         {
+            bracketMetrics.GenerationFailed();
             resolverContext.ReportError(BracketErrors.BracketAlreadyExistsForTournament(tournament.Id));
             return null;
         }
+
+        bracketMetrics.GenerationSucceeded();
 
         return context.Brackets.AsNoTracking().Where(b => b.Id == bracket.Id).With(query);
     }
@@ -62,8 +73,14 @@ public static partial class BracketMutations
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
         IResolverContext resolverContext,
+        BracketService bracketService,
         CancellationToken token)
     {
+        using var _ = resolverContext.PushEntityContext("Bracket", bracketId);
+        using var activity = TournamentActivitySource.Instance.StartActivity("Bracket.UpdateRound");
+        activity?.SetTag("bracket.id", bracketId);
+        activity?.SetTag("bracket.round", roundNumber);
+
         var userId = userClaims.GetUserId();
 
         var bracket = await context.Brackets
@@ -85,7 +102,7 @@ public static partial class BracketMutations
 
         if (resolverContext.TryReportError(BracketMutationValidations.ValidateNotFinalRound(winners, bracketId))) return null;
 
-        var newMatches = BracketService.CreateNextRoundMatches(bracket.Id, roundNumber, winners);
+        var newMatches = bracketService.CreateNextRoundMatches(bracket.Id, roundNumber, winners);
 
         foreach (var match in matchesInRound)
         {

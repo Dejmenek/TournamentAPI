@@ -1,12 +1,17 @@
 using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
+using TournamentAPI.Metrics;
+using TournamentAPI.Tracing;
 
 namespace TournamentAPI.Matches;
 
-public static class MatchCorrectionService
+public class MatchCorrectionService(
+    ILogger<MatchCorrectionService> logger,
+    MatchCascadePositionCalculator cascadePositionCalculator,
+    MatchMetrics matchMetrics)
 {
-    public static async Task<Match> ApplyCorrectionAsync(
+    public async Task<Match> ApplyCorrectionAsync(
         ApplicationDbContext context,
         Match match,
         MatchStatus previousStatus,
@@ -19,6 +24,10 @@ public static class MatchCorrectionService
         Guid correlationId,
         CancellationToken token)
     {
+        using var activity = TournamentActivitySource.Instance.StartActivity("MatchCorrectionService.ApplyCorrection");
+        activity?.SetTag("match.id", match.Id);
+        activity?.SetTag("correlation.id", correlationId.ToString());
+
         context.MatchCorrectionAudits.Add(BuildAuditRow(
             match,
             previousStatus, previousWinnerId, previousPlayer1Id, previousPlayer2Id, previousPlayer1Score, previousPlayer2Score,
@@ -27,10 +36,20 @@ public static class MatchCorrectionService
         if (previousWinnerId == match.WinnerId)
             return match;
 
+        logger.LogInformation(
+            "Match {MatchId} result corrected: winner {PreviousWinnerId} -> {NewWinnerId}, score {PreviousPlayer1Score}-{PreviousPlayer2Score} -> {NewPlayer1Score}-{NewPlayer2Score}",
+            match.Id,
+            previousWinnerId,
+            match.WinnerId,
+            previousPlayer1Score,
+            previousPlayer2Score,
+            match.Player1Score,
+            match.Player2Score);
+
         return await PropagateAsync(context, match, previousWinnerId, performedByUserId, correlationId, token);
     }
 
-    public static async Task RecordIdempotentDuplicateAsync(
+    public async Task RecordIdempotentDuplicateAsync(
         ApplicationDbContext context,
         Match currentCommittedState,
         int performedByUserId,
@@ -46,10 +65,14 @@ public static class MatchCorrectionService
             performedByUserId,
             notes: "Idempotent duplicate: retried request matched already-committed state."));
 
+        logger.LogInformation(
+            "Idempotent duplicate correction detected for match {MatchId}: retried request matched already-committed state",
+            currentCommittedState.Id);
+
         await context.SaveChangesAsync(token);
     }
 
-    private static async Task<Match> PropagateAsync(
+    private async Task<Match> PropagateAsync(
         ApplicationDbContext context,
         Match sourceMatch,
         int? sourceMatchPreviousWinnerId,
@@ -62,6 +85,10 @@ public static class MatchCorrectionService
 
         while (true)
         {
+            using var stepActivity = TournamentActivitySource.Instance.StartActivity("MatchCorrectionService.Propagate.Step");
+            stepActivity?.SetTag("match.id", upstreamMatch.Id);
+            stepActivity?.SetTag("round", upstreamMatch.Round);
+
             var currentRoundMatchIds = await context.Matches
                 .Where(m => m.BracketId == upstreamMatch.BracketId && m.Round == upstreamMatch.Round)
                 .OrderBy(m => m.Id)
@@ -75,11 +102,13 @@ public static class MatchCorrectionService
 
             var nextRoundMatchIds = nextRoundMatches.Select(m => m.Id).ToList();
 
-            var downstreamMatchId = MatchCascadePositionCalculator.GetDownstreamMatchId(
+            var downstreamMatchId = cascadePositionCalculator.GetDownstreamMatchId(
                 currentRoundMatchIds, nextRoundMatchIds, upstreamMatch.Id);
 
             if (downstreamMatchId is null)
                 return upstreamMatch;
+
+            stepActivity?.SetTag("downstream_match.id", downstreamMatchId);
 
             var downstream = nextRoundMatches.Single(m => m.Id == downstreamMatchId);
 
@@ -125,6 +154,7 @@ public static class MatchCorrectionService
             }
 
             downstream.Status = MatchStatus.NeedsReplay;
+            matchMetrics.MatchNeedsReplay();
 
             context.MatchCorrectionAudits.Add(BuildAuditRow(
                 downstream,

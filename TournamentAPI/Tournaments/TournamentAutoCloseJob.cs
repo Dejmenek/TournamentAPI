@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Metrics;
+using TournamentAPI.Tracing;
 
 namespace TournamentAPI.Tournaments;
 
@@ -26,6 +27,8 @@ public class TournamentAutoCloseJob
 
     public async Task RunAsync(CancellationToken cancellationToken)
     {
+        using var activity = TournamentActivitySource.Instance.StartActivity("TournamentAutoCloseJob.Run");
+
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken);
         var now = DateTime.UtcNow;
 
@@ -35,11 +38,15 @@ public class TournamentAutoCloseJob
                 setters => setters.SetProperty(t => t.Status, TournamentStatus.Closed),
                 cancellationToken);
 
+        activity?.SetTag("tournament.auto_close.count", closedCount);
+
         if (closedCount == 0)
             return;
 
         for (var i = 0; i < closedCount; i++)
             _tournamentMetrics.TournamentClosed();
+
+        _tournamentMetrics.IncrementTournamentsClosed("auto", closedCount);
 
         _logger.LogInformation("Auto-closed {Count} tournament(s) past StartDate.", closedCount);
     }

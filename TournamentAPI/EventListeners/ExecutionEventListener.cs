@@ -1,16 +1,19 @@
 using HotChocolate.Execution;
 using HotChocolate.Execution.Instrumentation;
 using System.Diagnostics;
+using TournamentAPI.Metrics;
 
 namespace TournamentAPI.EventListeners;
 
 public sealed class ExecutionEventListener : ExecutionDiagnosticEventListener
 {
     private readonly ILogger<ExecutionEventListener> _logger;
+    private readonly GraphQLMetrics _graphQLMetrics;
 
-    public ExecutionEventListener(ILogger<ExecutionEventListener> logger)
+    public ExecutionEventListener(ILogger<ExecutionEventListener> logger, GraphQLMetrics graphQLMetrics)
     {
         _logger = logger;
+        _graphQLMetrics = graphQLMetrics;
     }
 
     public override IDisposable ExecuteRequest(RequestContext context)
@@ -22,50 +25,60 @@ public sealed class ExecutionEventListener : ExecutionDiagnosticEventListener
             stopwatch.Stop();
             var duration = stopwatch.ElapsedMilliseconds;
 
-            var operationType = context.TryGetOperation(out var operation) ? operation.Kind.ToString() : "Unknown";
-            var requestId = context.ContextData.TryGetValue("requestId", out var reqId) ? reqId : "Unknown";
+            var operationName = context.TryGetOperation(out var operation)
+                ? string.IsNullOrEmpty(operation.Name) ? "Anonymous" : operation.Name
+                : "Unknown";
+            var operationType = operation is not null ? operation.Kind.ToString().ToLowerInvariant() : "unknown";
+            var traceId = Activity.Current?.TraceId.ToString() ?? "Unknown";
+            var spanId = Activity.Current?.SpanId.ToString() ?? "Unknown";
             var userId = context.ContextData.TryGetValue("userId", out var uid) ? uid : "Anonymous";
+            var entityType = context.ContextData.TryGetValue("EntityType", out var etype) ? etype : null;
+            var entityId = context.ContextData.TryGetValue("EntityId", out var eid) ? eid : null;
+
+            _graphQLMetrics.RecordRequestDuration(stopwatch.Elapsed.TotalSeconds, operationType, operationName);
 
             _logger.LogInformation(
-                "GraphQL request started: {RequestId} | Operation: {OperationType} | User: {UserId}",
-                requestId,
-                operationType,
+                "GraphQL request started: {TraceId} | {SpanId} | Operation: {OperationName} | User: {UserId}",
+                traceId,
+                spanId,
+                operationName,
                 userId ?? "Anonymous");
 
             var errorCount = 0;
             string[] errorCodes = [];
 
-            if (context.Result != null)
+            if (context.Result is OperationResult { Errors.Count: > 0 } result)
             {
-                var resultType = context.Result.GetType();
-                var errorsProperty = resultType.GetProperty("Errors");
+                errorCount = result.Errors.Count;
+                errorCodes = [.. result.Errors.Select(e => e.Code ?? "UNKNOWN_ERROR")];
 
-                if (errorsProperty != null)
+                foreach (var errorCode in errorCodes)
                 {
-                    if (errorsProperty.GetValue(context.Result) is IEnumerable<IError> errors)
-                    {
-                        var errorList = errors.ToList();
-                        errorCount = errorList.Count;
-                        errorCodes = [.. errorList.Select(e => e.Code ?? "UNKNOWN_ERROR")];
-                    }
+                    _graphQLMetrics.RecordError(operationName, errorCode);
                 }
             }
 
             if (errorCount > 0)
             {
                 _logger.LogWarning(
-                    "GraphQL request completed with errors: {RequestId} | Duration: {Duration}ms | Errors: {ErrorCount} | Error codes: {ErrorCodes}",
-                    requestId,
+                    "GraphQL request completed with errors: {TraceId} | {SpanId} | Duration: {Duration}ms | Errors: {ErrorCount} | Error codes: {ErrorCodes} | Entity: {EntityType}/{EntityId}",
+                    traceId,
+                    spanId,
                     duration,
                     errorCount,
-                    errorCodes);
+                    errorCodes,
+                    entityType,
+                    entityId);
             }
             else
             {
                 _logger.LogInformation(
-                    "GraphQL request completed: {RequestId} | Duration: {Duration}ms",
-                    requestId,
-                    duration);
+                    "GraphQL request completed: {TraceId} | {SpanId} | Duration: {Duration}ms | Entity: {EntityType}/{EntityId}",
+                    traceId,
+                    spanId,
+                    duration,
+                    entityType,
+                    entityId);
             }
         });
     }

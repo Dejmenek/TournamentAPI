@@ -1,11 +1,16 @@
 using TournamentAPI.Data.Models;
+using TournamentAPI.Tracing;
 
 namespace TournamentAPI.Brackets;
 
-public static class BracketService
+public class BracketService(ILogger<BracketService> logger)
 {
-    public static Bracket CreateBracket(int tournamentId, IList<int> participantIds)
+    public Bracket CreateBracket(int tournamentId, IList<int> participantIds)
     {
+        using var activity = TournamentActivitySource.Instance.StartActivity("BracketService.CreateBracket");
+        activity?.SetTag("tournament.id", tournamentId);
+        activity?.SetTag("bracket.participant_count", participantIds.Count);
+
         var bracket = new Bracket
         {
             TournamentId = tournamentId,
@@ -29,11 +34,21 @@ public static class BracketService
             });
         }
 
+        logger.LogInformation(
+            "Bracket generated for tournament {TournamentId}: {ParticipantCount} participants seeded into {MatchCount} first-round matches",
+            tournamentId,
+            participantIds.Count,
+            bracket.Matches.Count);
+
         return bracket;
     }
 
-    public static IList<Match> CreateNextRoundMatches(int bracketId, int roundNumber, IList<int> winners)
+    public IList<Match> CreateNextRoundMatches(int bracketId, int roundNumber, IList<int> winners)
     {
+        using var activity = TournamentActivitySource.Instance.StartActivity("BracketService.CreateNextRoundMatches");
+        activity?.SetTag("bracket.id", bracketId);
+        activity?.SetTag("bracket.round", roundNumber + 1);
+
         var matches = new List<Match>();
 
         for (int i = 0; i < winners.Count; i += 2)
@@ -56,6 +71,12 @@ public static class BracketService
                 Status = isBye ? MatchStatus.Played : MatchStatus.Scheduled
             });
         }
+
+        logger.LogInformation(
+            "Round {Round} generated for bracket {BracketId}: {MatchCount} matches",
+            roundNumber + 1,
+            bracketId,
+            matches.Count);
 
         return matches;
     }
