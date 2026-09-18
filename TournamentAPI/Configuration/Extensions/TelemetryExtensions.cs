@@ -18,6 +18,7 @@ internal static class TelemetryExtensions
                 tracing.AddHttpClientInstrumentation();
                 tracing.AddAspNetCoreInstrumentation();
                 tracing.AddHotChocolateInstrumentation();
+                tracing.AddEntityFrameworkCoreInstrumentation();
                 tracing.AddOtlpExporter(o =>
                 {
                     o.Endpoint = new Uri("http://localhost:4318/v1/traces");
