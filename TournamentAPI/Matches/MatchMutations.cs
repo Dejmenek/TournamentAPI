@@ -6,6 +6,7 @@ using TournamentAPI.Brackets;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Extensions;
+using TournamentAPI.Metrics;
 using TournamentAPI.Tournaments;
 using TournamentAPI.Tracing;
 
@@ -23,6 +24,7 @@ public static partial class MatchMutations
         ClaimsPrincipal userClaims,
         IResolverContext resolverContext,
         ApplicationDbContext context,
+        MatchMetrics matchMetrics,
         CancellationToken token)
     {
         var userId = userClaims.GetUserId();
@@ -92,6 +94,8 @@ public static partial class MatchMutations
 
             await context.SaveChangesAsync(token);
 
+            matchMetrics.MatchPlayed();
+
             return true;
         }
         catch (DbUpdateException)
@@ -111,6 +115,7 @@ public static partial class MatchMutations
         ClaimsPrincipal userClaims,
         IResolverContext resolverContext,
         ApplicationDbContext context,
+        MatchMetrics matchMetrics,
         CancellationToken token)
     {
         using var activity = TournamentActivitySource.Instance.StartActivity("Match.CorrectMatchResult");
@@ -189,6 +194,8 @@ public static partial class MatchMutations
             await BracketCompletionService.SyncChampionAsync(context, tournament, match.BracketId, frontierMatch.Round, token);
 
             await context.SaveChangesAsync(token);
+
+            matchMetrics.MatchResultCorrected();
 
             return true;
         }
