@@ -6,6 +6,7 @@ using System.Security.Claims;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Extensions;
+using TournamentAPI.Metrics;
 using TournamentAPI.Tournaments;
 using TournamentAPI.Users;
 
@@ -22,6 +23,7 @@ public static partial class ParticipantMutations
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
         IResolverContext resolverContext,
+        ParticipantMetrics participantMetrics,
         CancellationToken token)
     {
         var userId = userClaims.GetUserId();
@@ -69,6 +71,7 @@ public static partial class ParticipantMutations
         }
         catch (DbUpdateException ex) when (ex.IsUniqueConstraintViolation(TournamentParticipant.SlotNumberUniqueIndexName))
         {
+            participantMetrics.SlotContention();
             resolverContext.ReportError(TournamentErrors.TournamentFull(input.TournamentId, tournament.MaxParticipants));
             return null;
         }

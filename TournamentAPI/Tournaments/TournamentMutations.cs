@@ -19,6 +19,7 @@ public static partial class TournamentMutations
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
         IResolverContext resolverContext,
+        ParticipantMetrics participantMetrics,
         CancellationToken token)
     {
         var userId = userClaims.GetUserId();
@@ -34,13 +35,22 @@ public static partial class TournamentMutations
             return null;
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotClosed(tournament, DateTime.UtcNow)))
+        {
+            participantMetrics.JoinAttempt("closed");
             return null;
+        }
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentNotFull(tournament)))
+        {
+            participantMetrics.JoinAttempt("full");
             return null;
+        }
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateUserNotAlreadyParticipant(tournament, userId)))
+        {
+            participantMetrics.JoinAttempt("already_joined");
             return null;
+        }
 
         var participant = new TournamentParticipant
         {
@@ -53,16 +63,20 @@ public static partial class TournamentMutations
         try
         {
             await context.SaveChangesAsync(token);
+            participantMetrics.JoinAttempt("success");
             return true;
         }
         catch (DbUpdateException ex) when (ex.IsUniqueConstraintViolation(TournamentParticipant.SlotNumberUniqueIndexName))
         {
+            participantMetrics.SlotContention();
+            participantMetrics.JoinAttempt("full");
             resolverContext.ReportError(
                 TournamentErrors.TournamentFull(tournamentId, tournament.MaxParticipants));
             return null;
         }
         catch (DbUpdateException)
         {
+            participantMetrics.JoinAttempt("already_joined");
             resolverContext.ReportError(
                 TournamentErrors.UserAlreadyParticipant(userId, tournamentId));
             return null;

@@ -9,6 +9,7 @@ internal static class MetricsExtensions
         services.AddSingleton<TournamentMetrics>();
         services.AddSingleton<BracketMetrics>();
         services.AddSingleton<MatchMetrics>();
+        services.AddSingleton<ParticipantMetrics>();
         services.AddSingleton<UserMetrics>();
 
         return services;
