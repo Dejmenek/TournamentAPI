@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TournamentAPI.Data.Models;
 using TournamentAPI.Shared.Models;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Tournaments;
@@ -79,6 +80,152 @@ public class TournamentQueryTests : BaseIntegrationTest
             .Select(p => p.Participant)
             .First(p => p!.Id == 8);
         Assert.Null(henry!.Email);
+    }
+
+    [Fact]
+    public async Task GetTournamentById_Participants_AsAnonymousViewer_ShowsAllPublicEmailsAndHidesOnlyHenrys()
+    {
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithParticipantEmailOnly,
+            new { id = 3 });
+
+        Assert.False(response.HasErrors);
+        var expectedEmails = new Dictionary<int, string?>
+        {
+            [1] = "alice@example.com",
+            [2] = "bob@example.com",
+            [3] = "carol@example.com",
+            [4] = "david@example.com",
+            [5] = "emma@example.com",
+            [6] = "frank@example.com",
+            [7] = "grace@example.com",
+            [8] = null,
+        };
+
+        var participants = response.Data!.TournamentById!.Participants!.Nodes!.Select(p => p.Participant!);
+        Assert.Equal(expectedEmails.Count, participants.Count());
+        foreach (var participant in participants)
+        {
+            Assert.Equal(expectedEmails[participant.Id], participant.Email);
+        }
+    }
+
+    [Fact]
+    public async Task GetTournamentById_Participants_AsUnrelatedAuthenticatedViewer_ShowsAllPublicEmailsAndHidesOnlyHenrys()
+    {
+        using var client = CreateClient();
+
+        await client.ExecuteMutationAsync<RegisterResponse>(
+            Shared.MutationExamples.Mutations.Users.RegisterUser,
+            new { input = new { email = "ivan@example.com", userName = "ivan", password = "Password123!" } });
+
+        var loginResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email = "ivan@example.com", password = "Password123!" } });
+        client.SetAuthToken(loginResponse.Data!.LoginUser!.String!);
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithParticipantEmailOnly,
+            new { id = 3 });
+
+        Assert.False(response.HasErrors);
+        var expectedEmails = new Dictionary<int, string?>
+        {
+            [1] = "alice@example.com",
+            [2] = "bob@example.com",
+            [3] = "carol@example.com",
+            [4] = "david@example.com",
+            [5] = "emma@example.com",
+            [6] = "frank@example.com",
+            [7] = "grace@example.com",
+            [8] = null,
+        };
+
+        var participants = response.Data!.TournamentById!.Participants!.Nodes!.Select(p => p.Participant!);
+        Assert.Equal(expectedEmails.Count, participants.Count());
+        foreach (var participant in participants)
+        {
+            Assert.Equal(expectedEmails[participant.Id], participant.Email);
+        }
+    }
+
+    [Fact]
+    public async Task GetTournamentById_Participants_AsHenryViewingHimself_ShowsHenrysOwnEmailButLeavesOthersUnaffected()
+    {
+        using var client = CreateClient();
+
+        var loginResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email = "henry@example.com", password = "Password123!" } });
+        client.SetAuthToken(loginResponse.Data!.LoginUser!.String!);
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithParticipantEmailOnly,
+            new { id = 3 });
+
+        Assert.False(response.HasErrors);
+        var expectedEmails = new Dictionary<int, string?>
+        {
+            [1] = "alice@example.com",
+            [2] = "bob@example.com",
+            [3] = "carol@example.com",
+            [4] = "david@example.com",
+            [5] = "emma@example.com",
+            [6] = "frank@example.com",
+            [7] = "grace@example.com",
+            [8] = "henry@example.com",
+        };
+
+        var participants = response.Data!.TournamentById!.Participants!.Nodes!.Select(p => p.Participant!);
+        Assert.Equal(expectedEmails.Count, participants.Count());
+        foreach (var participant in participants)
+        {
+            Assert.Equal(expectedEmails[participant.Id], participant.Email);
+        }
+    }
+
+    [Fact]
+    public async Task GetTournamentById_Participants_WithTwoPrivateEmailParticipants_EachOnlyRevealsOwnEmailToSelf()
+    {
+        var ivan = new ApplicationUser
+        {
+            UserName = "ivan",
+            Email = "ivan@example.com",
+            FirstName = "Ivan",
+            LastName = "Ivanov",
+            IsEmailPublic = false
+        };
+        DbContext.Users.Add(ivan);
+        await DbContext.SaveChangesAsync();
+
+        DbContext.TournamentParticipants.Add(new TournamentParticipant
+        {
+            TournamentId = 3,
+            ParticipantId = ivan.Id,
+            SlotNumber = 9
+        });
+        await DbContext.SaveChangesAsync();
+
+        using var client = CreateClient();
+        var loginResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email = "henry@example.com", password = "Password123!" } });
+        client.SetAuthToken(loginResponse.Data!.LoginUser!.String!);
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
+            Shared.QueryExamples.Queries.Tournaments.GetByIdWithParticipantEmailOnly,
+            new { id = 3 });
+
+        Assert.False(response.HasErrors);
+        var nodes = response.Data!.TournamentById!.Participants!.Nodes!;
+
+        var henryNode = nodes.Single(n => n.Participant!.Id == 8);
+        Assert.Equal("henry@example.com", henryNode.Participant!.Email);
+
+        var ivanNode = nodes.Single(n => n.Participant!.Id == ivan.Id);
+        Assert.Null(ivanNode.Participant!.Email);
     }
 
     [Fact]
