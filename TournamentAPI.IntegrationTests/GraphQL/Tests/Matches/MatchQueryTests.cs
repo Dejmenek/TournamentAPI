@@ -59,4 +59,46 @@ public class MatchQueryTests : BaseIntegrationTest
                 Assert.NotNull(match.Winner);
         }
     }
+
+    [Fact]
+    public async Task GetMatchesForRound_WithRoundFilter_ExcludesOtherRounds()
+    {
+        // Act
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
+            Shared.QueryExamples.Queries.Match.GetMatchesForRoundWithBasicFields,
+            new
+            {
+                tournamentId = 3,
+                roundNumber = 1
+            });
+
+        // Assert
+        Assert.False(response.HasErrors);
+        var matches = response.Data!.TournamentById!.Bracket!.MatchesByBracket!;
+        Assert.Equal(4, matches.TotalCount);
+        Assert.All(matches.Nodes!, m => Assert.Equal(1, m.Round));
+    }
+
+    [Fact]
+    public async Task GetMatchesForRound_WithNonExistentRound_ReturnsEmptyConnection()
+    {
+        // Act
+        using var client = CreateClient();
+
+        var response = await client.ExecuteQueryAsync<TournamentByIdResponse>(
+            Shared.QueryExamples.Queries.Match.GetMatchesForRoundWithBasicFields,
+            new
+            {
+                tournamentId = 3,
+                roundNumber = 99
+            });
+
+        // Assert
+        Assert.False(response.HasErrors);
+        var matches = response.Data!.TournamentById!.Bracket!.MatchesByBracket!;
+        Assert.Equal(0, matches.TotalCount);
+        Assert.Empty(matches.Nodes!);
+    }
 }
