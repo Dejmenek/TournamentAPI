@@ -54,5 +54,53 @@ public static partial class Queries
               }
             }
             """;
+
+        public const string GetMePlayedTournamentsWithNameFilter = """
+            query($nameFilter: String!) {
+              me {
+                playedTournaments(first: 10, where: { name: { contains: $nameFilter } }) {
+                  totalCount
+                  edges {
+                    node {
+                      id
+                      name
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        public const string GetMeWonMatchesWithRoundFilter = """
+            query($roundNumber: Int!) {
+              me {
+                wonMatches(first: 10, where: { round: { eq: $roundNumber } }) {
+                  totalCount
+                  edges {
+                    node {
+                      id
+                      round
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        public const string GetMePlayedTournamentsSortedByNameDescending = """
+            query {
+              me {
+                playedTournaments(first: 20, order: { name: DESC }) {
+                  totalCount
+                  edges {
+                    node {
+                      id
+                      name
+                    }
+                  }
+                }
+              }
+            }
+            """;
     }
 }

@@ -73,6 +73,7 @@ public class ApplicationUserNode
     public bool IsEmailPublic { get; set; }
     public TournamentsConnection? WonTournaments { get; set; }
     public TournamentsConnection? PlayedTournaments { get; set; }
+    public MatchesByBracketConnection? WonMatches { get; set; }
 }
 
 public class BracketNode

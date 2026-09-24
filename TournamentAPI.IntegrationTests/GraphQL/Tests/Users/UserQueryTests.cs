@@ -247,4 +247,79 @@ public class UserQueryTests : BaseIntegrationTest
         var wonMatchIds = response.Data.Me.WonMatches.Nodes?.Select(m => m.Id).ToList();
         Assert.DoesNotContain(match.Id, wonMatchIds);
     }
+
+    [Fact]
+    public async Task GetMe_PlayedTournaments_WithNameFilter_ReturnsOnlyMatchingTournaments()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        using var client = CreateClient();
+
+        var token = await client.ExecuteQueryAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email, password = "Password123!" } });
+        client.SetAuthToken(token.Data.LoginUser.String);
+
+        // Act
+        var response = await client.ExecuteQueryAsync<MeResponse>(
+            Shared.QueryExamples.Queries.Users.GetMePlayedTournamentsWithNameFilter,
+            new { nameFilter = "Cup" });
+
+        // Assert
+        Assert.False(response.HasErrors);
+        var playedTournaments = response.Data!.Me!.PlayedTournaments!;
+        Assert.Equal(1, playedTournaments.TotalCount);
+        Assert.Equal(["Champions Cup"], playedTournaments.Nodes!.Select(t => t.Name));
+    }
+
+    [Fact]
+    public async Task GetMe_WonMatches_WithRoundFilter_ReturnsOnlyMatchingRoundMatches()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        using var client = CreateClient();
+
+        var expectedMatch = await DbContext.Matches
+            .AsNoTracking()
+            .SingleAsync(m => m.WinnerId == 1 && m.Round == 2 && m.Bracket.Tournament.Name == "Winter Championship 2024");
+
+        var token = await client.ExecuteQueryAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email, password = "Password123!" } });
+        client.SetAuthToken(token.Data.LoginUser.String);
+
+        // Act
+        var response = await client.ExecuteQueryAsync<MeResponse>(
+            Shared.QueryExamples.Queries.Users.GetMeWonMatchesWithRoundFilter,
+            new { roundNumber = 2 });
+
+        // Assert
+        Assert.False(response.HasErrors);
+        var wonMatches = response.Data!.Me!.WonMatches!;
+        Assert.Equal(1, wonMatches.TotalCount);
+        Assert.Equal(expectedMatch.Id, wonMatches.Nodes!.Single().Id);
+    }
+
+    [Fact]
+    public async Task GetMe_PlayedTournaments_WithSorting_ReturnsSortedResults()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        using var client = CreateClient();
+
+        var token = await client.ExecuteQueryAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email, password = "Password123!" } });
+        client.SetAuthToken(token.Data.LoginUser.String);
+
+        // Act
+        var response = await client.ExecuteQueryAsync<MeResponse>(
+            Shared.QueryExamples.Queries.Users.GetMePlayedTournamentsSortedByNameDescending);
+
+        // Assert
+        Assert.False(response.HasErrors);
+        var names = response.Data!.Me!.PlayedTournaments!.Nodes!.Select(t => t.Name).ToList();
+        Assert.True(names.Count > 1);
+        Assert.Equal(names.OrderByDescending(n => n, StringComparer.Ordinal), names);
+    }
 }

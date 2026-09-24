@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Testcontainers.MsSql;
 using TournamentAPI.Data;
+using TournamentAPI.IntegrationTests.Infrastructure;
 
 namespace TournamentAPI.IntegrationTests;
 
@@ -17,6 +18,8 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
         .WithImage("mcr.microsoft.com/azure-sql-edge:latest")
         .WithPassword("Your_password123")
         .Build();
+
+    public QueryCommandRecorder CommandRecorder { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -29,6 +32,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
             services.AddDbContextFactory<ApplicationDbContext>(options =>
             {
                 options.UseSqlServer(connectionString);
+                options.AddInterceptors(CommandRecorder);
             });
 
             services.AddHangfire(config => config.UseSqlServerStorage(connectionString));
