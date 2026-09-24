@@ -314,6 +314,137 @@ public static partial class Queries
         }
         """;
 
+        public const string GetByIdWithParticipantsSortedBySlotNumberDescending = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            id
+            participants(first: 20, order: { slotNumber: DESC }) {
+              totalCount
+              edges {
+                node {
+                  participantId
+                  tournamentId
+                }
+              }
+            }
+          }
+        }
+        """;
+
+        public const string GetByIdWithParticipantsSortedBySlotNumberAscending = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            id
+            participants(first: 20, order: { slotNumber: ASC }) {
+              totalCount
+              edges {
+                node {
+                  participantId
+                  tournamentId
+                }
+              }
+            }
+          }
+        }
+        """;
+
+        public const string GetByIdWithParticipantsFilteredBySlotNumberGreaterThan = """
+        query($id: Int!, $minSlot: Int!) {
+          tournamentById(id: $id) {
+            id
+            participants(first: 20, where: { slotNumber: { gt: $minSlot } }) {
+              totalCount
+              edges {
+                node {
+                  participantId
+                  tournamentId
+                }
+              }
+            }
+          }
+        }
+        """;
+
+        public const string GetByIdWithParticipantsFilteredByParticipantId = """
+        query($id: Int!, $participantId: Int!) {
+          tournamentById(id: $id) {
+            id
+            participants(first: 20, where: { participantId: { eq: $participantId } }) {
+              totalCount
+              edges {
+                node {
+                  participantId
+                  tournamentId
+                }
+              }
+            }
+          }
+        }
+        """;
+
+        public const string GetByIdWithParticipantsWonTournaments = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            id
+            participants(first: 20) {
+              totalCount
+              edges {
+                node {
+                  participant {
+                    id
+                    wonTournaments(first: 5) {
+                      totalCount
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
+        public const string GetByIdWithParticipantsWonMatches = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            id
+            participants(first: 20) {
+              totalCount
+              edges {
+                node {
+                  participant {
+                    id
+                    wonMatches(first: 5) {
+                      totalCount
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
+        public const string GetByIdWithParticipantsPlayedTournaments = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            id
+            participants(first: 20) {
+              totalCount
+              edges {
+                node {
+                  participant {
+                    id
+                    playedTournaments(first: 5) {
+                      totalCount
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
         public const string GetByIdWithOwnerTournamentHistory = """
         query($id: Int!) {
           tournamentById(id: $id) {
@@ -355,6 +486,64 @@ public static partial class Queries
               id
               firstName
               lastName
+            }
+          }
+        }
+        """;
+
+        public const string GetByIdWithAllMatchesAndPlayers = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            id
+            name
+            bracket {
+              id
+              tournamentId
+              matchesByBracket(first: 20) {
+                totalCount
+                edges {
+                  node {
+                    id
+                    round
+                    player1Id
+                    player2Id
+                    winnerId
+                    player1 {
+                      id
+                    }
+                    player2 {
+                      id
+                    }
+                    winner {
+                      id
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
+        public const string GetByIdWithParticipantsAndTournamentBackReference = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            id
+            name
+            participants(first: 20) {
+              totalCount
+              edges {
+                node {
+                  participantId
+                  tournamentId
+                  participant {
+                    id
+                  }
+                  tournament {
+                    id
+                  }
+                }
+              }
             }
           }
         }
