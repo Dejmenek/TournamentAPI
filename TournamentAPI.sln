@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.4.11612.150 stable
+VisualStudioVersion = 18.4.11612.150
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TournamentAPI", "TournamentAPI\TournamentAPI.csproj", "{80ADA061-EA86-4886-B91A-ABB20F05375A}"
 EndProject
@@ -14,6 +14,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TournamentAPI.LoadTests", "TournamentAPI.LoadTests\TournamentAPI.LoadTests.csproj", "{04030980-4EAF-49A2-AD8E-B9B56EEE6F17}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TournamentAPI.UnitTests", "TournamentAPI.UnitTests\TournamentAPI.UnitTests.csproj", "{214A6968-FF66-42DB-B78D-27C94B1D297E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8F0B2E89-5295-49C3-9FD3-243C504A4820}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
