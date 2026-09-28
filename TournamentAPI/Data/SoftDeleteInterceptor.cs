@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using System.Linq;
+using Microsoft.EntityFrameworkCore.Metadata;
 using TournamentAPI.Data.Models;
 
 namespace TournamentAPI.Data;
@@ -36,6 +36,8 @@ public class SoftDeleteInterceptor : SaveChangesInterceptor
 
         foreach (var navigation in parentEntry.Navigations)
         {
+            if (navigation.Metadata is INavigation { IsOnDependent: true }) continue;
+
             if (navigation.CurrentValue is null) continue;
 
             if (navigation.CurrentValue is IEnumerable<ISoftDeletable> children)
