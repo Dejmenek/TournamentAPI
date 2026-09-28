@@ -26,6 +26,22 @@ public static partial class Mutations
             }
             """;
 
+        public const string CreateTournamentWithFormatReturn = """
+            mutation CreateTournament($input: CreateTournamentInput!) {
+              createTournament(input: $input) {
+                tournament {
+                  id
+                  name
+                  ownerId
+                  startDate
+                  status
+                  maxParticipants
+                  format
+                }
+              }
+            }
+            """;
+
         public const string CreateTournamentWithOwnerReturn = """
             mutation CreateTournament($input: CreateTournamentInput!) {
               createTournament(input: $input) {
@@ -88,6 +104,14 @@ public static partial class Mutations
         public const string DeleteTournament = """
             mutation DeleteTournament($input: DeleteTournamentInput!) {
               deleteTournament(input: $input) {
+                boolean
+              }
+            }
+            """;
+
+        public const string WithdrawParticipant = """
+            mutation WithdrawParticipant($input: WithdrawParticipantInput!) {
+              withdrawParticipant(input: $input) {
                 boolean
               }
             }
