@@ -13,4 +13,5 @@ public static class BracketErrorCodes
     public const string NextRoundAlreadyGenerated = "Bracket.NextRoundAlreadyGenerated";
     public const string RoundUpdateNotAllowed = "Bracket.RoundUpdateNotAllowed";
     public const string RoundDataChanged = "Bracket.RoundDataChanged";
+    public const string RoundAdvancementNotSupportedForFormat = "Bracket.RoundAdvancementNotSupportedForFormat";
 }

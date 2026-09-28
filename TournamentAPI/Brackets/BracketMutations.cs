@@ -92,6 +92,7 @@ public static partial class BracketMutations
         if (resolverContext.TryReportError(BracketMutationValidations.ValidateBracketExists(bracket, bracketId))) return null;
         if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(bracket!.Tournament.OwnerId, userId, bracket.TournamentId))) return null;
         if (resolverContext.TryReportError(BracketMutationValidations.ValidateTournamentIsClosedForRoundUpdate(bracket.Tournament))) return null;
+        if (resolverContext.TryReportError(BracketMutationValidations.ValidateFormatSupportsRoundAdvancement(bracket.Tournament))) return null;
         if (resolverContext.TryReportError(BracketMutationValidations.ValidateNextRoundNotGenerated(bracket.Matches, roundNumber, bracketId))) return null;
 
         var matchesInRound = bracket.Matches.Where(m => m.Round == roundNumber).OrderBy(m => m.Id).ToList();
