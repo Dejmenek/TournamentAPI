@@ -18,14 +18,14 @@ public static partial class MatchMutations
     [Authorize]
     public static async Task<bool?> Play(
         int matchId,
-        int winnerId,
+        int? winnerId,
         int player1Score,
         int player2Score,
         ClaimsPrincipal userClaims,
         IResolverContext resolverContext,
         ApplicationDbContext context,
         MatchCorrectionService matchCorrectionService,
-        BracketCompletionService bracketCompletionService,
+        IEnumerable<IBracketCompletionStrategy> completionStrategies,
         MatchMetrics matchMetrics,
         CancellationToken token)
     {
@@ -52,14 +52,23 @@ public static partial class MatchMutations
         if (resolverContext.TryReportError(MatchValidations.ValidateMatchNotPlayed(match)))
             return null;
 
-        if (resolverContext.TryReportError(MatchValidations.ValidateWinnerIsParticipant(match, winnerId)))
+        if (resolverContext.TryReportError(MatchValidations.ValidateDrawAllowedForFormat(tournament, match.Id, winnerId)))
             return null;
 
         if (resolverContext.TryReportError(MatchValidations.ValidateScoresAreNonNegative(match.Id, player1Score, player2Score)))
             return null;
 
-        if (resolverContext.TryReportError(MatchValidations.ValidateWinnerHasHigherScore(match, winnerId, player1Score, player2Score)))
+        if (resolverContext.TryReportError(MatchValidations.ValidateDrawHasEqualScores(match.Id, winnerId, player1Score, player2Score)))
             return null;
+
+        if (winnerId is not null)
+        {
+            if (resolverContext.TryReportError(MatchValidations.ValidateWinnerIsParticipant(match, winnerId.Value)))
+                return null;
+
+            if (resolverContext.TryReportError(MatchValidations.ValidateWinnerHasHigherScore(match, winnerId.Value, player1Score, player2Score)))
+                return null;
+        }
 
         var isReplay = match.Status == MatchStatus.NeedsReplay;
         var previousStatus = match.Status;
@@ -72,7 +81,7 @@ public static partial class MatchMutations
         match.WinnerId = winnerId;
         match.Player1Score = player1Score;
         match.Player2Score = player2Score;
-        match.Status = MatchStatus.Played;
+        match.Status = winnerId is null ? MatchStatus.Drawn : MatchStatus.Played;
 
         try
         {
@@ -91,10 +100,12 @@ public static partial class MatchMutations
                     previousPlayer2Score,
                     userId,
                     Guid.NewGuid(),
+                    allowCascade: tournament.Format == TournamentFormat.SingleElimination,
                     token);
             }
 
-            await bracketCompletionService.SyncChampionAsync(context, tournament, match.BracketId, frontierMatch.Round, token);
+            var completionStrategy = completionStrategies.Single(s => s.Format == tournament.Format);
+            await completionStrategy.SyncCompletionAsync(context, tournament, match.BracketId, frontierMatch.Round, token);
 
             await context.SaveChangesAsync(token);
 
@@ -112,7 +123,7 @@ public static partial class MatchMutations
     [Authorize]
     public static async Task<bool?> CorrectMatchResult(
         int matchId,
-        int winnerId,
+        int? winnerId,
         int player1Score,
         int player2Score,
         string version,
@@ -121,7 +132,7 @@ public static partial class MatchMutations
         ApplicationDbContext context,
         ILoggerFactory loggerFactory,
         MatchCorrectionService matchCorrectionService,
-        BracketCompletionService bracketCompletionService,
+        IEnumerable<IBracketCompletionStrategy> completionStrategies,
         MatchMetrics matchMetrics,
         CancellationToken token)
     {
@@ -156,14 +167,23 @@ public static partial class MatchMutations
         if (resolverContext.TryReportError(MatchValidations.ValidateMatchNotNeedsReplay(match)))
             return null;
 
-        if (resolverContext.TryReportError(MatchValidations.ValidateWinnerIsParticipant(match, winnerId)))
+        if (resolverContext.TryReportError(MatchValidations.ValidateDrawAllowedForFormat(tournament, match.Id, winnerId)))
             return null;
 
         if (resolverContext.TryReportError(MatchValidations.ValidateScoresAreNonNegative(match.Id, player1Score, player2Score)))
             return null;
 
-        if (resolverContext.TryReportError(MatchValidations.ValidateWinnerHasHigherScore(match, winnerId, player1Score, player2Score)))
+        if (resolverContext.TryReportError(MatchValidations.ValidateDrawHasEqualScores(match.Id, winnerId, player1Score, player2Score)))
             return null;
+
+        if (winnerId is not null)
+        {
+            if (resolverContext.TryReportError(MatchValidations.ValidateWinnerIsParticipant(match, winnerId.Value)))
+                return null;
+
+            if (resolverContext.TryReportError(MatchValidations.ValidateWinnerHasHigherScore(match, winnerId.Value, player1Score, player2Score)))
+                return null;
+        }
 
         if (!MatchVersionCodec.TryDecode(version, out var decodedRowVersion))
         {
@@ -183,7 +203,7 @@ public static partial class MatchMutations
         match.WinnerId = winnerId;
         match.Player1Score = player1Score;
         match.Player2Score = player2Score;
-        match.Status = MatchStatus.Played;
+        match.Status = winnerId is null ? MatchStatus.Drawn : MatchStatus.Played;
 
         try
         {
@@ -198,9 +218,11 @@ public static partial class MatchMutations
                 previousPlayer2Score,
                 userId,
                 Guid.NewGuid(),
+                allowCascade: tournament.Format == TournamentFormat.SingleElimination,
                 token);
 
-            await bracketCompletionService.SyncChampionAsync(context, tournament, match.BracketId, frontierMatch.Round, token);
+            var completionStrategy = completionStrategies.Single(s => s.Format == tournament.Format);
+            await completionStrategy.SyncCompletionAsync(context, tournament, match.BracketId, frontierMatch.Round, token);
 
             await context.SaveChangesAsync(token);
 

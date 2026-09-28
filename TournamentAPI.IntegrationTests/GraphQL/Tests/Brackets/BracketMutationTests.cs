@@ -1265,4 +1265,145 @@ public class BracketMutationTests : BaseIntegrationTest
         Assert.Equal(TournamentStatus.Closed, tournamentAfter.Status);
         Assert.Null(tournamentAfter.ChampionId);
     }
+
+    [Fact]
+    public async Task GenerateBracket_RoundRobin_WithOddParticipantCount_CreatesFullScheduleWithOneByeEach()
+    {
+        // Arrange: 5 participants (odd) → 5*4/2 = 10 matches, every pair exactly once, one bye each.
+        var email = "alice@example.com";
+        var password = "Password123!";
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email, password } });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var createResponse = await client.ExecuteMutationAsync<CreateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.CreateTournamentWithBasicFieldsReturn,
+            new
+            {
+                input = new
+                {
+                    name = "Round Robin Fixture",
+                    startDate = DateTime.UtcNow.AddDays(1),
+                    status = "OPEN",
+                    maxParticipants = 5,
+                    format = "ROUND_ROBIN"
+                }
+            });
+
+        Assert.False(createResponse.HasErrors);
+        var tournamentId = createResponse.Data!.CreateTournament!.Tournament!.Id;
+
+        var participantIds = new[] { 1, 2, 3, 4, 5 };
+        foreach (var participantId in participantIds)
+        {
+            var addResponse = await client.ExecuteMutationAsync<AddParticipantResponse>(
+                Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+                new { input = new { tournamentId, userId = participantId } });
+            Assert.False(addResponse.HasErrors);
+        }
+
+        var closeResponse = await client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            new { input = new { tournamentId, status = "CLOSED" } });
+        Assert.False(closeResponse.HasErrors);
+
+        // Act
+        var response = await client.ExecuteMutationAsync<GenerateBracketResponse>(
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
+            new { input = new { tournamentId } });
+
+        // Assert
+        Assert.False(response.HasErrors);
+
+        var matches = await DbContext.Matches
+            .AsNoTracking()
+            .Where(m => m.Bracket.TournamentId == tournamentId)
+            .ToListAsync();
+
+        Assert.Equal(10, matches.Count);
+
+        var pairs = matches
+            .Where(m => m.Player2Id != null)
+            .Select(m => (Math.Min(m.Player1Id, m.Player2Id!.Value), Math.Max(m.Player1Id, m.Player2Id!.Value)))
+            .ToList();
+        Assert.Equal(pairs.Count, pairs.Distinct().Count());
+
+        var expectedPairs =
+            (from a in participantIds
+             from b in participantIds
+             where a < b
+             select (a, b))
+            .OrderBy(p => p)
+            .ToList();
+        Assert.Equal(expectedPairs, pairs.OrderBy(p => p).ToList());
+
+        // Byes aren't persisted as Match rows: each participant is simply missing from one round.
+        Assert.DoesNotContain(matches, m => m.Player2Id == null);
+
+        foreach (var participantId in participantIds)
+        {
+            var matchesPlayed = matches.Count(m => m.Player1Id == participantId || m.Player2Id == participantId);
+            Assert.Equal(participantIds.Length - 1, matchesPlayed);
+        }
+    }
+
+    [Fact]
+    public async Task UpdateRound_ReturnsFormatNotSupportedError_WhenBracketIsRoundRobin()
+    {
+        // Arrange: a Round Robin tournament with a generated bracket has no next-round-from-winners concept.
+        var email = "alice@example.com";
+        var password = "Password123!";
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email, password } });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var createResponse = await client.ExecuteMutationAsync<CreateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.CreateTournamentWithBasicFieldsReturn,
+            new
+            {
+                input = new
+                {
+                    name = "Round Robin UpdateRound Fixture",
+                    startDate = DateTime.UtcNow.AddDays(1),
+                    status = "OPEN",
+                    maxParticipants = 4,
+                    format = "ROUND_ROBIN"
+                }
+            });
+        var tournamentId = createResponse.Data!.CreateTournament!.Tournament!.Id;
+
+        foreach (var participantId in new[] { 1, 2, 3, 4 })
+        {
+            await client.ExecuteMutationAsync<AddParticipantResponse>(
+                Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+                new { input = new { tournamentId, userId = participantId } });
+        }
+
+        await client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            new { input = new { tournamentId, status = "CLOSED" } });
+
+        await client.ExecuteMutationAsync<GenerateBracketResponse>(
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
+            new { input = new { tournamentId } });
+
+        var bracketId = await DbContext.Brackets.AsNoTracking().Where(b => b.TournamentId == tournamentId).Select(b => b.Id).SingleAsync();
+
+        // Act
+        var response = await client.ExecuteMutationAsync<UpdateRoundResponse>(
+            Shared.MutationExamples.Mutations.Bracket.UpdateRound,
+            new { input = new { bracketId, roundNumber = 1 } });
+
+        // Assert
+        Assert.True(response.HasErrors);
+        var error = response.Errors!.First();
+        var expectedError = BracketErrors.RoundAdvancementNotSupportedForFormat(tournamentId);
+        Assert.Equal(expectedError.Code, error.Extensions!["code"]?.ToString());
+    }
 }

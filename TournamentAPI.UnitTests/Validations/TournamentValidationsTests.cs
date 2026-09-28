@@ -364,4 +364,67 @@ public class TournamentValidationsTests
 
         Assert.Null(error);
     }
+
+    [Fact]
+    public void ValidateCanWithdrawParticipant_WhenCallerIsOwner_ReturnsNull()
+    {
+        IError? error = TournamentValidations.ValidateCanWithdrawParticipant(ownerId: 1, callerId: 1, participantId: 2, tournamentId: 10);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateCanWithdrawParticipant_WhenCallerIsTheParticipantBeingWithdrawn_ReturnsNull()
+    {
+        IError? error = TournamentValidations.ValidateCanWithdrawParticipant(ownerId: 1, callerId: 2, participantId: 2, tournamentId: 10);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateCanWithdrawParticipant_WhenCallerIsUnrelatedThirdUser_ReturnsError()
+    {
+        IError? error = TournamentValidations.ValidateCanWithdrawParticipant(ownerId: 1, callerId: 3, participantId: 2, tournamentId: 10);
+
+        Assert.NotNull(error);
+        Assert.Equal(TournamentErrorCodes.NotAuthorizedForWithdrawal, error.Code);
+    }
+
+    [Fact]
+    public void ValidateFormatSupportsWithdrawal_WhenRoundRobin_ReturnsNull()
+    {
+        var tournament = new Tournament { Id = 1, Format = TournamentFormat.RoundRobin };
+
+        IError? error = TournamentValidations.ValidateFormatSupportsWithdrawal(tournament);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateFormatSupportsWithdrawal_WhenSingleElimination_ReturnsError()
+    {
+        var tournament = new Tournament { Id = 1, Format = TournamentFormat.SingleElimination };
+
+        IError? error = TournamentValidations.ValidateFormatSupportsWithdrawal(tournament);
+
+        Assert.NotNull(error);
+        Assert.Equal(TournamentErrorCodes.WithdrawalNotSupportedForFormat, error.Code);
+    }
+
+    [Fact]
+    public void ValidateBracketGeneratedForWithdrawal_WhenBracketExists_ReturnsNull()
+    {
+        IError? error = TournamentValidations.ValidateBracketGeneratedForWithdrawal(bracketExists: true, tournamentId: 1);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateBracketGeneratedForWithdrawal_WhenBracketDoesNotExist_ReturnsError()
+    {
+        IError? error = TournamentValidations.ValidateBracketGeneratedForWithdrawal(bracketExists: false, tournamentId: 1);
+
+        Assert.NotNull(error);
+        Assert.Equal(TournamentErrorCodes.WithdrawalRequiresBracket, error.Code);
+    }
 }

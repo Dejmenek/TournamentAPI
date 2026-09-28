@@ -3,6 +3,7 @@ using HotChocolate.Authorization;
 using HotChocolate.Resolvers;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using TournamentAPI.Brackets;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Extensions;
@@ -116,7 +117,8 @@ public static partial class TournamentMutations
             StartDate = input.StartDate,
             Status = input.Status,
             OwnerId = userId,
-            MaxParticipants = input.MaxParticipants
+            MaxParticipants = input.MaxParticipants,
+            Format = input.Format ?? TournamentFormat.SingleElimination
         };
 
         context.Tournaments.Add(tournament);
@@ -259,6 +261,61 @@ public static partial class TournamentMutations
             tournamentMetrics.TournamentClosed();
 
         tournamentMetrics.IncrementTournamentsDeleted();
+
+        return true;
+    }
+
+    [Authorize]
+    public static async Task<bool?> WithdrawParticipant(
+        WithdrawParticipantInput input,
+        ClaimsPrincipal userClaims,
+        ApplicationDbContext context,
+        IResolverContext resolverContext,
+        IEnumerable<IBracketCompletionStrategy> completionStrategies,
+        CancellationToken token)
+    {
+        using var _ = resolverContext.PushEntityContext("Tournament", input.TournamentId);
+
+        var userId = userClaims.GetUserId();
+
+        var tournament = await context.Tournaments
+            .Include(t => t.Bracket)
+                .ThenInclude(b => b!.Matches)
+            .Include(t => t.Participants)
+            .FirstOrDefaultAsync(t => t.Id == input.TournamentId, token);
+
+        if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentExists(tournament, input.TournamentId)))
+            return null;
+
+        if (resolverContext.TryReportError(TournamentValidations.ValidateCanWithdrawParticipant(tournament!.OwnerId, userId, input.ParticipantId, input.TournamentId)))
+            return null;
+
+        if (resolverContext.TryReportError(TournamentValidations.ValidateFormatSupportsWithdrawal(tournament)))
+            return null;
+
+        if (resolverContext.TryReportError(TournamentValidations.ValidateBracketGeneratedForWithdrawal(tournament.Bracket != null, input.TournamentId)))
+            return null;
+
+        var participant = tournament.Participants.FirstOrDefault(p => p.ParticipantId == input.ParticipantId);
+
+        if (resolverContext.TryReportError(participant is null ? TournamentErrors.ParticipantNotFound(input.TournamentId, input.ParticipantId) : null))
+            return null;
+
+        var scheduledMatches = tournament.Bracket!.Matches
+            .Where(m => m.Status == MatchStatus.Scheduled && (m.Player1Id == input.ParticipantId || m.Player2Id == input.ParticipantId));
+
+        foreach (var match in scheduledMatches)
+        {
+            match.WinnerId = match.Player1Id == input.ParticipantId ? match.Player2Id!.Value : match.Player1Id;
+            match.Status = MatchStatus.Played;
+        }
+
+        context.TournamentParticipants.Remove(participant!);
+
+        var completionStrategy = completionStrategies.Single(s => s.Format == tournament.Format);
+        await completionStrategy.SyncCompletionAsync(context, tournament, tournament.Bracket!.Id, frontierRound: 0, token);
+
+        await context.SaveChangesAsync(token);
 
         return true;
     }

@@ -3,8 +3,10 @@ using TournamentAPI.Tracing;
 
 namespace TournamentAPI.Brackets;
 
-public class BracketService(ILogger<BracketService> logger)
+public class SingleEliminationBracketStrategy(ILogger<SingleEliminationBracketStrategy> logger) : IBracketGenerationStrategy
 {
+    public TournamentFormat Format => TournamentFormat.SingleElimination;
+
     public Bracket CreateBracket(int tournamentId, IList<int> participantIds)
     {
         using var activity = TournamentActivitySource.Instance.StartActivity("BracketService.CreateBracket");

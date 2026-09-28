@@ -82,4 +82,20 @@ public static class MatchErrors
             .SetCode(MatchErrorCodes.MatchCorrectionFailed)
             .SetExtension("MatchId", matchId)
             .Build();
+
+    public static IError DrawNotAllowedForFormat(int matchId) =>
+        ErrorBuilder.New()
+            .SetMessage("A draw is not allowed for this tournament's format.")
+            .SetCode(MatchErrorCodes.DrawNotAllowedForFormat)
+            .SetExtension("MatchId", matchId)
+            .Build();
+
+    public static IError DrawRequiresEqualScores(int matchId, int player1Score, int player2Score) =>
+        ErrorBuilder.New()
+            .SetMessage("A draw requires both players to have equal scores.")
+            .SetCode(MatchErrorCodes.DrawRequiresEqualScores)
+            .SetExtension("MatchId", matchId)
+            .SetExtension("Player1Score", player1Score)
+            .SetExtension("Player2Score", player2Score)
+            .Build();
 }

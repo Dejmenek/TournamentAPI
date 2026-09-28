@@ -1,0 +1,101 @@
+# GraphQL schema delta for Round Robin Tournament Format
+#
+# This project is implementation-first (HotChocolate derives schema.graphql from C#),
+# so this file is not fed into a generator — it documents the contract this feature
+# must produce, for review against the regenerated schema.graphql during implementation.
+# Everything not listed here is unchanged.
+
+# --- New enum ---
+
+enum TournamentFormat {
+  SINGLE_ELIMINATION
+  ROUND_ROBIN
+}
+
+# --- Changed enum: Match gains a dedicated DRAWN status ---
+
+enum MatchStatus {
+  SCHEDULED
+  PLAYED
+  NEEDS_REPLAY
+  DRAWN # NEW — appended last (not inserted after PLAYED) since MatchStatus has no HasConversion and is stored as a plain int; Round Robin only, a played match with no winner (research.md §2)
+}
+
+# --- Changed: Tournament gains a Format field ---
+
+type Tournament {
+  format: TournamentFormat!
+  # ...all existing fields unchanged
+}
+
+# --- Changed: format is choosable only at creation, defaults to SINGLE_ELIMINATION ---
+
+input CreateTournamentInput {
+  name: String!
+  startDate: DateTime!
+  status: TournamentStatus!
+  maxParticipants: Int!
+  format: TournamentFormat # optional; defaults to SINGLE_ELIMINATION when omitted (FR-002)
+}
+
+# UpdateTournamentInput is UNCHANGED — format is deliberately not editable after creation (FR-012, research.md §3)
+
+# --- Changed: Play now allows a draw (Round Robin only) ---
+
+input PlayInput {
+  matchId: Int!
+  winnerId: Int # was Int! — null means a draw, which sets Match.status to DRAWN instead of PLAYED; rejected for Single Elimination matches (FR-005/FR-006)
+  player1Score: Int!
+  player2Score: Int!
+}
+
+# CorrectMatchResultInput is UNCHANGED in shape; the same nullable-winnerId + format-aware
+# validation rules from Play apply when correcting a Round Robin match's result, including
+# setting/clearing DRAWN status as appropriate.
+
+# --- New mutation: withdraw a participant from an in-progress Round Robin tournament ---
+
+input WithdrawParticipantInput {
+  tournamentId: Int!
+  participantId: Int!
+}
+
+type WithdrawParticipantPayload {
+  boolean: Boolean
+}
+
+# Errors are reported the same way every other mutation in this API reports them — via the
+# top-level GraphQL `errors` array (resolverContext.ReportError), NOT a typed field on the
+# payload. No existing payload (PlayPayload, JoinTournamentPayload, AddParticipantPayload, ...)
+# has an `errors` field, so this one doesn't either (fixed per /speckit-analyze finding F2).
+#
+# Callable by the tournament's owner OR the participant being withdrawn themselves — FR-010
+# covers both "a participant withdraws" (self-service) and "or is removed" (organizer-initiated)
+# (research.md §6 Authorization). Rejected for anyone else, if the tournament's format is not
+# ROUND_ROBIN, or if its bracket has not been generated yet — withdrawal before a schedule
+# exists is unaffected; organizers/participants use the existing tournament participant
+# management for that case.
+
+# --- New query: Round Robin standings ---
+
+type StandingEntry {
+  participantId: Int!
+  wins: Int!
+  draws: Int!
+  losses: Int!
+  points: Int!
+  rank: Int!
+  matchesPlayed: Int!
+  matchesRemaining: Int!
+}
+
+type Bracket {
+  standings: [StandingEntry!] # null/empty for Single Elimination brackets; populated for Round Robin
+  # ...all existing fields unchanged
+}
+
+# --- Changed: UpdateRound rejects Round Robin brackets ---
+
+# updateRound(input: UpdateRoundInput!): UpdateRoundPayload! — unchanged signature, but now
+# returns a new "format not supported" error when the target bracket's tournament is
+# ROUND_ROBIN, since a Round Robin schedule has no next-round-from-winners concept.

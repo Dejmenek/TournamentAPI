@@ -549,6 +549,31 @@ public static partial class Queries
         }
         """;
 
+        public const string GetByIdWithBracketStandings = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            id
+            name
+            status
+            championId
+            bracket {
+              id
+              tournamentId
+              standings {
+                participantId
+                wins
+                draws
+                losses
+                points
+                rank
+                matchesPlayed
+                matchesRemaining
+              }
+            }
+          }
+        }
+        """;
+
         public const string GetByIdWithBracketAndMatches = """
         query($id: Int!) {
           tournamentById(id: $id) {

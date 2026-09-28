@@ -5,6 +5,7 @@ using TournamentAPI.Shared.Models;
 using TournamentAPI.Tournaments;
 
 namespace TournamentAPI.IntegrationTests.GraphQL.Tests.Matches;
+
 public class MatchMutationTests : BaseIntegrationTest
 {
     public MatchMutationTests(IntegrationTestWebAppFactory factory) : base(factory)
@@ -572,5 +573,161 @@ public class MatchMutationTests : BaseIntegrationTest
 
         Assert.NotNull(match);
         Assert.Null(match.WinnerId);
+    }
+
+    [Fact]
+    public async Task Play_RoundRobin_WithNullWinnerIdAndEqualScores_SucceedsAsADraw()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email, password } });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var createResponse = await client.ExecuteMutationAsync<CreateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.CreateTournamentWithBasicFieldsReturn,
+            new
+            {
+                input = new
+                {
+                    name = "Round Robin Draw Fixture",
+                    startDate = DateTime.UtcNow.AddDays(1),
+                    status = "OPEN",
+                    maxParticipants = 4,
+                    format = "ROUND_ROBIN"
+                }
+            });
+        var tournamentId = createResponse.Data!.CreateTournament!.Tournament!.Id;
+
+        foreach (var participantId in new[] { 1, 2, 3, 4 })
+        {
+            await client.ExecuteMutationAsync<AddParticipantResponse>(
+                Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+                new { input = new { tournamentId, userId = participantId } });
+        }
+
+        await client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            new { input = new { tournamentId, status = "CLOSED" } });
+
+        await client.ExecuteMutationAsync<GenerateBracketResponse>(
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
+            new { input = new { tournamentId } });
+
+        var match = await DbContext.Matches.AsNoTracking().FirstAsync(m => m.Bracket.TournamentId == tournamentId && m.Status == MatchStatus.Scheduled);
+
+        // Act
+        var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
+            Shared.MutationExamples.Mutations.Match.Play,
+            new { input = new { matchId = match.Id, winnerId = (int?)null, player1Score = 1, player2Score = 1 } });
+
+        // Assert
+        Assert.False(response.HasErrors);
+
+        var matchAfter = await DbContext.Matches.AsNoTracking().SingleAsync(m => m.Id == match.Id);
+        Assert.Equal(MatchStatus.Drawn, matchAfter.Status);
+        Assert.Null(matchAfter.WinnerId);
+    }
+
+    [Fact]
+    public async Task Play_RoundRobin_WithNullWinnerIdAndUnequalScores_IsRejected()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email, password } });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var createResponse = await client.ExecuteMutationAsync<CreateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.CreateTournamentWithBasicFieldsReturn,
+            new
+            {
+                input = new
+                {
+                    name = "Round Robin Bad Draw Fixture",
+                    startDate = DateTime.UtcNow.AddDays(1),
+                    status = "OPEN",
+                    maxParticipants = 4,
+                    format = "ROUND_ROBIN"
+                }
+            });
+        var tournamentId = createResponse.Data!.CreateTournament!.Tournament!.Id;
+
+        foreach (var participantId in new[] { 1, 2, 3, 4 })
+        {
+            await client.ExecuteMutationAsync<AddParticipantResponse>(
+                Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+                new { input = new { tournamentId, userId = participantId } });
+        }
+
+        await client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            new { input = new { tournamentId, status = "CLOSED" } });
+
+        await client.ExecuteMutationAsync<GenerateBracketResponse>(
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
+            new { input = new { tournamentId } });
+
+        var match = await DbContext.Matches.AsNoTracking().FirstAsync(m => m.Bracket.TournamentId == tournamentId && m.Status == MatchStatus.Scheduled);
+
+        // Act
+        var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
+            Shared.MutationExamples.Mutations.Match.Play,
+            new { input = new { matchId = match.Id, winnerId = (int?)null, player1Score = 2, player2Score = 1 } });
+
+        // Assert
+        Assert.True(response.HasErrors);
+        var error = response.Errors!.First();
+        var expectedError = MatchErrors.DrawRequiresEqualScores(match.Id, 2, 1);
+        Assert.Equal(expectedError.Code, error.Extensions!["code"]?.ToString());
+
+        var matchAfter = await DbContext.Matches.AsNoTracking().SingleAsync(m => m.Id == match.Id);
+        Assert.Equal(MatchStatus.Scheduled, matchAfter.Status);
+    }
+
+    [Fact]
+    public async Task Play_SingleElimination_WithNullWinnerId_IsRejected()
+    {
+        // Arrange: tournament 10 ("Trio Tournament") is Single Elimination; regression boundary check
+        // distinct from the Round Robin draw tests above.
+        var email = "bob@example.com";
+        var password = "Password123!";
+        var tournamentId = 10;
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email, password } });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        await client.ExecuteMutationAsync<GenerateBracketResponse>(
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
+            new { input = new { tournamentId } });
+
+        var match = await DbContext.Matches
+            .AsNoTracking()
+            .FirstAsync(m => m.Bracket.TournamentId == tournamentId && m.Status == MatchStatus.Scheduled);
+
+        // Act
+        var response = await client.ExecuteMutationAsync<PlayMatchResponse>(
+            Shared.MutationExamples.Mutations.Match.Play,
+            new { input = new { matchId = match.Id, winnerId = (int?)null, player1Score = 1, player2Score = 1 } });
+
+        // Assert
+        Assert.True(response.HasErrors);
+        var error = response.Errors!.First();
+        var expectedError = MatchErrors.DrawNotAllowedForFormat(match.Id);
+        Assert.Equal(expectedError.Code, error.Extensions!["code"]?.ToString());
+
+        var matchAfter = await DbContext.Matches.AsNoTracking().SingleAsync(m => m.Id == match.Id);
+        Assert.Equal(MatchStatus.Scheduled, matchAfter.Status);
     }
 }

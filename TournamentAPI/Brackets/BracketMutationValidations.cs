@@ -30,4 +30,7 @@ public static class BracketMutationValidations
 
     public static IError? ValidateNotFinalRound(IList<int> winners, int bracketId)
         => winners.Count < 2 ? BracketErrors.BracketAlreadyHasWinner(bracketId) : null;
+
+    public static IError? ValidateFormatSupportsRoundAdvancement(Tournament tournament)
+        => tournament.Format != TournamentFormat.SingleElimination ? BracketErrors.RoundAdvancementNotSupportedForFormat(tournament.Id) : null;
 }

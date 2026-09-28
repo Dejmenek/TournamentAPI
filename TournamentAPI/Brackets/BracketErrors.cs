@@ -71,4 +71,11 @@ public static class BracketErrors
             .SetCode(BracketErrorCodes.RoundDataChanged)
             .SetExtension("BracketId", bracketId)
             .Build();
+
+    public static IError RoundAdvancementNotSupportedForFormat(int tournamentId) =>
+        ErrorBuilder.New()
+            .SetMessage("Round advancement is not supported for this tournament's format.")
+            .SetCode(BracketErrorCodes.RoundAdvancementNotSupportedForFormat)
+            .SetExtension("TournamentId", tournamentId)
+            .Build();
 }

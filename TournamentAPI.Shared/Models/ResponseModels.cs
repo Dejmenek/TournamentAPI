@@ -35,6 +35,7 @@ public class TournamentNode
     public int MaxParticipants { get; set; }
     public bool IsActive { get; set; }
     public int? ChampionId { get; set; }
+    public string? Format { get; set; }
     public ApplicationUserNode? Owner { get; set; }
     public ApplicationUserNode? Champion { get; set; }
     public BracketNode? Bracket { get; set; }
@@ -81,6 +82,19 @@ public class BracketNode
     public int Id { get; set; }
     public int TournamentId { get; set; }
     public MatchesByBracketConnection? MatchesByBracket { get; set; }
+    public List<StandingEntryNode>? Standings { get; set; }
+}
+
+public class StandingEntryNode
+{
+    public int ParticipantId { get; set; }
+    public int Wins { get; set; }
+    public int Draws { get; set; }
+    public int Losses { get; set; }
+    public int Points { get; set; }
+    public int Rank { get; set; }
+    public int MatchesPlayed { get; set; }
+    public int MatchesRemaining { get; set; }
 }
 
 public class MatchesByBracketConnection
@@ -156,6 +170,16 @@ public class DeleteTournamentResponse
 }
 
 public class DeleteTournamentResult
+{
+    public bool? Boolean { get; set; }
+}
+
+public class WithdrawParticipantResponse
+{
+    public WithdrawParticipantResult? WithdrawParticipant { get; set; }
+}
+
+public class WithdrawParticipantResult
 {
     public bool? Boolean { get; set; }
 }

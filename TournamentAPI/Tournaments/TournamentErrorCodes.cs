@@ -16,4 +16,8 @@ public static class TournamentErrorCodes
     public const string CannotDeleteTournamentWithBracket = "Tournament.CannotDeleteWithBracket";
     public const string StatusCannotBeSetManually = "Tournament.StatusCannotBeSetManually";
     public const string CannotChangeCompletedStatus = "Tournament.CannotChangeCompletedStatus";
+    public const string NotAuthorizedForWithdrawal = "Tournament.NotAuthorizedForWithdrawal";
+    public const string WithdrawalNotSupportedForFormat = "Tournament.WithdrawalNotSupportedForFormat";
+    public const string WithdrawalRequiresBracket = "Tournament.WithdrawalRequiresBracket";
+    public const string ParticipantNotFound = "Tournament.ParticipantNotFound";
 }

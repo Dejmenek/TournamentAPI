@@ -8,6 +8,7 @@ using TournamentAPI.Configuration.Extensions;
 using TournamentAPI.Matches;
 using TournamentAPI.Participants;
 using TournamentAPI.Services;
+using TournamentAPI.Standings;
 using TournamentAPI.Tournaments;
 using TournamentAPI.Users;
 
@@ -36,8 +37,14 @@ public class ApplicationUserSchemaTests
         services.AddScoped<MatchService>();
         services.AddScoped<ApplicationUserService>();
         services.AddScoped<BracketLookupService>();
-        services.AddScoped<BracketService>();
-        services.AddScoped<BracketCompletionService>();
+        services.AddScoped<SingleEliminationBracketStrategy>();
+        services.AddScoped<SingleEliminationCompletionStrategy>();
+        services.AddScoped<IBracketGenerationStrategy, SingleEliminationBracketStrategy>();
+        services.AddScoped<IBracketCompletionStrategy, SingleEliminationCompletionStrategy>();
+        services.AddScoped<IBracketGenerationStrategy, RoundRobinBracketStrategy>();
+        services.AddScoped<StandingsService>();
+        services.AddScoped<StandingsLookupService>();
+        services.AddScoped<IBracketCompletionStrategy, RoundRobinCompletionStrategy>();
         services.AddScoped<MatchCascadePositionCalculator>();
         services.AddScoped<MatchCorrectionService>();
         services.AddScoped<ParticipantsService>();

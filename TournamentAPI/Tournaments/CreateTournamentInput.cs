@@ -2,4 +2,4 @@ using TournamentAPI.Data.Models;
 
 namespace TournamentAPI.Tournaments;
 
-public record CreateTournamentInput(string Name, DateTime StartDate, TournamentStatus Status, int MaxParticipants);
+public record CreateTournamentInput(string Name, DateTime StartDate, TournamentStatus Status, int MaxParticipants, TournamentFormat? Format = null);

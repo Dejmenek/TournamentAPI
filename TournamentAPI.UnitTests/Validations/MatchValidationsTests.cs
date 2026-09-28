@@ -247,4 +247,81 @@ public class MatchValidationsTests
 
         Assert.Null(error);
     }
+
+    [Fact]
+    public void ValidateMatchNotPlayed_WhenMatchIsDrawn_ReturnsError()
+    {
+        var match = new Match { Id = 1, WinnerId = null, Status = MatchStatus.Drawn };
+
+        IError? error = MatchValidations.ValidateMatchNotPlayed(match);
+
+        Assert.NotNull(error);
+        Assert.Equal(MatchErrorCodes.MatchAlreadyPlayed, error.Code);
+    }
+
+    [Fact]
+    public void ValidateMatchNotScheduled_WhenMatchIsDrawn_ReturnsNull()
+    {
+        var match = new Match { Id = 1, Status = MatchStatus.Drawn };
+
+        IError? error = MatchValidations.ValidateMatchNotScheduled(match);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateDrawAllowedForFormat_WhenRoundRobinAndWinnerIsNull_ReturnsNull()
+    {
+        var tournament = new Tournament { Id = 1, Format = TournamentFormat.RoundRobin };
+
+        IError? error = MatchValidations.ValidateDrawAllowedForFormat(tournament, matchId: 1, winnerId: null);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateDrawAllowedForFormat_WhenSingleEliminationAndWinnerIsNull_ReturnsError()
+    {
+        var tournament = new Tournament { Id = 1, Format = TournamentFormat.SingleElimination };
+
+        IError? error = MatchValidations.ValidateDrawAllowedForFormat(tournament, matchId: 1, winnerId: null);
+
+        Assert.NotNull(error);
+        Assert.Equal(MatchErrorCodes.DrawNotAllowedForFormat, error.Code);
+    }
+
+    [Fact]
+    public void ValidateDrawAllowedForFormat_WhenWinnerIsSet_ReturnsNull()
+    {
+        var tournament = new Tournament { Id = 1, Format = TournamentFormat.SingleElimination };
+
+        IError? error = MatchValidations.ValidateDrawAllowedForFormat(tournament, matchId: 1, winnerId: 5);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateDrawHasEqualScores_WhenWinnerIsNullAndScoresAreEqual_ReturnsNull()
+    {
+        IError? error = MatchValidations.ValidateDrawHasEqualScores(matchId: 1, winnerId: null, player1Score: 1, player2Score: 1);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateDrawHasEqualScores_WhenWinnerIsNullAndScoresAreUnequal_ReturnsError()
+    {
+        IError? error = MatchValidations.ValidateDrawHasEqualScores(matchId: 1, winnerId: null, player1Score: 2, player2Score: 1);
+
+        Assert.NotNull(error);
+        Assert.Equal(MatchErrorCodes.DrawRequiresEqualScores, error.Code);
+    }
+
+    [Fact]
+    public void ValidateDrawHasEqualScores_WhenWinnerIsSetAndScoresAreUnequal_ReturnsNull()
+    {
+        IError? error = MatchValidations.ValidateDrawHasEqualScores(matchId: 1, winnerId: 2, player1Score: 2, player2Score: 1);
+
+        Assert.Null(error);
+    }
 }

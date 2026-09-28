@@ -11,6 +11,7 @@ public class Tournament : ISoftDeletable
     public int OwnerId { get; set; }
     public int MaxParticipants { get; set; }
     public int? ChampionId { get; set; }
+    public TournamentFormat Format { get; set; } = TournamentFormat.SingleElimination;
 
     [GraphQLIgnore]
     public bool IsDeleted { get; set; }

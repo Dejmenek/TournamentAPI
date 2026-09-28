@@ -57,4 +57,13 @@ public static class TournamentValidations
 
         return null;
     }
+
+    public static IError? ValidateCanWithdrawParticipant(int ownerId, int callerId, int participantId, int tournamentId)
+        => callerId == ownerId || callerId == participantId ? null : TournamentErrors.NotAuthorizedForWithdrawal(callerId, tournamentId, participantId);
+
+    public static IError? ValidateFormatSupportsWithdrawal(Tournament tournament)
+        => tournament.Format != TournamentFormat.RoundRobin ? TournamentErrors.WithdrawalNotSupportedForFormat(tournament.Id) : null;
+
+    public static IError? ValidateBracketGeneratedForWithdrawal(bool bracketExists, int tournamentId)
+        => bracketExists ? null : TournamentErrors.WithdrawalRequiresBracket(tournamentId);
 }

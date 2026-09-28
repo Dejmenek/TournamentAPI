@@ -11,7 +11,7 @@ public static class MatchValidations
         => tournament.Status is TournamentStatus.Closed or TournamentStatus.Completed ? null : MatchErrors.TournamentNotClosed(tournament.Id);
 
     public static IError? ValidateMatchNotPlayed(Match match)
-        => match.Status == MatchStatus.Played ? MatchErrors.MatchAlreadyPlayed(match.Id) : null;
+        => match.Status is MatchStatus.Played or MatchStatus.Drawn ? MatchErrors.MatchAlreadyPlayed(match.Id) : null;
 
     public static IError? ValidateMatchNotScheduled(Match match)
         => match.Status == MatchStatus.Scheduled ? MatchErrors.MatchNotYetPlayed(match.Id) : null;
@@ -31,4 +31,10 @@ public static class MatchValidations
         var opponentScore = winnerId == match.Player1Id ? player2Score : player1Score;
         return winnerScore <= opponentScore ? MatchErrors.WinnerScoreMismatch(match.Id, winnerId) : null;
     }
+
+    public static IError? ValidateDrawAllowedForFormat(Tournament tournament, int matchId, int? winnerId)
+        => winnerId is null && tournament.Format != TournamentFormat.RoundRobin ? MatchErrors.DrawNotAllowedForFormat(matchId) : null;
+
+    public static IError? ValidateDrawHasEqualScores(int matchId, int? winnerId, int player1Score, int player2Score)
+        => winnerId is null && player1Score != player2Score ? MatchErrors.DrawRequiresEqualScores(matchId, player1Score, player2Score) : null;
 }
