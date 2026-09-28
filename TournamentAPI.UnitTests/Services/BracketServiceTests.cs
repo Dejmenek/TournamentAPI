@@ -5,7 +5,7 @@ namespace TournamentAPI.UnitTests.Services;
 
 public class BracketServiceTests
 {
-    private readonly BracketService _sut = new(NullLogger<BracketService>.Instance);
+    private readonly SingleEliminationBracketStrategy _sut = new(NullLogger<SingleEliminationBracketStrategy>.Instance);
 
     [Fact]
     public void CreateBracket_SetsTournamentId()
