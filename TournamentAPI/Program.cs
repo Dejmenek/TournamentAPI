@@ -11,6 +11,7 @@ using TournamentAPI.Data.Models;
 using TournamentAPI.Matches;
 using TournamentAPI.Participants;
 using TournamentAPI.Services;
+using TournamentAPI.Standings;
 using TournamentAPI.Tournaments;
 using TournamentAPI.Users;
 
@@ -28,8 +29,14 @@ if (builder.Environment.IsDevelopment())
 builder.Services.AddScoped<MatchService>();
 builder.Services.AddScoped<ApplicationUserService>();
 builder.Services.AddScoped<BracketLookupService>();
-builder.Services.AddScoped<BracketService>();
-builder.Services.AddScoped<BracketCompletionService>();
+builder.Services.AddScoped<SingleEliminationBracketStrategy>();
+builder.Services.AddScoped<SingleEliminationCompletionStrategy>();
+builder.Services.AddScoped<IBracketGenerationStrategy, SingleEliminationBracketStrategy>();
+builder.Services.AddScoped<IBracketCompletionStrategy, SingleEliminationCompletionStrategy>();
+builder.Services.AddScoped<IBracketGenerationStrategy, RoundRobinBracketStrategy>();
+builder.Services.AddScoped<StandingsService>();
+builder.Services.AddScoped<StandingsLookupService>();
+builder.Services.AddScoped<IBracketCompletionStrategy, RoundRobinCompletionStrategy>();
 builder.Services.AddScoped<MatchCascadePositionCalculator>();
 builder.Services.AddScoped<MatchCorrectionService>();
 builder.Services.AddScoped<ParticipantsService>();
