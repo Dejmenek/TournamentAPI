@@ -22,6 +22,7 @@ public class MatchCorrectionService(
         int previousPlayer2Score,
         int performedByUserId,
         Guid correlationId,
+        bool allowCascade,
         CancellationToken token)
     {
         using var activity = TournamentActivitySource.Instance.StartActivity("MatchCorrectionService.ApplyCorrection");
@@ -33,7 +34,7 @@ public class MatchCorrectionService(
             previousStatus, previousWinnerId, previousPlayer1Id, previousPlayer2Id, previousPlayer1Score, previousPlayer2Score,
             correlationId, triggeredByMatchId: null, performedByUserId, notes: null));
 
-        if (previousWinnerId == match.WinnerId)
+        if (!allowCascade || previousWinnerId == match.WinnerId)
             return match;
 
         logger.LogInformation(

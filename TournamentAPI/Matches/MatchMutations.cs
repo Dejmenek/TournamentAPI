@@ -25,7 +25,7 @@ public static partial class MatchMutations
         IResolverContext resolverContext,
         ApplicationDbContext context,
         MatchCorrectionService matchCorrectionService,
-        BracketCompletionService bracketCompletionService,
+        IEnumerable<IBracketCompletionStrategy> completionStrategies,
         MatchMetrics matchMetrics,
         CancellationToken token)
     {
@@ -100,10 +100,12 @@ public static partial class MatchMutations
                     previousPlayer2Score,
                     userId,
                     Guid.NewGuid(),
+                    allowCascade: tournament.Format == TournamentFormat.SingleElimination,
                     token);
             }
 
-            await bracketCompletionService.SyncChampionAsync(context, tournament, match.BracketId, frontierMatch.Round, token);
+            var completionStrategy = completionStrategies.Single(s => s.Format == tournament.Format);
+            await completionStrategy.SyncCompletionAsync(context, tournament, match.BracketId, frontierMatch.Round, token);
 
             await context.SaveChangesAsync(token);
 
@@ -130,7 +132,7 @@ public static partial class MatchMutations
         ApplicationDbContext context,
         ILoggerFactory loggerFactory,
         MatchCorrectionService matchCorrectionService,
-        BracketCompletionService bracketCompletionService,
+        IEnumerable<IBracketCompletionStrategy> completionStrategies,
         MatchMetrics matchMetrics,
         CancellationToken token)
     {
@@ -177,7 +179,7 @@ public static partial class MatchMutations
         if (winnerId is not null)
         {
             if (resolverContext.TryReportError(MatchValidations.ValidateWinnerIsParticipant(match, winnerId.Value)))
-            return null;
+                return null;
 
             if (resolverContext.TryReportError(MatchValidations.ValidateWinnerHasHigherScore(match, winnerId.Value, player1Score, player2Score)))
                 return null;
@@ -216,9 +218,11 @@ public static partial class MatchMutations
                 previousPlayer2Score,
                 userId,
                 Guid.NewGuid(),
+                allowCascade: tournament.Format == TournamentFormat.SingleElimination,
                 token);
 
-            await bracketCompletionService.SyncChampionAsync(context, tournament, match.BracketId, frontierMatch.Round, token);
+            var completionStrategy = completionStrategies.Single(s => s.Format == tournament.Format);
+            await completionStrategy.SyncCompletionAsync(context, tournament, match.BracketId, frontierMatch.Round, token);
 
             await context.SaveChangesAsync(token);
 
