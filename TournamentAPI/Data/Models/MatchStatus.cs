@@ -4,5 +4,6 @@ public enum MatchStatus
 {
     Scheduled,
     Played,
-    NeedsReplay
+    NeedsReplay,
+    Drawn
 }
