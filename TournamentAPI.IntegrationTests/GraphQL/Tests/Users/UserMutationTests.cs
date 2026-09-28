@@ -655,7 +655,7 @@ public class UserMutationTests : BaseIntegrationTest
     }
 
     [Fact]
-    public async Task LogoutUser_TreatsConcurrentRevoke_AsIdempotentSuccess()
+    public async Task LogoutUser_ConcurrentRevoke_LeavesNoActiveTokens()
     {
         using var client1 = CreateClient();
         using var client2 = CreateClient();
@@ -679,11 +679,17 @@ public class UserMutationTests : BaseIntegrationTest
 
         var results = await Task.WhenAll(task1, task2);
 
-        Assert.All(results, r =>
+        var successes = results.Where(r => !r.HasErrors).ToList();
+        Assert.NotEmpty(successes);
+        Assert.All(successes, r => Assert.True(r.Data?.LogoutUser?.Boolean));
+
+        var allowedCodes = new[]
         {
-            Assert.False(r.HasErrors);
-            Assert.True(r.Data?.LogoutUser?.Boolean);
-        });
+            UserErrors.RefreshTokenInvalid().Code,
+            UserErrors.RefreshTokenConflict().Code
+        };
+        Assert.All(results.Where(r => r.HasErrors), r =>
+            Assert.Contains(r.Errors!.First().Extensions!["code"]?.ToString(), allowedCodes));
 
         var alice = await DbContext.Users.FirstAsync(u => u.Email == "alice@example.com");
         var activeTokenCount = await DbContext.RefreshTokens
