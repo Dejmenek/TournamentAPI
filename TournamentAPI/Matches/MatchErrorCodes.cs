@@ -13,4 +13,6 @@ public static class MatchErrorCodes
     public const string InvalidVersionToken = "Match.InvalidVersionToken";
     public const string MatchVersionConflict = "Match.VersionConflict";
     public const string MatchCorrectionFailed = "Match.CorrectionFailed";
+    public const string DrawNotAllowedForFormat = "Match.DrawNotAllowedForFormat";
+    public const string DrawRequiresEqualScores = "Match.DrawRequiresEqualScores";
 }
