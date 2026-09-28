@@ -102,4 +102,35 @@ public static class TournamentErrors
             .SetCode(TournamentErrorCodes.CannotChangeCompletedStatus)
             .SetExtension("TournamentId", tournamentId)
             .Build();
+
+    public static IError NotAuthorizedForWithdrawal(int userId, int tournamentId, int participantId) =>
+        ErrorBuilder.New()
+            .SetMessage("Only the tournament owner or the participant being withdrawn may perform this action.")
+            .SetCode(TournamentErrorCodes.NotAuthorizedForWithdrawal)
+            .SetExtension("UserId", userId)
+            .SetExtension("TournamentId", tournamentId)
+            .SetExtension("ParticipantId", participantId)
+            .Build();
+
+    public static IError WithdrawalNotSupportedForFormat(int tournamentId) =>
+        ErrorBuilder.New()
+            .SetMessage("Participant withdrawal is only supported for Round Robin tournaments.")
+            .SetCode(TournamentErrorCodes.WithdrawalNotSupportedForFormat)
+            .SetExtension("TournamentId", tournamentId)
+            .Build();
+
+    public static IError WithdrawalRequiresBracket(int tournamentId) =>
+        ErrorBuilder.New()
+            .SetMessage("Participant withdrawal requires the tournament's bracket to already be generated.")
+            .SetCode(TournamentErrorCodes.WithdrawalRequiresBracket)
+            .SetExtension("TournamentId", tournamentId)
+            .Build();
+
+    public static IError ParticipantNotFound(int tournamentId, int participantId) =>
+        ErrorBuilder.New()
+            .SetMessage("Participant was not found in this tournament.")
+            .SetCode(TournamentErrorCodes.ParticipantNotFound)
+            .SetExtension("TournamentId", tournamentId)
+            .SetExtension("ParticipantId", participantId)
+            .Build();
 }
