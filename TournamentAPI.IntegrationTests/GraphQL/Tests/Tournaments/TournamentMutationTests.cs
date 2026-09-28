@@ -2072,4 +2072,286 @@ public class TournamentMutationTests : BaseIntegrationTest
 
         Assert.NotNull(tournamentInDb);
     }
+
+    [Fact]
+    public async Task CreateTournament_WithoutFormat_DefaultsToSingleEliminationAndFullFlowIsUnaffected()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email, password } });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var createResponse = await client.ExecuteMutationAsync<CreateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.CreateTournamentWithBasicFieldsReturn,
+            new
+            {
+                input = new
+                {
+                    name = "Default Format Fixture",
+                    startDate = DateTime.UtcNow.AddDays(1),
+                    status = "OPEN",
+                    maxParticipants = 4
+                }
+            });
+        var tournamentId = createResponse.Data!.CreateTournament!.Tournament!.Id;
+
+        var tournamentAfterCreate = await DbContext.Tournaments.AsNoTracking().SingleAsync(t => t.Id == tournamentId);
+        Assert.Equal(TournamentFormat.SingleElimination, tournamentAfterCreate.Format);
+
+        foreach (var participantId in new[] { 1, 2, 3, 4 })
+        {
+            await client.ExecuteMutationAsync<AddParticipantResponse>(
+                Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+                new { input = new { tournamentId, userId = participantId } });
+        }
+
+        await client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            new { input = new { tournamentId, status = "CLOSED" } });
+
+        var generateResponse = await client.ExecuteMutationAsync<GenerateBracketResponse>(
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
+            new { input = new { tournamentId } });
+        Assert.False(generateResponse.HasErrors);
+
+        var bracketId = await DbContext.Brackets.AsNoTracking().Where(b => b.TournamentId == tournamentId).Select(b => b.Id).SingleAsync();
+        var roundOneMatches = await DbContext.Matches.AsNoTracking().Where(m => m.BracketId == bracketId && m.Round == 1).ToListAsync();
+
+        foreach (var match in roundOneMatches)
+        {
+            var playResponse = await client.ExecuteMutationAsync<PlayMatchResponse>(
+                Shared.MutationExamples.Mutations.Match.Play,
+                new { input = new { matchId = match.Id, winnerId = match.Player1Id, player1Score = 3, player2Score = 1 } });
+            Assert.False(playResponse.HasErrors);
+        }
+
+        var updateRoundResponse = await client.ExecuteMutationAsync<UpdateRoundResponse>(
+            Shared.MutationExamples.Mutations.Bracket.UpdateRound,
+            new { input = new { bracketId, roundNumber = 1 } });
+        Assert.False(updateRoundResponse.HasErrors);
+
+        var finalMatch = await DbContext.Matches.AsNoTracking().SingleAsync(m => m.BracketId == bracketId && m.Round == 2);
+
+        var finalPlayResponse = await client.ExecuteMutationAsync<PlayMatchResponse>(
+            Shared.MutationExamples.Mutations.Match.Play,
+            new { input = new { matchId = finalMatch.Id, winnerId = finalMatch.Player1Id, player1Score = 3, player2Score = 1 } });
+
+        // Assert
+        Assert.False(finalPlayResponse.HasErrors);
+
+        var tournamentAfter = await DbContext.Tournaments.AsNoTracking().SingleAsync(t => t.Id == tournamentId);
+        Assert.Equal(TournamentStatus.Completed, tournamentAfter.Status);
+        Assert.Equal(finalMatch.Player1Id, tournamentAfter.ChampionId);
+    }
+
+    [Fact]
+    public async Task WithdrawParticipant_AsOrganizer_ForfeitsRemainingMatchesAndRemovesParticipant()
+    {
+        // Arrange
+        var email = "alice@example.com";
+        var password = "Password123!";
+        using var client = CreateClient();
+
+        var tokenResponse = await client.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email, password } });
+        client.SetAuthToken(tokenResponse.Data.LoginUser.String);
+
+        var createResponse = await client.ExecuteMutationAsync<CreateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.CreateTournamentWithBasicFieldsReturn,
+            new
+            {
+                input = new
+                {
+                    name = "Withdrawal Fixture Organizer",
+                    startDate = DateTime.UtcNow.AddDays(1),
+                    status = "OPEN",
+                    maxParticipants = 5,
+                    format = "ROUND_ROBIN"
+                }
+            });
+        var tournamentId = createResponse.Data!.CreateTournament!.Tournament!.Id;
+
+        foreach (var participantId in new[] { 2, 3, 4, 5, 6 })
+        {
+            await client.ExecuteMutationAsync<AddParticipantResponse>(
+                Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+                new { input = new { tournamentId, userId = participantId } });
+        }
+
+        await client.ExecuteMutationAsync<UpdateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            new { input = new { tournamentId, status = "CLOSED" } });
+
+        await client.ExecuteMutationAsync<GenerateBracketResponse>(
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
+            new { input = new { tournamentId } });
+
+        var withdrawingParticipantId = 2;
+        var remainingScheduledMatches = await DbContext.Matches
+            .AsNoTracking()
+            .Where(m => m.Bracket.TournamentId == tournamentId
+                && m.Status == MatchStatus.Scheduled
+                && (m.Player1Id == withdrawingParticipantId || m.Player2Id == withdrawingParticipantId))
+            .ToListAsync();
+        Assert.NotEmpty(remainingScheduledMatches);
+
+        // Act
+        var response = await client.ExecuteMutationAsync<WithdrawParticipantResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.WithdrawParticipant,
+            new { input = new { tournamentId, participantId = withdrawingParticipantId } });
+
+        // Assert
+        Assert.False(response.HasErrors);
+
+        foreach (var beforeMatch in remainingScheduledMatches)
+        {
+            var afterMatch = await DbContext.Matches.AsNoTracking().SingleAsync(m => m.Id == beforeMatch.Id);
+            Assert.Equal(MatchStatus.Played, afterMatch.Status);
+
+            var expectedWinnerId = beforeMatch.Player1Id == withdrawingParticipantId ? beforeMatch.Player2Id : beforeMatch.Player1Id;
+            Assert.Equal(expectedWinnerId, afterMatch.WinnerId);
+        }
+
+        var remainingParticipant = await DbContext.TournamentParticipants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(tp => tp.TournamentId == tournamentId && tp.ParticipantId == withdrawingParticipantId);
+        Assert.Null(remainingParticipant);
+    }
+
+    [Fact]
+    public async Task WithdrawParticipant_AsTheParticipantThemselves_SucceedsIdentically()
+    {
+        // Arrange
+        var ownerEmail = "alice@example.com";
+        var password = "Password123!";
+        using var ownerClient = CreateClient();
+
+        var ownerTokenResponse = await ownerClient.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email = ownerEmail, password } });
+        ownerClient.SetAuthToken(ownerTokenResponse.Data.LoginUser.String);
+
+        var createResponse = await ownerClient.ExecuteMutationAsync<CreateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.CreateTournamentWithBasicFieldsReturn,
+            new
+            {
+                input = new
+                {
+                    name = "Withdrawal Fixture Self",
+                    startDate = DateTime.UtcNow.AddDays(1),
+                    status = "OPEN",
+                    maxParticipants = 5,
+                    format = "ROUND_ROBIN"
+                }
+            });
+        var tournamentId = createResponse.Data!.CreateTournament!.Tournament!.Id;
+
+        foreach (var participantId in new[] { 2, 3, 4, 5, 6 })
+        {
+            await ownerClient.ExecuteMutationAsync<AddParticipantResponse>(
+                Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+                new { input = new { tournamentId, userId = participantId } });
+        }
+
+        await ownerClient.ExecuteMutationAsync<UpdateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            new { input = new { tournamentId, status = "CLOSED" } });
+
+        await ownerClient.ExecuteMutationAsync<GenerateBracketResponse>(
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
+            new { input = new { tournamentId } });
+
+        // carol (id 3) withdraws herself
+        using var carolClient = CreateClient();
+        var carolTokenResponse = await carolClient.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email = "carol@example.com", password } });
+        carolClient.SetAuthToken(carolTokenResponse.Data.LoginUser.String);
+
+        // Act
+        var response = await carolClient.ExecuteMutationAsync<WithdrawParticipantResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.WithdrawParticipant,
+            new { input = new { tournamentId, participantId = 3 } });
+
+        // Assert
+        Assert.False(response.HasErrors);
+
+        var remainingParticipant = await DbContext.TournamentParticipants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(tp => tp.TournamentId == tournamentId && tp.ParticipantId == 3);
+        Assert.Null(remainingParticipant);
+    }
+
+    [Fact]
+    public async Task WithdrawParticipant_AsUnrelatedThirdUser_IsRejected()
+    {
+        // Arrange
+        var ownerEmail = "alice@example.com";
+        var password = "Password123!";
+        using var ownerClient = CreateClient();
+
+        var ownerTokenResponse = await ownerClient.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email = ownerEmail, password } });
+        ownerClient.SetAuthToken(ownerTokenResponse.Data.LoginUser.String);
+
+        var createResponse = await ownerClient.ExecuteMutationAsync<CreateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.CreateTournamentWithBasicFieldsReturn,
+            new
+            {
+                input = new
+                {
+                    name = "Withdrawal Fixture Unauthorized",
+                    startDate = DateTime.UtcNow.AddDays(1),
+                    status = "OPEN",
+                    maxParticipants = 5,
+                    format = "ROUND_ROBIN"
+                }
+            });
+        var tournamentId = createResponse.Data!.CreateTournament!.Tournament!.Id;
+
+        foreach (var participantId in new[] { 2, 3, 4, 5, 6 })
+        {
+            await ownerClient.ExecuteMutationAsync<AddParticipantResponse>(
+                Shared.MutationExamples.Mutations.Participant.AddParticipantWithBasicFieldsReturn,
+                new { input = new { tournamentId, userId = participantId } });
+        }
+
+        await ownerClient.ExecuteMutationAsync<UpdateTournamentResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.UpdateTournamentWithBasicFieldsReturn,
+            new { input = new { tournamentId, status = "CLOSED" } });
+
+        await ownerClient.ExecuteMutationAsync<GenerateBracketResponse>(
+            Shared.MutationExamples.Mutations.Bracket.GenerateBracket,
+            new { input = new { tournamentId } });
+
+        // emma (id 5) is an unrelated third party trying to withdraw carol (id 3)
+        using var emmaClient = CreateClient();
+        var emmaTokenResponse = await emmaClient.ExecuteMutationAsync<LoginResponse>(
+            Shared.MutationExamples.Mutations.Users.LoginUser,
+            new { input = new { email = "emma@example.com", password } });
+        emmaClient.SetAuthToken(emmaTokenResponse.Data.LoginUser.String);
+
+        // Act
+        var response = await emmaClient.ExecuteMutationAsync<WithdrawParticipantResponse>(
+            Shared.MutationExamples.Mutations.Tournaments.WithdrawParticipant,
+            new { input = new { tournamentId, participantId = 3 } });
+
+        // Assert
+        Assert.True(response.HasErrors);
+        var error = response.Errors!.First();
+        var expectedError = TournamentErrors.NotAuthorizedForWithdrawal(5, tournamentId, 3);
+        Assert.Equal(expectedError.Code, error.Extensions!["code"]?.ToString());
+
+        var remainingParticipant = await DbContext.TournamentParticipants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(tp => tp.TournamentId == tournamentId && tp.ParticipantId == 3);
+        Assert.NotNull(remainingParticipant);
+    }
 }
