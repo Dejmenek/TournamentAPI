@@ -222,4 +222,38 @@ public class BracketMutationValidationsTests
 
         Assert.Null(error);
     }
+
+    [Theory]
+    [InlineData(TournamentFormat.SingleElimination)]
+    [InlineData(TournamentFormat.RoundRobin)]
+    public void ValidateEnoughParticipants_WhenFewerThanTwo_ReturnsError_RegardlessOfFormat(TournamentFormat format)
+    {
+        var tournament = new Tournament { Id = 1, Format = format };
+
+        IError? error = BracketMutationValidations.ValidateEnoughParticipants(1, tournament.Id);
+
+        Assert.NotNull(error);
+        Assert.Equal(BracketErrorCodes.NotEnoughParticipants, error.Code);
+    }
+
+    [Fact]
+    public void ValidateFormatSupportsRoundAdvancement_WhenSingleElimination_ReturnsNull()
+    {
+        var tournament = new Tournament { Id = 1, Format = TournamentFormat.SingleElimination };
+
+        IError? error = BracketMutationValidations.ValidateFormatSupportsRoundAdvancement(tournament);
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateFormatSupportsRoundAdvancement_WhenRoundRobin_ReturnsError()
+    {
+        var tournament = new Tournament { Id = 1, Format = TournamentFormat.RoundRobin };
+
+        IError? error = BracketMutationValidations.ValidateFormatSupportsRoundAdvancement(tournament);
+
+        Assert.NotNull(error);
+        Assert.Equal(BracketErrorCodes.RoundAdvancementNotSupportedForFormat, error.Code);
+    }
 }
