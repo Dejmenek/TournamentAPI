@@ -3,6 +3,7 @@ using HotChocolate.Authorization;
 using HotChocolate.Resolvers;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using TournamentAPI.Brackets;
 using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Extensions;
@@ -116,7 +117,8 @@ public static partial class TournamentMutations
             StartDate = input.StartDate,
             Status = input.Status,
             OwnerId = userId,
-            MaxParticipants = input.MaxParticipants
+            MaxParticipants = input.MaxParticipants,
+            Format = input.Format ?? TournamentFormat.SingleElimination
         };
 
         context.Tournaments.Add(tournament);
