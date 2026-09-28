@@ -5,9 +5,11 @@ using TournamentAPI.Tracing;
 
 namespace TournamentAPI.Brackets;
 
-public class BracketCompletionService(ILogger<BracketCompletionService> logger)
+public class SingleEliminationCompletionStrategy(ILogger<SingleEliminationCompletionStrategy> logger) : IBracketCompletionStrategy
 {
-    public async Task SyncChampionAsync(
+    public TournamentFormat Format => TournamentFormat.SingleElimination;
+
+    public async Task SyncCompletionAsync(
         ApplicationDbContext context,
         Tournament tournament,
         int bracketId,

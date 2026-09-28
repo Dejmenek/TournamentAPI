@@ -23,7 +23,7 @@ public static partial class BracketMutations
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
         IResolverContext resolverContext,
-        BracketService bracketService,
+        IEnumerable<IBracketGenerationStrategy> generationStrategies,
         BracketMetrics bracketMetrics,
         CancellationToken token)
     {
@@ -45,7 +45,8 @@ public static partial class BracketMutations
         if (resolverContext.TryReportError(BracketMutationValidations.ValidateEnoughParticipants(tournament.Participants.Count, tournamentId))) return null;
 
         var participantIds = tournament.Participants.Select(p => p.ParticipantId).ToList();
-        var bracket = bracketService.CreateBracket(tournamentId, participantIds);
+        var generationStrategy = generationStrategies.Single(s => s.Format == tournament.Format);
+        var bracket = generationStrategy.CreateBracket(tournamentId, participantIds);
 
         try
         {
@@ -73,7 +74,7 @@ public static partial class BracketMutations
         ClaimsPrincipal userClaims,
         ApplicationDbContext context,
         IResolverContext resolverContext,
-        BracketService bracketService,
+        SingleEliminationBracketStrategy bracketService,
         CancellationToken token)
     {
         using var _ = resolverContext.PushEntityContext("Bracket", bracketId);
