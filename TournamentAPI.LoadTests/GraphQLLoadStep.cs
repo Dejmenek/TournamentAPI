@@ -20,7 +20,10 @@ internal static class GraphQLLoadStep
         object? variables = null,
         Func<JsonElement, bool>? bodyCheck = null,
         IReadOnlySet<string>? expectedRejections = null,
-        string? bearerToken = null)
+        string? bearerToken = null,
+        string? refreshTokenCookie = null,
+        Action<HttpResponseMessage, byte[]>? onResponse = null,
+        Func<JsonElement, string?>? classifyRejection = null)
     {
         return Step.Run(stepName, context, async () =>
         {
@@ -34,9 +37,15 @@ internal static class GraphQLLoadStep
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
             }
 
+            if (refreshTokenCookie is not null)
+            {
+                request.Headers.Add("Cookie", $"refreshToken={refreshTokenCookie}");
+            }
+
             using var response = await client.SendAsync(request);
             var body = await response.Content.ReadAsByteArrayAsync();
-            var (code, isSuccess) = Classify(response.IsSuccessStatusCode, (int)response.StatusCode, body, bodyCheck);
+            onResponse?.Invoke(response, body);
+            var (code, isSuccess) = Classify(response.IsSuccessStatusCode, (int)response.StatusCode, body, bodyCheck, classifyRejection);
 
             return isSuccess || expectedRejections?.Contains(code) == true
                 ? Response.Ok(statusCode: code, sizeBytes: body.Length)
@@ -52,27 +61,48 @@ internal static class GraphQLLoadStep
             && edges.GetArrayLength() > 0;
     }
 
+    public static Func<JsonElement, bool> NonNullField(string field)
+    {
+        return data => data.TryGetProperty(field, out var value) && value.ValueKind == JsonValueKind.Object;
+    }
+
+    public static Func<JsonElement, string?> RejectionWhenErrorHasExtension(string extensionName, string statusCode)
+    {
+        return error => error.TryGetProperty("extensions", out var extensions)
+            && extensions.TryGetProperty(extensionName, out _)
+                ? statusCode
+                : null;
+    }
+
     private static (string Code, bool IsSuccess) Classify(
         bool isSuccessStatusCode,
         int statusCode,
         byte[] body,
-        Func<JsonElement, bool>? bodyCheck)
+        Func<JsonElement, bool>? bodyCheck,
+        Func<JsonElement, string?>? classifyRejection)
     {
         var httpCode = statusCode.ToString();
-
-        if (!isSuccessStatusCode)
-        {
-            return (httpCode, false);
-        }
 
         try
         {
             using var document = JsonDocument.Parse(body);
             var root = document.RootElement;
 
-            if (root.TryGetProperty("errors", out var errors)
+            var hasErrors = root.TryGetProperty("errors", out var errors)
                 && errors.ValueKind == JsonValueKind.Array
-                && errors.GetArrayLength() > 0)
+                && errors.GetArrayLength() > 0;
+
+            if (hasErrors && classifyRejection?.Invoke(errors[0]) is { } rejection)
+            {
+                return (rejection, true);
+            }
+
+            if (!isSuccessStatusCode)
+            {
+                return (httpCode, false);
+            }
+
+            if (hasErrors)
             {
                 return (ReadErrorCode(errors[0]), false);
             }
@@ -87,7 +117,7 @@ internal static class GraphQLLoadStep
         }
         catch (JsonException)
         {
-            return (InvalidJsonCode, false);
+            return isSuccessStatusCode ? (InvalidJsonCode, false) : (httpCode, false);
         }
     }
 

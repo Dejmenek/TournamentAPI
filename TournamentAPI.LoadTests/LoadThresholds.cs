@@ -83,6 +83,38 @@ internal static class LoadThresholds
             stepName,
             s => s.Fail.Request.Percent <= maxFailPercent);
 
+    public static LoadThreshold[] ForBudget(StepBudget budget)
+    {
+        var thresholds = new List<LoadThreshold>
+        {
+            StepHealth(budget.Step, 0),
+            TailLatency(budget.Step, budget.P95Ms, budget.P99Ms, budget.MaxMs)
+        };
+
+        if (budget.MinMeanBytes is { } minMeanBytes && budget.MaxMeanBytes is { } maxMeanBytes)
+        {
+            thresholds.Add(PayloadGuard(budget.Step, minMeanBytes, maxMeanBytes));
+        }
+
+        return thresholds.ToArray();
+    }
+
+    public static LoadThreshold[] ForSteps(LoadTestDataSize size, string okCode, params string[] steps)
+    {
+        var thresholds = new List<LoadThreshold>
+        {
+            ErrorBudget(0),
+            StatusMix(okCode, 100)
+        };
+
+        foreach (var step in steps)
+        {
+            thresholds.AddRange(ForBudget(LoadTestBudgets.Steps.For(size, step)));
+        }
+
+        return thresholds.ToArray();
+    }
+
     public static bool IsStatusMixSatisfied(
         ScenarioStats stats,
         string okCode,
@@ -102,31 +134,58 @@ internal static class LoadThresholds
     }
 }
 
+internal sealed record ScenarioRun(ScenarioProps Scenario, LoadThreshold[] Thresholds);
+
 internal static class LoadTestRun
 {
     public static ScenarioStats Execute(ScenarioProps scenario, params LoadThreshold[] thresholds)
     {
-        var withThresholds = thresholds.Length == 0
-            ? scenario
-            : scenario.WithThresholds(thresholds.Select(t => t.ToNBomberThreshold()).ToArray());
+        var results = ExecuteAll(new ScenarioRun(scenario, thresholds));
+
+        return results[scenario.ScenarioName];
+    }
+
+    public static IReadOnlyDictionary<string, ScenarioStats> ExecuteAll(params ScenarioRun[] runs)
+    {
+        var scenarios = runs
+            .Select(run => run.Thresholds.Length == 0
+                ? run.Scenario
+                : run.Scenario.WithThresholds(run.Thresholds.Select(t => t.ToNBomberThreshold()).ToArray()))
+            .ToArray();
 
         var result = NBomberRunner
-            .RegisterScenarios(withThresholds)
+            .RegisterScenarios(scenarios)
             .Run();
 
-        var stats = result.ScenarioStats.Get(scenario.ScenarioName);
-        AssertPassed(stats, thresholds);
+        var stats = runs.ToDictionary(
+            run => run.Scenario.ScenarioName,
+            run => result.ScenarioStats.Get(run.Scenario.ScenarioName));
+
+        var failures = runs.SelectMany(run => FindFailures(stats[run.Scenario.ScenarioName], run.Thresholds)).ToList();
+
+        if (failures.Count > 0)
+        {
+            Assert.Fail($"Load thresholds failed:{Environment.NewLine}- {string.Join($"{Environment.NewLine}- ", failures)}");
+        }
 
         return stats;
     }
 
     public static void AssertPassed(ScenarioStats stats, IEnumerable<LoadThreshold> thresholds)
     {
-        var failed = thresholds.Where(t => !t.IsSatisfiedBy(stats)).Select(t => t.Name).ToList();
+        var failures = FindFailures(stats, thresholds);
 
-        if (failed.Count > 0)
+        if (failures.Count > 0)
         {
-            Assert.Fail($"Load thresholds failed for '{stats.ScenarioName}':{Environment.NewLine}- {string.Join($"{Environment.NewLine}- ", failed)}");
+            Assert.Fail($"Load thresholds failed:{Environment.NewLine}- {string.Join($"{Environment.NewLine}- ", failures)}");
         }
+    }
+
+    private static List<string> FindFailures(ScenarioStats stats, IEnumerable<LoadThreshold> thresholds)
+    {
+        return thresholds
+            .Where(t => !t.IsSatisfiedBy(stats))
+            .Select(t => $"[{stats.ScenarioName}] {t.Name}")
+            .ToList();
     }
 }
