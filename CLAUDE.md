@@ -27,7 +27,7 @@ TournamentAPI is a GraphQL API for running tournaments: creating them, managing 
 
 Modular monolith: one ASP.NET Core deployable, one shared database, feature folders as the module boundaries.
 
-- Rate limiting - Applied to `/graphql` only: a global concurrency limiter, plus a per-IP token bucket
+- Rate limiting - One chained global limiter that runs before routing, so it covers every endpoint: a per-IP token bucket first, then a global concurrency limiter (ADR 0001)
 
 ## File naming convention
 
@@ -83,8 +83,8 @@ dotnet test TournamentAPI.IntegrationTests --filter "TournamentQueryTests"
 # Run a single test method
 dotnet test TournamentAPI.IntegrationTests --filter "FullyQualifiedName~TournamentQueryTests.GetTournaments_ReturnsAllTournamentsWithTotalCount"
 
-# Run load tests
-dotnet test TournamentAPI.LoadTests
+# Run load tests (Docker required, manual only, not part of CI)
+dotnet test TournamentAPI.LoadTests --filter "Category=Load"
 
 # Run benchmarks (must be Release)
 dotnet run --project TournamentAPI.Benchmarks --configuration Release
