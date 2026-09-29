@@ -34,7 +34,7 @@ public class LatencyTests : BaseLoadTest, IClassFixture<LatencyWebAppFactory>
     {
         // Arrange
         using var client = CreateClient();
-        var scenario = Scenario.Create("browse_tournaments", async context =>
+        var scenario = GraphQLLoadScenario.Create("browse_tournaments", async context =>
             await GraphQLLoadStep.RunAsync(
                 ListBudget.Step,
                 context,
@@ -62,7 +62,7 @@ public class LatencyTests : BaseLoadTest, IClassFixture<LatencyWebAppFactory>
     {
         // Arrange
         using var client = CreateClient();
-        var scenario = Scenario.Create("browse_tournaments_ramp", async context =>
+        var scenario = GraphQLLoadScenario.Create("browse_tournaments_ramp", async context =>
             await GraphQLLoadStep.RunAsync(
                 PhaseAt(context.GetScenarioTimerTime()),
                 context,

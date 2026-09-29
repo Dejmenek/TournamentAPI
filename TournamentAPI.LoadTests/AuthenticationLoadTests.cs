@@ -26,7 +26,7 @@ public class AuthenticationLoadTests : BaseLoadTest, IClassFixture<MediumDataset
         var emails = _factory.UserEmails;
         var password = _factory.UserPassword;
 
-        var scenario = Scenario.Create("authenticate_and_refresh_session", async context =>
+        var scenario = GraphQLLoadScenario.Create("authenticate_and_refresh_session", async context =>
         {
             var email = emails[(int)(context.InvocationNumber % emails.Count)];
             string? accessToken = null;

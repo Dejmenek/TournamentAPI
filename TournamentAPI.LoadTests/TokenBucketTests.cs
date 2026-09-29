@@ -16,7 +16,7 @@ public class TokenBucketTests : BaseLoadTest, IClassFixture<TokenBucketWebAppFac
         // Arrange
         using var client = CreateClient();
 
-        var scenario = Scenario.Create("tournament_browsing_burst", async context =>
+        var scenario = GraphQLLoadScenario.Create("tournament_browsing_burst", async context =>
             await GraphQLLoadStep.RunAsync(
                 LoadTestBudgets.ListTournaments.Step,
                 context,

@@ -50,7 +50,7 @@ public abstract class TournamentInsightsLoadTestsBase : BaseLoadTest
 
         VirtualUserSession[] sessions = [];
 
-        var ownHistory = Scenario.Create("inspect_own_tournament_history", async context =>
+        var ownHistory = GraphQLLoadScenario.Create("inspect_own_tournament_history", async context =>
         {
             var session = VirtualUserSessions.Pick(sessions, context.InvocationNumber);
 
@@ -69,7 +69,7 @@ public abstract class TournamentInsightsLoadTestsBase : BaseLoadTest
         .WithWarmUpDuration(WarmUp)
         .WithLoadSimulations(Steady());
 
-        var oversizedPage = Scenario.Create("request_oversized_page", async context =>
+        var oversizedPage = GraphQLLoadScenario.Create("request_oversized_page", async context =>
             await GraphQLLoadStep.RunAsync(
                 StepNames.ListTournamentsWithOversizedPage,
                 context,
@@ -98,7 +98,7 @@ public abstract class TournamentInsightsLoadTestsBase : BaseLoadTest
         IReadOnlyList<int> tournamentIds,
         Func<JsonElement, bool>? bodyCheck = null)
     {
-        return Scenario.Create(scenarioName, async context =>
+        return GraphQLLoadScenario.Create(scenarioName, async context =>
             await GraphQLLoadStep.RunAsync(
                 stepName,
                 context,

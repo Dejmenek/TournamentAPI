@@ -121,7 +121,7 @@ internal static class LoadThresholds
         double minOkPercent,
         string[] allowedFailCodes)
     {
-        var total = stats.Ok.Request.Count + stats.Fail.Request.Count;
+        var total = stats.Ok.StatusCodes.Sum(c => c.Count) + stats.Fail.StatusCodes.Sum(c => c.Count);
         if (total == 0)
         {
             return false;
