@@ -16,7 +16,7 @@ public class ConcurrencyLimiterTests : BaseLoadTest, IClassFixture<ConcurrencyLi
         // Arrange
         using var client = CreateClient();
 
-        var scenario = Scenario.Create("concurrent_tournament_browsing", async context =>
+        var scenario = GraphQLLoadScenario.Create("concurrent_tournament_browsing", async context =>
             await GraphQLLoadStep.RunAsync(
                 LoadTestBudgets.ListTournaments.Step,
                 context,

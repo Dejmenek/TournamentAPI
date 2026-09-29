@@ -26,7 +26,7 @@ public abstract class TournamentBrowseLoadTestsBase : BaseLoadTest
         var tournamentIds = _factory.TournamentIds;
         var searchTerm = _factory.TournamentSearchTerm;
 
-        var browseList = Scenario.Create("browse_tournament_list", async context =>
+        var browseList = GraphQLLoadScenario.Create("browse_tournament_list", async context =>
             await GraphQLLoadStep.RunAsync(
                 StepNames.ListTournaments,
                 context,
@@ -39,7 +39,7 @@ public abstract class TournamentBrowseLoadTestsBase : BaseLoadTest
             interval: TimeSpan.FromSeconds(1),
             during: Duration));
 
-        var viewDetails = Scenario.Create("view_tournament_details", async context =>
+        var viewDetails = GraphQLLoadScenario.Create("view_tournament_details", async context =>
             await GraphQLLoadStep.RunAsync(
                 StepNames.ViewTournament,
                 context,
@@ -53,7 +53,7 @@ public abstract class TournamentBrowseLoadTestsBase : BaseLoadTest
             interval: TimeSpan.FromSeconds(1),
             during: Duration));
 
-        var discover = Scenario.Create("discover_tournaments", async context =>
+        var discover = GraphQLLoadScenario.Create("discover_tournaments", async context =>
         {
             var search = await GraphQLLoadStep.RunAsync(
                 StepNames.SearchTournamentsByName,
