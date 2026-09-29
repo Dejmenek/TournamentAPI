@@ -166,4 +166,55 @@ internal static class LoadTestBudgets
         public const double MaxTopToBottomP95Ratio = 6;
         public const double MaxRecoveryP95Ratio = 2;
     }
+
+    public static class Spike
+    {
+        public const int BaselineRatePerSecond = 25;
+        public const int BurstRatePerSecond = 150;
+
+        public const int WarmUpSeconds = 15;
+        public const int BaselineSeconds = 15;
+        public const int BurstSeconds = 10;
+        public const int DrainSeconds = 15;
+
+        public const double BaselineP95Ms = 280;
+        public const double BaselineP99Ms = 340;
+        public const double BaselineMaxMs = 1_000;
+
+        public const double BurstP95Ms = 5_030;
+        public const double BurstP99Ms = 6_860;
+        public const double BurstMaxMs = 13_920;
+
+        public const double MinMeanPayloadBytes = 3_250;
+        public const double MaxMeanPayloadBytes = 8_680;
+
+        public const double MaxRecoveryP95Ratio = 2;
+        public const double RecoveryP95FloorMs = 100;
+    }
+
+    public static class Soak
+    {
+        public const int WarmUpSeconds = 30;
+        public const int SegmentSeconds = 120;
+        public const int SegmentCount = 6;
+
+        public const double MaxDriftP95Ratio = 2;
+        public const double DriftP95FloorMs = 50;
+
+        public const long MaxManagedMemoryGrowthBytes = 150L * 1024 * 1024;
+    }
+
+    public static class Breakpoint
+    {
+        public static readonly int[] RatesPerSecond = [25, 50, 75, 100, 125, 150];
+
+        public const int WarmUpSeconds = 15;
+        public const int PhaseSeconds = 15;
+
+        public const double CeilingP95Ms = 800;
+        public const int MinBreakpointRatePerSecond = 50;
+
+        public const double SafetyMaxFailPercent = 50;
+        public const int SafetyAbortWhenErrorCount = 3;
+    }
 }
