@@ -49,7 +49,10 @@ The API runs in-process, and load is generated as an open model with a fixed arr
 
 The baseline was measured on a developer machine on 29/09/2026. At 50 req/s the list query had p95 55 ms, p99 104 ms, a maximum of 225 ms and a payload of 3,026 bytes. In the ramp, 100 req/s gave p95 325 ms, p99 488 ms and a maximum of 689 ms, and the run recovered to p95 34 ms after ramping back down. Budgets are set with headroom above those figures: for the list query, p95 150 ms, p99 300 ms and a maximum of 1,000 ms. Ramp windows have their own limits, because peak load is expected to run slower than steady load.
 
+Headroom over the measured values is 3.5x for p95, 3.5x for p99 and 5x for the maximum. Floors of 100 ms, 250 ms and 1,000 ms keep a tiny baseline from producing a limit nobody can meet. Payload limits sit between 0.6x and 1.6x of the measured mean. Where a step varied a lot between runs, the baseline is the worst value over at least three runs. On the mixed browsing load, latency collapsed between 25 and 50 requests per second, with p99 going from about 50 ms to 1,900 ms.
+
 Numbers from the in-process host are comparable between runs on the same machine. They are not production latency figures.
 
 ## Related ADRs
 - ADR #0001 Rate Limiting Algorithm for API Requests: the concurrency limiter and token bucket tests exercise the chained global limiter that ADR decided on. Running them showed the per-IP limiter was attached as an endpoint policy before routing and never took effect, so it was moved into the global limiter.
+- ADR #0009 Soak and Breakpoint Test Design: adds phased spike, soak and breakpoint runs on top of this execution model.
