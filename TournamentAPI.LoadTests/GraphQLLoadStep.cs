@@ -66,6 +66,13 @@ internal static class GraphQLLoadStep
         return data => data.TryGetProperty(field, out var value) && value.ValueKind == JsonValueKind.Object;
     }
 
+    public static Func<JsonElement, bool> TrueResult(string mutation)
+    {
+        return data => data.TryGetProperty(mutation, out var result)
+            && result.TryGetProperty("boolean", out var value)
+            && value.ValueKind == JsonValueKind.True;
+    }
+
     public static Func<JsonElement, string?> RejectionWhenErrorHasExtension(string extensionName, string statusCode)
     {
         return error => error.TryGetProperty("extensions", out var extensions)

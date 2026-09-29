@@ -1,3 +1,5 @@
+using TournamentAPI.Data.Models;
+
 namespace TournamentAPI.LoadTests;
 
 internal sealed record StepBudget(
@@ -27,6 +29,17 @@ internal static class StepNames
     public const string ViewProfile = "view_profile";
     public const string RefreshToken = "refresh_token";
     public const string Logout = "logout";
+    public const string CreateTournament = "create_tournament";
+    public const string JoinTournament = "join_tournament";
+    public const string PlayMatch = "play_match";
+    public const string CorrectMatchResult = "correct_match_result";
+
+    public static string GenerateBracket(TournamentFormat format, int participants)
+    {
+        var formatName = format == TournamentFormat.RoundRobin ? "round_robin" : "single_elimination";
+
+        return $"generate_bracket_{formatName}_{participants}";
+    }
 }
 
 internal static class LoadTestBudgets
@@ -38,6 +51,10 @@ internal static class LoadTestBudgets
         public const int DiscoverTournamentsPerSecond = 4;
         public const int InsightPerSecond = 5;
         public const int AuthFlowPerSecond = 5;
+        public const int CreateTournamentPerSecond = 10;
+        public const int JoinTournamentPerSecond = 40;
+        public const int MatchContentionPerSecond = 40;
+        public const int GenerateBracketPerSecond = 4;
     }
 
     public static class Steps
@@ -59,6 +76,16 @@ internal static class LoadTestBudgets
             [(LoadTestDataSize.Default, StepNames.ViewTournament)] = new(18.96, 23.97, 30.28, 0.592),
             [(LoadTestDataSize.Default, StepNames.SearchTournamentsByName)] = new(8.26, 11.89, 12.15, 0.314),
             [(LoadTestDataSize.Default, StepNames.SortTournaments)] = new(19.54, 21.01, 22.43, 2.678),
+            [(LoadTestDataSize.Default, StepNames.CreateTournament)] = new(25.09, 426.75, 469.95, 0.177),
+            [(LoadTestDataSize.Default, StepNames.JoinTournament)] = new(24.59, 46.24, 1141.50, 0.198),
+            [(LoadTestDataSize.Default, StepNames.PlayMatch)] = new(171.39, 741.38, 963.21, 0.138),
+            [(LoadTestDataSize.Default, StepNames.CorrectMatchResult)] = new(87.68, 164.22, 206.74, 0.186),
+            [(LoadTestDataSize.Default, StepNames.GenerateBracket(TournamentFormat.SingleElimination, 8))] = new(203.65, 503.04, 502.94, 0.130),
+            [(LoadTestDataSize.Default, StepNames.GenerateBracket(TournamentFormat.SingleElimination, 16))] = new(218.88, 412.93, 412.90, 0.130),
+            [(LoadTestDataSize.Default, StepNames.GenerateBracket(TournamentFormat.SingleElimination, 32))] = new(235.52, 398.34, 398.16, 0.130),
+            [(LoadTestDataSize.Default, StepNames.GenerateBracket(TournamentFormat.RoundRobin, 8))] = new(300.80, 386.30, 386.08, 0.130),
+            [(LoadTestDataSize.Default, StepNames.GenerateBracket(TournamentFormat.RoundRobin, 16))] = new(530.94, 849.92, 849.89, 0.131),
+            [(LoadTestDataSize.Default, StepNames.GenerateBracket(TournamentFormat.RoundRobin, 32))] = new(1304.58, 2053.12, 2052.77, 0.131),
 
             [(LoadTestDataSize.Medium, StepNames.ListTournaments)] = new(8.56, 13.29, 35.31, 1.410),
             [(LoadTestDataSize.Medium, StepNames.ViewTournament)] = new(23.52, 47.84, 60.71, 1.425),
