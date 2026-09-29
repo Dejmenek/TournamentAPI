@@ -105,15 +105,13 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 })
-.RequireAuthorization("HealthCheckPolicy")
-.RequireRateLimiting("IpBasedTokenBucket");
+.RequireAuthorization("HealthCheckPolicy");
 
 app.MapGraphQL()
     .WithOptions(options =>
     {
         options.Tool.Enable = app.Environment.IsDevelopment();
-    })
-    .RequireRateLimiting("IpBasedTokenBucket");
+    });
 
 app.Run();
 

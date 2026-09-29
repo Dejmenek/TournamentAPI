@@ -4,6 +4,11 @@ namespace TournamentAPI.Configuration.Extensions;
 
 internal static class RateLimiterExtensions
 {
+    internal const int ConcurrencyPermitLimit = 100;
+    internal const int TokenBucketLimit = 100;
+    internal const int TokenBucketTokensPerPeriod = 50;
+    internal static readonly TimeSpan TokenBucketReplenishmentPeriod = TimeSpan.FromMinutes(1);
+
     internal static IServiceCollection AddApplicationRateLimiting(this IServiceCollection services)
     {
         services.AddRateLimiter(options =>
@@ -25,36 +30,45 @@ internal static class RateLimiterExtensions
                 return ValueTask.CompletedTask;
             };
             options.GlobalLimiter = PartitionedRateLimiter.CreateChained(
-                PartitionedRateLimiter.Create<HttpContext, string>(_ =>
-                    RateLimitPartition.GetConcurrencyLimiter(
-                        "GlobalConcurrencyLimiter",
-                        _ => new ConcurrencyLimiterOptions
-                        {
-                            PermitLimit = 100,
-                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                            QueueLimit = 0
-                        }
-                    )
-                )
-            );
-            options.AddPolicy("IpBasedTokenBucket", httpContext =>
-            {
-                var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-
-                return RateLimitPartition.GetTokenBucketLimiter(
-                    clientIp,
-                    _ => new TokenBucketRateLimiterOptions
-                    {
-                        TokenLimit = 100,
-                        TokensPerPeriod = 50,
-                        ReplenishmentPeriod = TimeSpan.FromMinutes(1),
-                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                        QueueLimit = 0
-                    }
-                );
-            });
+                CreateIpTokenBucketLimiter(),
+                CreateConcurrencyLimiter());
         });
 
         return services;
+    }
+
+    internal static PartitionedRateLimiter<HttpContext> CreateIpTokenBucketLimiter()
+    {
+        return PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        {
+            var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+            return RateLimitPartition.GetTokenBucketLimiter(
+                clientIp,
+                _ => new TokenBucketRateLimiterOptions
+                {
+                    TokenLimit = TokenBucketLimit,
+                    TokensPerPeriod = TokenBucketTokensPerPeriod,
+                    ReplenishmentPeriod = TokenBucketReplenishmentPeriod,
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    QueueLimit = 0
+                }
+            );
+        });
+    }
+
+    internal static PartitionedRateLimiter<HttpContext> CreateConcurrencyLimiter()
+    {
+        return PartitionedRateLimiter.Create<HttpContext, string>(_ =>
+            RateLimitPartition.GetConcurrencyLimiter(
+                "GlobalConcurrencyLimiter",
+                _ => new ConcurrencyLimiterOptions
+                {
+                    PermitLimit = ConcurrencyPermitLimit,
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    QueueLimit = 0
+                }
+            )
+        );
     }
 }
