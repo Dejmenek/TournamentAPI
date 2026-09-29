@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="TournamentAPI.UnitTests" />
+    <InternalsVisibleTo Include="TournamentAPI.LoadTests" />
   </ItemGroup>
 
   <ItemGroup>

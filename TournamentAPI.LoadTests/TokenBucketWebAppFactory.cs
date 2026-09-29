@@ -2,10 +2,10 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace TournamentAPI.LoadTests;
 
-public class LatencyWebAppFactory : RateLimiterOverrideWebAppFactory
+public class TokenBucketWebAppFactory : RateLimiterOverrideWebAppFactory
 {
     protected override void ConfigureRateLimiter(RateLimiterOptions options)
     {
-        DisableLimiters(options);
+        UseOnlyIpTokenBucketLimiter(options);
     }
 }
