@@ -1,11 +1,12 @@
 using NBomber.CSharp;
-using TournamentAPI.Shared.Models;
+using TournamentAPI.Configuration.Extensions;
 
 namespace TournamentAPI.LoadTests;
 
-public class TokenBucketTests : BaseLoadTest, IClassFixture<LoadTestWebAppFactory>
+[Trait("Category", "Load")]
+public class TokenBucketTests : BaseLoadTest, IClassFixture<TokenBucketWebAppFactory>
 {
-    public TokenBucketTests(LoadTestWebAppFactory factory) : base(factory)
+    public TokenBucketTests(TokenBucketWebAppFactory factory) : base(factory)
     {
     }
 
@@ -13,40 +14,34 @@ public class TokenBucketTests : BaseLoadTest, IClassFixture<LoadTestWebAppFactor
     public void TokenBucket_Should_AllowBurst_Then_Reject()
     {
         // Arrange
-        var client = CreateClient();
+        using var client = CreateClient();
 
-        var scenario = Scenario.Create("token_bucket_burst", async _ =>
-        {
-            var response = await client.ExecuteQueryAsync<TournamentsResponse>(
-                Shared.QueryExamples.Queries.Tournaments.GetAllWithBracketAndMatches);
-
-            if (response.HasErrors &&
-                response.Errors?.Any(e => e.Extensions?.ContainsKey("statusCode") == true &&
-                                         (int)e.Extensions["statusCode"] == 429) == true)
-            {
-                return Response.Fail(statusCode: "429", message: "Rate limited");
-            }
-
-            return response.HasErrors ? Response.Fail() : Response.Ok();
-        })
+        var scenario = Scenario.Create("tournament_browsing_burst", async context =>
+            await GraphQLLoadStep.RunAsync(
+                LoadTestBudgets.ListTournaments.Step,
+                context,
+                client.HttpClient,
+                Shared.QueryExamples.Queries.Tournaments.GetAllWithBracketAndMatches,
+                bodyCheck: GraphQLLoadStep.NonEmptyConnection("tournaments")))
         .WithoutWarmUp()
         .WithLoadSimulations(
             Simulation.Inject(rate: 300, interval: TimeSpan.FromSeconds(1), during: TimeSpan.FromSeconds(2))
         );
 
         // Act
-        var stats = NBomberRunner
-            .RegisterScenarios(scenario)
-            .Run();
+        var stats = LoadTestRun.Execute(
+            scenario,
+            LoadThresholds.StatusMix("200", minOkPercent: 0, allowedFailCodes: "429"));
 
         // Assert
-        Assert.InRange(stats.ScenarioStats[0].Ok.Request.Count, 90, 130);
-        Assert.True(stats.ScenarioStats[0].Fail.Request.Count > 0);
+        Assert.InRange(
+            stats.Ok.Request.Count,
+            RateLimiterExtensions.TokenBucketLimit - 10,
+            RateLimiterExtensions.TokenBucketLimit + 30);
+        Assert.True(stats.Fail.Request.Count > 0);
 
-        Assert.Single(stats.ScenarioStats[0].Fail.StatusCodes);
-        var rateLimitedRequests = stats.ScenarioStats[0].Fail.StatusCodes.Single();
-
+        var rateLimitedRequests = Assert.Single(stats.Fail.StatusCodes);
         Assert.Equal("429", rateLimitedRequests.StatusCode);
-        Assert.Equal(stats.ScenarioStats[0].Fail.Request.Count, rateLimitedRequests.Count);
+        Assert.Equal(stats.Fail.Request.Count, rateLimitedRequests.Count);
     }
 }

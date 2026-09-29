@@ -1,11 +1,16 @@
 using Hangfire;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using System.Threading.RateLimiting;
 using Testcontainers.MsSql;
 using TournamentAPI.Data;
 using TournamentAPI.IntegrationTests.Infrastructure;
@@ -38,6 +43,14 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
             services.AddHangfire(config => config.UseSqlServerStorage(connectionString));
 
             services.RemoveAll<IHostedService>();
+
+            services.RemoveAll<IConfigureOptions<RateLimiterOptions>>();
+
+            services.AddRateLimiter(options =>
+            {
+                options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(_ =>
+                    RateLimitPartition.GetNoLimiter("no-limit"));
+            });
         });
     }
 

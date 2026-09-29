@@ -15,6 +15,9 @@ public abstract class BaseLoadTest
     protected TestClient CreateClient()
     {
         var httpClient = _factory.CreateClient();
-        return new TestClient(httpClient);
+        var testClient = new TestClient(httpClient);
+        testClient.SetApiKey(LoadTestWebAppFactory.ApiKey);
+
+        return testClient;
     }
 }

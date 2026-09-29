@@ -1,53 +1,45 @@
 using NBomber.CSharp;
-using TournamentAPI.Shared.Models;
+using TournamentAPI.Configuration.Extensions;
 
 namespace TournamentAPI.LoadTests;
 
-public class ConcurrencyLimiterTests : BaseLoadTest, IClassFixture<LoadTestWebAppFactory>
+[Trait("Category", "Load")]
+public class ConcurrencyLimiterTests : BaseLoadTest, IClassFixture<ConcurrencyLimiterWebAppFactory>
 {
-    public ConcurrencyLimiterTests(LoadTestWebAppFactory factory) : base(factory)
+    public ConcurrencyLimiterTests(ConcurrencyLimiterWebAppFactory factory) : base(factory)
     {
     }
 
     [Fact]
-    public void ConcurrencyLimiter_Should_LimitConcurrentRequests()
+    public void ConcurrencyLimiter_Should_RejectRequests_AboveThePermitLimit()
     {
         // Arrange
-        var client = CreateClient();
+        using var client = CreateClient();
 
-        var scenario = Scenario.Create("concurrency_limiter", async _ =>
-        {
-            var response = await client.ExecuteQueryAsync<TournamentsResponse>(
-                Shared.QueryExamples.Queries.Tournaments.GetAllWithBracketAndMatches
-            );
-
-            await Task.Delay(1000);
-
-            if (response.HasErrors &&
-                response.Errors?.Any(e => e.Extensions?.ContainsKey("statusCode") == true &&
-                                         (int)e.Extensions["statusCode"] == 429) == true)
-            {
-                return Response.Fail(statusCode: "429", message: "Rate limited");
-            }
-
-            return response.HasErrors ? Response.Fail() : Response.Ok();
-        })
+        var scenario = Scenario.Create("concurrent_tournament_browsing", async context =>
+            await GraphQLLoadStep.RunAsync(
+                LoadTestBudgets.ListTournaments.Step,
+                context,
+                client.HttpClient,
+                Shared.QueryExamples.Queries.Tournaments.GetAllWithBracketAndMatches,
+                bodyCheck: GraphQLLoadStep.NonEmptyConnection("tournaments")))
         .WithoutWarmUp()
         .WithLoadSimulations(
-            Simulation.KeepConstant(copies: 150, during: TimeSpan.FromSeconds(5))
+            Simulation.Inject(rate: 400, interval: TimeSpan.FromSeconds(1), during: TimeSpan.FromSeconds(5))
         );
 
         // Act
-        var stats = NBomberRunner.RegisterScenarios(scenario).Run();
+        var stats = LoadTestRun.Execute(
+            scenario,
+            LoadThresholds.StatusMix("200", minOkPercent: 0, allowedFailCodes: "429"));
 
         // Assert
-        Assert.True(stats.ScenarioStats[0].Ok.Request.Count >= 100);
-        Assert.True(stats.ScenarioStats[0].Fail.Request.Count > 0);
+        Assert.True(stats.Ok.Request.Count >= RateLimiterExtensions.ConcurrencyPermitLimit);
+        Assert.True(stats.Ok.Request.Count > RateLimiterExtensions.TokenBucketLimit);
+        Assert.True(stats.Fail.Request.Count > 0);
 
-        Assert.Single(stats.ScenarioStats[0].Fail.StatusCodes);
-        var rateLimitedRequests = stats.ScenarioStats[0].Fail.StatusCodes.Single();
-
+        var rateLimitedRequests = Assert.Single(stats.Fail.StatusCodes);
         Assert.Equal("429", rateLimitedRequests.StatusCode);
-        Assert.Equal(stats.ScenarioStats[0].Fail.Request.Count, rateLimitedRequests.Count);
+        Assert.Equal(stats.Fail.Request.Count, rateLimitedRequests.Count);
     }
 }
