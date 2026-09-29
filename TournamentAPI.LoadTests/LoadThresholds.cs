@@ -13,25 +13,31 @@ internal sealed class LoadThreshold
     private readonly Expression<Func<StepStats, bool>>? _stepCheck;
     private readonly Func<ScenarioStats, bool>? _compiledScenarioCheck;
     private readonly Func<StepStats, bool>? _compiledStepCheck;
+    private readonly int? _abortWhenErrorCount;
 
     private LoadThreshold(
         string name,
         string? stepName,
         Expression<Func<ScenarioStats, bool>>? scenarioCheck,
-        Expression<Func<StepStats, bool>>? stepCheck)
+        Expression<Func<StepStats, bool>>? stepCheck,
+        int? abortWhenErrorCount = null)
     {
         Name = name;
         _stepName = stepName;
         _scenarioCheck = scenarioCheck;
         _stepCheck = stepCheck;
+        _abortWhenErrorCount = abortWhenErrorCount;
         _compiledScenarioCheck = scenarioCheck?.Compile();
         _compiledStepCheck = stepCheck?.Compile();
     }
 
     public string Name { get; }
 
-    public static LoadThreshold ForScenario(string name, Expression<Func<ScenarioStats, bool>> check)
-        => new(name, null, check, null);
+    public static LoadThreshold ForScenario(
+        string name,
+        Expression<Func<ScenarioStats, bool>> check,
+        int? abortWhenErrorCount = null)
+        => new(name, null, check, null, abortWhenErrorCount);
 
     public static LoadThreshold ForStep(string name, string stepName, Expression<Func<StepStats, bool>> check)
         => new(name, stepName, null, check);
@@ -45,9 +51,14 @@ internal sealed class LoadThreshold
 
     public Threshold ToNBomberThreshold()
     {
-        return _stepName is null
-            ? Threshold.Create(_scenarioCheck!)
-            : Threshold.Create(_stepName, _stepCheck!);
+        if (_stepName is not null)
+        {
+            return Threshold.Create(_stepName, _stepCheck!);
+        }
+
+        return _abortWhenErrorCount is { } abortWhenErrorCount
+            ? Threshold.Create(_scenarioCheck!, abortWhenErrorCount: abortWhenErrorCount)
+            : Threshold.Create(_scenarioCheck!);
     }
 }
 
@@ -57,6 +68,12 @@ internal static class LoadThresholds
         => LoadThreshold.ForScenario(
             $"error budget: fail rate <= {maxFailPercent}%",
             s => s.Fail.Request.Percent <= maxFailPercent);
+
+    public static LoadThreshold AbortOnErrors(double maxFailPercent, int abortWhenErrorCount)
+        => LoadThreshold.ForScenario(
+            $"safety abort: fail rate <= {maxFailPercent}%",
+            s => s.Fail.Request.Percent <= maxFailPercent,
+            abortWhenErrorCount);
 
     public static LoadThreshold TailLatency(string stepName, double p95Ms, double p99Ms, double maxMs)
         => LoadThreshold.ForStep(

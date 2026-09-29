@@ -86,6 +86,9 @@ dotnet test TournamentAPI.IntegrationTests --filter "FullyQualifiedName~Tourname
 # Run load tests (Docker required, manual only, not part of CI)
 dotnet test TournamentAPI.LoadTests --filter "Category=Load"
 
+# Run soak and breakpoint tests (Docker required, about 15 minutes, manual only, not part of CI)
+dotnet test TournamentAPI.LoadTests --filter "Category=Soak"
+
 # Run benchmarks (must be Release)
 dotnet run --project TournamentAPI.Benchmarks --configuration Release
 ```
