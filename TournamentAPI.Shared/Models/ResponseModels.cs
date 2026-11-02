@@ -312,3 +312,19 @@ public class UpdateEmailVisibilityResult
 {
     public UserNode? ApplicationUser { get; set; }
 }
+
+public class StartStripeOnboardingResponse
+{
+    public StartStripeOnboardingResult? StartStripeOnboarding { get; set; }
+}
+
+public class StartStripeOnboardingResult
+{
+    public StripeOnboardingLinkNode? StripeOnboardingLink { get; set; }
+}
+
+public class StripeOnboardingLinkNode
+{
+    public string Url { get; set; } = string.Empty;
+    public DateTime ExpiresAt { get; set; }
+}

@@ -97,7 +97,7 @@ public class ApplicationUserSchemaTests
 
         var fieldNames = type.Fields.Select(f => f.Name).ToHashSet();
 
-        var identityInternalFields = new[] { "userName", "passwordHash", "securityStamp", "phoneNumber", "stripeAccountId", "payoutAccountStatusChangedAt" };
+        var identityInternalFields = new[] { "userName", "passwordHash", "securityStamp", "phoneNumber", "stripeAccountId", "payoutAccountStatusChangedAt", "stripeAccountCreationAttempt" };
 
         foreach (var field in identityInternalFields)
         {

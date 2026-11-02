@@ -14,6 +14,8 @@ public class ApplicationUser : IdentityUser<int>
     public PayoutAccountStatus PayoutAccountStatus { get; set; } = PayoutAccountStatus.NotStarted;
     [GraphQLIgnore]
     public DateTime? PayoutAccountStatusChangedAt { get; set; }
+    [GraphQLIgnore]
+    public int StripeAccountCreationAttempt { get; set; }
 
     [GraphQLIgnore]
     public ICollection<TournamentParticipant> ParticipatedTournaments { get; set; } = new List<TournamentParticipant>();
