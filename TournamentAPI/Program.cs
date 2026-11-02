@@ -10,6 +10,7 @@ using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Matches;
 using TournamentAPI.Participants;
+using TournamentAPI.Payments;
 using TournamentAPI.Services;
 using TournamentAPI.Standings;
 using TournamentAPI.Tournaments;
@@ -51,6 +52,7 @@ builder.Services.AddApplicationAuthorization();
 builder.Services.AddApplicationMetrics();
 builder.Services.AddApplicationGraphQL(builder.Environment.IsDevelopment());
 builder.Services.AddApplicationHangfire();
+builder.Services.AddApplicationPayments();
 
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<TournamentAutoCloseJob>();
@@ -106,6 +108,8 @@ app.MapHealthChecks("/health", new HealthCheckOptions
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 })
 .RequireAuthorization("HealthCheckPolicy");
+
+app.MapStripeWebhook();
 
 app.MapGraphQL()
     .WithOptions(options =>
