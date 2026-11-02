@@ -23,13 +23,18 @@ is recorded as processed and lost.
 ## Considered Options
 
 ### For ordering account.updated events
-1. Compare `event.created` with the stored `PayoutAccountStatusChangedAt` and skip strictly older
-   events (chosen)
-   - Pros: No Stripe call inside the webhook transaction. Every event carries the full account
-     snapshot, so the newest event wins. Easy to test with signed payloads.
-   - Cons: `created` has one-second precision. Two events in the same second are both applied in
-     arrival order, so a replay of an older event within that second can still win. The next
-     `account.updated` corrects it.
+1. Compare `event.created` with the stored `PayoutAccountStatusChangedAt` in a conditional update,
+   and re-fetch the account from Stripe only when the two are equal (chosen)
+   - Pros: Every event carries the full account snapshot, so normally the newest event wins
+     without a Stripe call. The comparison is part of the `UPDATE`, so two deliveries for the same
+     account processed at the same time can't let an older snapshot overwrite a newer one: the
+     second update re-checks the row once it holds the lock and changes nothing. `created` has
+     one-second precision, and Stripe often sends several `account.updated` events within a second
+     when onboarding finishes. On a tie, the handler maps the live account instead of guessing
+     which snapshot is newer.
+   - Cons: A Stripe API call inside the webhook transaction on a tie, so a Stripe outage at that
+     moment fails the delivery with a 500 and Stripe retries it later. Tests need the gateway fake
+     for the tie path.
 2. Re-fetch the account from Stripe on every event and ignore the payload
    - Pros: Always uses the current state, so ordering stops mattering.
    - Cons: A Stripe API call while the webhook transaction is open, which ties webhook latency and
@@ -95,9 +100,20 @@ differs from the account it just created, and builds the link for the stored acc
 that's the one webhooks will match. Every call returns a fresh Account Link for the stored account.
 
 The `account.updated` handler finds the user by account ID, or by `user_id` metadata when no user
-has that ID yet. It skips events older than `PayoutAccountStatusChangedAt`, then maps the snapshot:
-an active `transfers` capability is `Enabled`; unsubmitted details or a pending capability is
-`Pending`; anything else after onboarding is `Restricted`. The mutation reports failures instead
+has that ID yet. It writes the mapped status with an `ExecuteUpdate` that only applies while the
+stored `PayoutAccountStatusChangedAt` is older than the event, and only while the user has no
+account ID or has this one. When the stored time equals the event's, either on the first read or
+after an update that changed no row, it fetches the account from Stripe and writes the live state
+instead. If that fetch fails, the delivery returns 500 and Stripe retries it.
+
+The mapper reads the `transfers` capability, `details_submitted` and the `requirements` hash. An
+active `transfers` capability is `Enabled`, even when more information is due before a deadline,
+because the account can still receive transfers. Unsubmitted details, a pending capability, or an
+inactive one where Stripe is only verifying what was submitted (`pending_verification` set,
+nothing `currently_due` or `past_due`) is `Pending`. Anything else after onboarding is
+`Restricted`.
+
+The mutation reports failures instead
 of throwing them. Stripe errors, connection failures and timeouts that aren't client cancellations
 become `Payment.StripeRequestFailed`. A database failure while saving the account ID becomes
 `Payment.PayoutAccountSaveFailed`.
@@ -105,10 +121,14 @@ become `Payment.StripeRequestFailed`. A database failure while saving the accoun
 `payoutAccountStatus` is resolved only for the user who owns it, the same rule `email` uses for
 private addresses. The account ID and the change timestamp are not in the schema.
 
-We accept the one-second ordering gap and the 24-hour idempotency window. Both leave a state that
-the next `account.updated` or the next onboarding call repairs, and neither can move money. We also
-accept the orphaned account a 500 can leave behind. No user points at it, so the platform never
-sends it a transfer.
+We accept the 24-hour idempotency window, which leaves a state the next onboarding call repairs and
+can't move money. We also accept the orphaned account a 500 can leave behind. No user points at it,
+so the platform never sends it a transfer.
+
+`Enabled` doesn't warn the user when Stripe needs more information before a deadline. When the
+deadline passes, Stripe disables transfers and sends `account.updated`, so the status becomes
+`Restricted`. Warning earlier needs a new status value or a separate field, which waits until a
+client can show it.
 
 ## Related ADRs
 - ADR #0010 Payments Money Flow for Paid Tournaments: limits connected accounts to the EU/EEA and
