@@ -24,6 +24,17 @@ public class StripeGatewayContractTests : IClassFixture<StripeMockFixture>
     }
 
     [Fact]
+    public async Task GetAccountAsync_IsAcceptedByStripeApi()
+    {
+        // Act
+        var account = await _gateway.GetAccountAsync("acct_test_contract", CancellationToken.None);
+
+        // Assert
+        Assert.Equal("account", account.Object);
+        Assert.False(string.IsNullOrEmpty(account.Id));
+    }
+
+    [Fact]
     public async Task CreateConnectedAccountAsync_IsAcceptedByStripeApi()
     {
         // Act

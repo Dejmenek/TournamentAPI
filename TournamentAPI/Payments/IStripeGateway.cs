@@ -11,6 +11,8 @@ public interface IStripeGateway
 {
     Task<Session> GetCheckoutSessionAsync(string sessionId, CancellationToken cancellationToken);
 
+    Task<Account> GetAccountAsync(string accountId, CancellationToken cancellationToken);
+
     Task<Account> CreateConnectedAccountAsync(ConnectedAccountRequest request, CancellationToken cancellationToken);
 
     Task<AccountLink> CreateOnboardingLinkAsync(OnboardingLinkRequest request, CancellationToken cancellationToken);

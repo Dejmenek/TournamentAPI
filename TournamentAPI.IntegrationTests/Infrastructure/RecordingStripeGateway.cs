@@ -16,6 +16,8 @@ public sealed class RecordingStripeGateway : IStripeGateway
 
     public Func<string, Session> CheckoutSessionResult { get; set; } = DefaultCheckoutSession;
 
+    public Func<string, Account> AccountResult { get; set; } = DefaultAccount;
+
     public Func<ConnectedAccountRequest, Account> ConnectedAccountResult { get; set; } = DefaultConnectedAccount;
 
     public Func<OnboardingLinkRequest, AccountLink>? OnboardingLinkResult { get; set; }
@@ -24,6 +26,12 @@ public sealed class RecordingStripeGateway : IStripeGateway
     {
         _calls.Enqueue(new StripeGatewayCall(nameof(GetCheckoutSessionAsync), sessionId));
         return Task.FromResult(CheckoutSessionResult(sessionId));
+    }
+
+    public Task<Account> GetAccountAsync(string accountId, CancellationToken cancellationToken)
+    {
+        _calls.Enqueue(new StripeGatewayCall(nameof(GetAccountAsync), accountId));
+        return Task.FromResult(AccountResult(accountId));
     }
 
     public Task<Account> CreateConnectedAccountAsync(ConnectedAccountRequest request, CancellationToken cancellationToken)
@@ -58,11 +66,14 @@ public sealed class RecordingStripeGateway : IStripeGateway
         _calls.Clear();
         Interlocked.Exchange(ref _accountLinkCounter, 0);
         CheckoutSessionResult = DefaultCheckoutSession;
+        AccountResult = DefaultAccount;
         ConnectedAccountResult = DefaultConnectedAccount;
         OnboardingLinkResult = null;
     }
 
     private static Session DefaultCheckoutSession(string sessionId) => new() { Id = sessionId, Object = "checkout.session" };
+
+    private static Account DefaultAccount(string accountId) => new() { Id = accountId, Object = "account" };
 
     private static Account DefaultConnectedAccount(ConnectedAccountRequest request) => new()
     {

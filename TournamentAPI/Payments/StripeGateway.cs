@@ -17,6 +17,9 @@ public class StripeGateway : IStripeGateway
     public Task<Session> GetCheckoutSessionAsync(string sessionId, CancellationToken cancellationToken)
         => _client.V1.Checkout.Sessions.GetAsync(sessionId, cancellationToken: cancellationToken);
 
+    public Task<Account> GetAccountAsync(string accountId, CancellationToken cancellationToken)
+        => _client.V1.Accounts.GetAsync(accountId, cancellationToken: cancellationToken);
+
     public Task<Account> CreateConnectedAccountAsync(ConnectedAccountRequest request, CancellationToken cancellationToken)
     {
         var options = new AccountCreateOptions
