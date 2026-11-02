@@ -43,3 +43,10 @@ before the Stripe call, and its ID builds the Stripe idempotency key.
 The Stripe connected account a user needs to receive money, either as the owner of a tournament with
 an entry fee or as a participant in a tournament with prizes. One per user. Users who only pay don't
 need one. Stripe calls this a connected account; in this codebase it's a payout account.
+
+**Payout account status**
+The user's `PayoutAccountStatus`, visible only to that user. `NotStarted` means no payout account
+exists yet. `Pending` means the account exists but onboarding isn't finished or Stripe is still
+reviewing it. `Enabled` means the account's `transfers` capability is active and it can receive
+payouts. `Restricted` means onboarding was submitted but Stripe has disabled transfers, usually
+until more information is provided.
