@@ -98,3 +98,17 @@ dotnet run --project TournamentAPI.Benchmarks --configuration Release
 - `dotnet build` succeeds, and both `TournamentAPI.UnitTests` and `TournamentAPI.IntegrationTests` pass locally
 - Any query/mutation added, removed, or renamed, or any input/payload/error-code change, is reflected in both the Postman collection as part of the same change
 - Any decision with a real trade-off gets an ADR
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues on `Dejmenek/TournamentAPI` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: root `GLOSSARY.md` (created lazily) plus `docs/adr/`. See `docs/agents/domain.md`.
