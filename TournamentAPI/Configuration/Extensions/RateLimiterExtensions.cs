@@ -1,9 +1,12 @@
 using System.Threading.RateLimiting;
+using TournamentAPI.Payments;
 
 namespace TournamentAPI.Configuration.Extensions;
 
 internal static class RateLimiterExtensions
 {
+    private const string StripeWebhookPartitionKey = "stripe-webhook";
+
     internal const int ConcurrencyPermitLimit = 100;
     internal const int TokenBucketLimit = 100;
     internal const int TokenBucketTokensPerPeriod = 50;
@@ -29,18 +32,26 @@ internal static class RateLimiterExtensions
 
                 return ValueTask.CompletedTask;
             };
-            options.GlobalLimiter = PartitionedRateLimiter.CreateChained(
-                CreateIpTokenBucketLimiter(),
-                CreateConcurrencyLimiter());
+            options.GlobalLimiter = CreateGlobalLimiter();
         });
 
         return services;
+    }
+
+    internal static PartitionedRateLimiter<HttpContext> CreateGlobalLimiter()
+    {
+        return PartitionedRateLimiter.CreateChained(
+            CreateIpTokenBucketLimiter(),
+            CreateConcurrencyLimiter());
     }
 
     internal static PartitionedRateLimiter<HttpContext> CreateIpTokenBucketLimiter()
     {
         return PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
         {
+            if (httpContext.Request.Path.StartsWithSegments(StripeWebhookEndpoint.Path))
+                return RateLimitPartition.GetNoLimiter(StripeWebhookPartitionKey);
+
             var clientIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
             return RateLimitPartition.GetTokenBucketLimiter(

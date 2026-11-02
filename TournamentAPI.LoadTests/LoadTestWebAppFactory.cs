@@ -28,7 +28,9 @@ public class LoadTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifet
         builder.ConfigureAppConfiguration((_, configuration) =>
             configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ApiKey:Value"] = ApiKey
+                ["ApiKey:Value"] = ApiKey,
+                ["Stripe:SecretKey"] = "sk_test_load_test_placeholder",
+                ["Stripe:WebhookSigningSecret"] = "whsec_load_test_placeholder"
             }));
 
         builder.ConfigureTestServices(services =>

@@ -5,7 +5,7 @@ Rate Limiting Algorithm for API Requests
 02/01/2026
 
 ## Status
-Accepted
+Accepted. Amended by ADR #0012: `/webhooks/stripe` is exempt from the per-IP token bucket but stays under the concurrency limiter.
 
 ## Context
 As our API usage continues to grow, we need to implement a robust rate limiting strategy to ensure fair usage among all clients and to protect our infrastructure from abuse.

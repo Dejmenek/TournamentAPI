@@ -17,6 +17,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<Match> Matches { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<MatchCorrectionAudit> MatchCorrectionAudits { get; set; }
+    public DbSet<ProcessedStripeEvent> ProcessedStripeEvents { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -148,5 +149,17 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
 
         builder.Entity<MatchCorrectionAudit>()
             .HasIndex(e => e.CorrelationId);
+
+        builder.Entity<ProcessedStripeEvent>()
+            .HasKey(e => e.Id)
+            .HasName(ProcessedStripeEvent.PrimaryKeyName);
+
+        builder.Entity<ProcessedStripeEvent>()
+            .Property(e => e.Id)
+            .HasMaxLength(255);
+
+        builder.Entity<ProcessedStripeEvent>()
+            .Property(e => e.Type)
+            .HasMaxLength(255);
     }
 }

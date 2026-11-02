@@ -24,6 +24,18 @@ internal static class OptionsExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        services
+            .AddOptions<StripeOptions>()
+            .BindConfiguration(StripeOptions.SectionName)
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services
+            .AddOptions<PaidTournamentOptions>()
+            .BindConfiguration(PaidTournamentOptions.SectionName)
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         return services;
     }
 }

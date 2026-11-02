@@ -21,6 +21,8 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
 
     public virtual async Task InitializeAsync()
     {
+        Factory.ResetStripeFakes();
+
         _scope = Factory.Services.CreateScope();
         DbContext = _scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 

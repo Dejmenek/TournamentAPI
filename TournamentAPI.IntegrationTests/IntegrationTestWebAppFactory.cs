@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -14,6 +15,7 @@ using System.Threading.RateLimiting;
 using Testcontainers.MsSql;
 using TournamentAPI.Data;
 using TournamentAPI.IntegrationTests.Infrastructure;
+using TournamentAPI.Payments;
 
 namespace TournamentAPI.IntegrationTests;
 
@@ -26,8 +28,19 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
 
     public QueryCommandRecorder CommandRecorder { get; } = new();
 
+    public RecordingStripeGateway StripeGateway { get; } = new();
+
+    public RecordingStripeWebhookHandler RecordingWebhookHandler { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.ConfigureAppConfiguration((_, configuration) =>
+            configuration.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Stripe:SecretKey"] = "sk_test_integration_placeholder",
+                ["Stripe:WebhookSigningSecret"] = StripeWebhookPayloads.TestSigningSecret
+            }));
+
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IDbContextFactory<ApplicationDbContext>>();
@@ -51,7 +64,19 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
                 options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(_ =>
                     RateLimitPartition.GetNoLimiter("no-limit"));
             });
+
+            services.RemoveAll<IStripeGateway>();
+            services.AddSingleton<IStripeGateway>(StripeGateway);
+
+            services.AddSingleton<IStripeWebhookHandler>(RecordingWebhookHandler);
+            services.AddSingleton<IStripeWebhookHandler, ThrowingStripeWebhookHandler>();
         });
+    }
+
+    public void ResetStripeFakes()
+    {
+        StripeGateway.Reset();
+        RecordingWebhookHandler.Reset();
     }
 
     public Task InitializeAsync() => _dbContainer.StartAsync();
