@@ -1,7 +1,9 @@
-using System.Net;
 using Microsoft.EntityFrameworkCore;
+using Stripe;
+using System.Net;
 using TournamentAPI.Data.Models;
 using TournamentAPI.IntegrationTests.Infrastructure;
+using TournamentAPI.Payments;
 
 namespace TournamentAPI.IntegrationTests.Payments;
 
@@ -126,6 +128,79 @@ public class StripeAccountUpdatedHandlerTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task AccountUpdated_SameSecondEventsDeliveredOutOfOrder_UsesTheLiveAccountState()
+    {
+        // Arrange
+        var aliceId = await GiveAliceConnectedAccountAsync();
+        using var client = Factory.CreateClient();
+        var created = DateTimeOffset.UtcNow;
+        var newerEvent = StripeWebhookPayloads.AccountUpdated(AccountId, transfers: "active", detailsSubmitted: true, created: created);
+        var olderEvent = StripeWebhookPayloads.AccountUpdated(AccountId, transfers: "pending", detailsSubmitted: true, created: created);
+        Factory.StripeGateway.AccountResult = accountId => ActiveAccount(accountId);
+
+        // Act
+        await client.SendAsync(newerEvent.ToRequest());
+        var olderResponse = await client.SendAsync(olderEvent.ToRequest());
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, olderResponse.StatusCode);
+        Assert.Equal(PayoutAccountStatus.Enabled, await GetStatusAsync(aliceId));
+        Assert.Equal([AccountId], Factory.StripeGateway.CallsTo<string>(nameof(IStripeGateway.GetAccountAsync)));
+    }
+
+    [Fact]
+    public async Task AccountUpdated_SameSecondEvent_Returns500_AndKeepsStatus_WhenStripeCannotBeReached()
+    {
+        // Arrange
+        var aliceId = await GiveAliceConnectedAccountAsync();
+        using var client = Factory.CreateClient();
+        var created = DateTimeOffset.UtcNow;
+        var firstEvent = StripeWebhookPayloads.AccountUpdated(AccountId, transfers: "active", detailsSubmitted: true, created: created);
+        var secondEvent = StripeWebhookPayloads.AccountUpdated(AccountId, transfers: "pending", detailsSubmitted: true, created: created);
+        Factory.StripeGateway.AccountResult = _ => throw new HttpRequestException("Connection reset.");
+
+        // Act
+        await client.SendAsync(firstEvent.ToRequest());
+        var secondResponse = await client.SendAsync(secondEvent.ToRequest());
+
+        // Assert
+        Assert.Equal(HttpStatusCode.InternalServerError, secondResponse.StatusCode);
+        Assert.Equal(PayoutAccountStatus.Enabled, await GetStatusAsync(aliceId));
+        Assert.False(await DbContext.ProcessedStripeEvents.AsNoTracking().AnyAsync(e => e.Id == secondEvent.EventId));
+    }
+
+    [Fact]
+    public async Task AccountUpdated_DoesNotOverwriteANewerStatus_WrittenWhileTheEventIsBeingHandled()
+    {
+        // Arrange
+        var aliceId = await GiveAliceConnectedAccountAsync();
+        using var client = Factory.CreateClient();
+        var now = DateTimeOffset.UtcNow;
+        var olderEvent = StripeWebhookPayloads.AccountUpdated(
+            AccountId,
+            transfers: "inactive",
+            detailsSubmitted: true,
+            created: now.AddMinutes(-5),
+            outstandingRequirements: ["individual.verification.document"],
+            disabledReason: "requirements.past_due");
+        Factory.CommandHook.RunOnce(
+            command => command.CommandText.StartsWith("UPDATE", StringComparison.OrdinalIgnoreCase)
+                && command.CommandText.Contains("[AspNetUsers]", StringComparison.Ordinal),
+            () => DbContext.Users
+                .Where(u => u.Id == aliceId)
+                .ExecuteUpdate(s => s
+                    .SetProperty(u => u.PayoutAccountStatus, PayoutAccountStatus.Enabled)
+                    .SetProperty(u => u.PayoutAccountStatusChangedAt, now.UtcDateTime)));
+
+        // Act
+        var response = await client.SendAsync(olderEvent.ToRequest());
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(PayoutAccountStatus.Enabled, await GetStatusAsync(aliceId));
+    }
+
+    [Fact]
     public async Task AccountUpdated_ForUnknownAccount_Returns200_AndChangesNoUser()
     {
         // Arrange
@@ -194,4 +269,12 @@ public class StripeAccountUpdatedHandlerTests : BaseIntegrationTest
 
     private async Task<PayoutAccountStatus> GetStatusAsync(int userId)
         => (await DbContext.Users.AsNoTracking().FirstAsync(u => u.Id == userId)).PayoutAccountStatus;
+
+    private static Account ActiveAccount(string accountId) => new()
+    {
+        Id = accountId,
+        Object = "account",
+        DetailsSubmitted = true,
+        Capabilities = new AccountCapabilities { Transfers = "active" }
+    };
 }
