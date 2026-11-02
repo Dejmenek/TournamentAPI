@@ -81,6 +81,40 @@ public class PayoutAccountStatusMapperTests
     }
 
     [Fact]
+    public void FromAccount_ReturnsPending_WhenTransfersAreInactiveWhileStripeVerifiesSubmittedInformation()
+    {
+        // Arrange
+        var account = CreateAccount(
+            transfers: "inactive",
+            detailsSubmitted: true,
+            pendingVerification: ["individual.verification.document"],
+            disabledReason: "requirements.pending_verification");
+
+        // Act
+        var status = PayoutAccountStatusMapper.FromAccount(account);
+
+        // Assert
+        Assert.Equal(PayoutAccountStatus.Pending, status);
+    }
+
+    [Fact]
+    public void FromAccount_ReturnsRestricted_WhenInformationIsDueWhileStripeVerifiesOtherInformation()
+    {
+        // Arrange
+        var account = CreateAccount(
+            transfers: "inactive",
+            detailsSubmitted: true,
+            currentlyDue: ["individual.id_number"],
+            pendingVerification: ["individual.verification.document"]);
+
+        // Act
+        var status = PayoutAccountStatusMapper.FromAccount(account);
+
+        // Assert
+        Assert.Equal(PayoutAccountStatus.Restricted, status);
+    }
+
+    [Fact]
     public void FromAccount_ReturnsRestricted_WhenTransfersCapabilityIsMissingAfterOnboarding()
     {
         // Arrange
@@ -98,6 +132,7 @@ public class PayoutAccountStatusMapperTests
         bool detailsSubmitted,
         List<string>? currentlyDue = null,
         List<string>? pastDue = null,
+        List<string>? pendingVerification = null,
         string? disabledReason = null) => new()
     {
         Id = "acct_test",
@@ -107,6 +142,7 @@ public class PayoutAccountStatusMapperTests
         {
             CurrentlyDue = currentlyDue ?? [],
             PastDue = pastDue ?? [],
+            PendingVerification = pendingVerification ?? [],
             DisabledReason = disabledReason
         }
     };
