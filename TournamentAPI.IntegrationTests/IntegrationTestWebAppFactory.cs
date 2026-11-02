@@ -38,7 +38,9 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
             configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Stripe:SecretKey"] = "sk_test_integration_placeholder",
-                ["Stripe:WebhookSigningSecret"] = StripeWebhookPayloads.TestSigningSecret
+                ["Stripe:WebhookSigningSecret"] = StripeWebhookPayloads.TestSigningSecret,
+                ["Stripe:OnboardingRefreshUrl"] = "https://tournamentapi.test/payouts/onboarding/refresh",
+                ["Stripe:OnboardingReturnUrl"] = "https://tournamentapi.test/payouts/onboarding/return"
             }));
 
         builder.ConfigureTestServices(services =>
