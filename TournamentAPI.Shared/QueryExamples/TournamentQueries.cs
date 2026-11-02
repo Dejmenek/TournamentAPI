@@ -241,6 +241,18 @@ public static partial class Queries
         }
         """;
 
+        public const string GetByIdWithOwnerPayoutAccountStatus = """
+        query($id: Int!) {
+          tournamentById(id: $id) {
+            id
+            owner {
+              id
+              payoutAccountStatus
+            }
+          }
+        }
+        """;
+
         public const string GetByIdWithOwner = """
         query($id: Int!) {
           tournamentById(id: $id) {

@@ -15,6 +15,15 @@ public static partial class Queries
             }
             """;
 
+        public const string GetMePayoutAccountStatus = """
+            query {
+              me {
+                id
+                payoutAccountStatus
+              }
+            }
+            """;
+
         public const string GetMeWithTournamentHistory = """
             query {
               me {

@@ -26,11 +26,15 @@ public static partial class ApplicationUserResolvers
         descriptor.Ignore(u => u.LockoutEnabled);
         descriptor.Ignore(u => u.AccessFailedCount);
         descriptor.Ignore(u => u.Email);
+        descriptor.Ignore(u => u.PayoutAccountStatus);
         descriptor.Field(u => u.Id).IsProjected(true);
     }
 
     public static string? GetEmail([Parent] ApplicationUser user, IResolverContext ctx)
         => user.IsEmailPublic || IsViewingOwnAccount(ctx, user) ? user.Email : null;
+
+    public static PayoutAccountStatus? GetPayoutAccountStatus([Parent] ApplicationUser user, IResolverContext ctx)
+        => IsViewingOwnAccount(ctx, user) ? user.PayoutAccountStatus : null;
 
     [UseConnection(IncludeTotalCount = true)]
     [UseFiltering]
