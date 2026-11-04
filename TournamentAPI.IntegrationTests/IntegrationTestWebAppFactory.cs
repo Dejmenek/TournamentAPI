@@ -5,12 +5,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Respawn;
 using System.Threading.RateLimiting;
 using Testcontainers.MsSql;
 using TournamentAPI.Data;
@@ -21,10 +23,13 @@ namespace TournamentAPI.IntegrationTests;
 
 public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private readonly MsSqlContainer _dbContainer = new MsSqlBuilder()
-        .WithImage("mcr.microsoft.com/azure-sql-edge:latest")
+    private readonly MsSqlContainer _dbContainer = new MsSqlBuilder("mcr.microsoft.com/azure-sql-edge:latest")
         .WithPassword("Your_password123")
         .Build();
+
+    private Respawner _respawner = null!;
+
+    private string ConnectionString => _dbContainer.GetConnectionString() + ";Initial Catalog=TournamentTestDb";
 
     public QueryCommandRecorder CommandRecorder { get; } = new();
 
@@ -36,6 +41,8 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseEnvironment("Testing");
+
         builder.ConfigureAppConfiguration((_, configuration) =>
             configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -49,15 +56,13 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
         {
             services.RemoveAll<IDbContextFactory<ApplicationDbContext>>();
 
-            var connectionString = _dbContainer.GetConnectionString() + ";Initial Catalog=TournamentTestDb";
-
             services.AddDbContextFactory<ApplicationDbContext>(options =>
             {
-                options.UseSqlServer(connectionString);
+                options.UseSqlServer(ConnectionString);
                 options.AddInterceptors(CommandRecorder, CommandHook);
             });
 
-            services.AddHangfire(config => config.UseSqlServerStorage(connectionString));
+            services.AddHangfire(config => config.UseSqlServerStorage(ConnectionString));
 
             services.RemoveAll<IHostedService>();
 
@@ -84,7 +89,36 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
         CommandHook.Reset();
     }
 
-    public Task InitializeAsync() => _dbContainer.StartAsync();
+    public async Task InitializeAsync()
+    {
+        await _dbContainer.StartAsync();
+
+        var contextOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseSqlServer(ConnectionString)
+            .Options;
+
+        await using (var context = new ApplicationDbContext(contextOptions))
+        {
+            await context.Database.EnsureCreatedAsync();
+        }
+
+        await using var connection = new SqlConnection(ConnectionString);
+        await connection.OpenAsync();
+
+        _respawner = await Respawner.CreateAsync(connection, new RespawnerOptions
+        {
+            DbAdapter = DbAdapter.SqlServer,
+            SchemasToInclude = ["dbo"],
+            WithReseed = true
+        });
+    }
 
     public new Task DisposeAsync() => _dbContainer.StopAsync();
+
+    public async Task ResetDatabaseAsync()
+    {
+        await using var connection = new SqlConnection(ConnectionString);
+        await connection.OpenAsync();
+        await _respawner.ResetAsync(connection);
+    }
 }
