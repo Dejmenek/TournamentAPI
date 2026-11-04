@@ -353,6 +353,27 @@ public class PaidTournamentTermsTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task UpdateTournament_OpeningCompletedTournamentWithUnfundedPool_ReturnsCannotChangeCompletedStatus()
+    {
+        // Arrange
+        using var client = await CreateClientLoggedInAsAsync(AliceEmail);
+        var created = await CreateAsync(client, new
+        {
+            status = "CLOSED",
+            prizes = new[] { new { placement = 1, amount = 5000 } }
+        });
+        var id = created.Data!.CreateTournament!.Tournament!.Id;
+        await DbContext.Tournaments.Where(t => t.Id == id)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.Status, TournamentStatus.Completed));
+
+        // Act
+        var response = await UpdateAsync(client, new { tournamentId = id, status = "OPEN" });
+
+        // Assert
+        AssertErrorCode(response, TournamentErrorCodes.CannotChangeCompletedStatus);
+    }
+
+    [Fact]
     public async Task UpdateTournament_OpeningWithFundedPool_Succeeds()
     {
         // Arrange

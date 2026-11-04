@@ -275,6 +275,20 @@ public static partial class TournamentMutations
                 return null;
         }
 
+        if (input.Status != null)
+        {
+            if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotCompleted(tournament)))
+                return null;
+
+            if (resolverContext.TryReportError(TournamentValidations.ValidateStatusIsNotCompleted(input.Status.Value)))
+                return null;
+
+            var bracketExists = await context.Brackets.AnyAsync(b => b.TournamentId == tournament.Id, token);
+
+            if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentCanBeReopened(tournament.Id, bracketExists, input.Status.Value, tournament.StartDate, DateTime.UtcNow)))
+                return null;
+        }
+
         if (input.Status != null || (termsChanged && tournament.Status == TournamentStatus.Open))
         {
             if (resolverContext.TryReportError(TournamentValidations.ValidatePrizePoolAllowsOpening(tournament.Id, tournament.PrizePoolStatus, input.Status ?? tournament.Status)))
@@ -294,17 +308,6 @@ public static partial class TournamentMutations
 
         if (input.Status != null)
         {
-            if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotCompleted(tournament)))
-                return null;
-
-            if (resolverContext.TryReportError(TournamentValidations.ValidateStatusIsNotCompleted(input.Status.Value)))
-                return null;
-
-            var bracketExists = await context.Brackets.AnyAsync(b => b.TournamentId == tournament.Id, token);
-
-            if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentCanBeReopened(tournament.Id, bracketExists, input.Status.Value, tournament.StartDate, DateTime.UtcNow)))
-                return null;
-
             var previousStatus = tournament.Status;
             tournament.Status = input.Status.Value;
 
