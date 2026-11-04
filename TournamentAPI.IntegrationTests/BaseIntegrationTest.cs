@@ -26,8 +26,7 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
         _scope = Factory.Services.CreateScope();
         DbContext = _scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        await DbContext.Database.EnsureDeletedAsync();
-        await DbContext.Database.EnsureCreatedAsync();
+        await Factory.ResetDatabaseAsync();
 
         var userManager = _scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         await DatabaseSeeder.SeedAsync(DbContext, userManager);
