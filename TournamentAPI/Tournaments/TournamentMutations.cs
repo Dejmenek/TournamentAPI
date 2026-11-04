@@ -38,7 +38,7 @@ public static partial class TournamentMutations
         if (tournament is null)
             return null;
 
-        if (resolverContext.TryReportError(PaymentValidations.ValidateTournamentHasNoEntryFee(tournament.Id, tournament.EntryFeeAmount)))
+        if (resolverContext.TryReportError(PaymentValidations.ValidateTournamentDoesNotRequireCheckout(tournament.Id, tournament.EntryFeeAmount)))
         {
             participantMetrics.JoinAttempt("checkout_required");
             return null;
@@ -133,17 +133,14 @@ public static partial class TournamentMutations
         if (resolverContext.TryReportError(TournamentValidations.ValidatePrizePlacementsSupportedByFormat(prizes, format)))
             return null;
 
-        var prizePoolStatus = prizes.Count > 0 ? PrizePoolStatus.Unfunded : PrizePoolStatus.NotRequired;
+        var prizePoolStatus = PrizePoolStatusFor(prizes.Count);
 
-        if (resolverContext.TryReportError(TournamentValidations.ValidatePrizePoolAllowsOpening(0, prizePoolStatus, input.Status)))
+        if (resolverContext.TryReportError(TournamentValidations.ValidatePrizePoolAllowsOpening(null, prizePoolStatus, input.Status)))
             return null;
 
         if (input.Status == TournamentStatus.Open && input.EntryFeeAmount > 0)
         {
-            var ownerPayoutStatus = await context.Users
-                .Where(u => u.Id == userId)
-                .Select(u => u.PayoutAccountStatus)
-                .FirstAsync(token);
+            var ownerPayoutStatus = await GetPayoutAccountStatusAsync(context, userId, token);
 
             if (resolverContext.TryReportError(PaymentValidations.ValidatePayoutAccountEnabledForPaidTournament(userId, input.EntryFeeAmount, ownerPayoutStatus)))
                 return null;
@@ -259,7 +256,7 @@ public static partial class TournamentMutations
                     return null;
 
                 ReplacePrizes(context, tournament, input.Prizes);
-                tournament.PrizePoolStatus = input.Prizes.Count > 0 ? PrizePoolStatus.Unfunded : PrizePoolStatus.NotRequired;
+                tournament.PrizePoolStatus = PrizePoolStatusFor(input.Prizes.Count);
             }
         }
 
@@ -291,15 +288,14 @@ public static partial class TournamentMutations
 
         if (input.Status != null || (termsChanged && tournament.Status == TournamentStatus.Open))
         {
-            if (resolverContext.TryReportError(TournamentValidations.ValidatePrizePoolAllowsOpening(tournament.Id, tournament.PrizePoolStatus, input.Status ?? tournament.Status)))
+            var targetStatus = input.Status ?? tournament.Status;
+
+            if (resolverContext.TryReportError(TournamentValidations.ValidatePrizePoolAllowsOpening(tournament.Id, tournament.PrizePoolStatus, targetStatus)))
                 return null;
 
-            if ((input.Status ?? tournament.Status) == TournamentStatus.Open)
+            if (targetStatus == TournamentStatus.Open)
             {
-                var ownerPayoutStatus = await context.Users
-                    .Where(u => u.Id == tournament.OwnerId)
-                    .Select(u => u.PayoutAccountStatus)
-                    .FirstAsync(token);
+                var ownerPayoutStatus = await GetPayoutAccountStatusAsync(context, tournament.OwnerId, token);
 
                 if (resolverContext.TryReportError(PaymentValidations.ValidatePayoutAccountEnabledForPaidTournament(tournament.OwnerId, tournament.EntryFeeAmount, ownerPayoutStatus)))
                     return null;
@@ -324,6 +320,15 @@ public static partial class TournamentMutations
 
         return context.Tournaments.AsNoTracking().Where(t => t.Id == tournament.Id).With(query);
     }
+
+    private static PrizePoolStatus PrizePoolStatusFor(int prizeCount)
+        => prizeCount > 0 ? PrizePoolStatus.Unfunded : PrizePoolStatus.NotRequired;
+
+    private static Task<PayoutAccountStatus> GetPayoutAccountStatusAsync(ApplicationDbContext context, int userId, CancellationToken token)
+        => context.Users
+            .Where(u => u.Id == userId)
+            .Select(u => u.PayoutAccountStatus)
+            .FirstAsync(token);
 
     private static void ReplacePrizes(ApplicationDbContext context, Tournament tournament, IReadOnlyList<PrizeInput> prizes)
     {

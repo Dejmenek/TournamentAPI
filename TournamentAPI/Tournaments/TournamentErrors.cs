@@ -172,10 +172,15 @@ public static class TournamentErrors
             .SetExtension("TournamentId", tournamentId)
             .Build();
 
-    public static IError PrizePoolNotFunded(int tournamentId) =>
-        ErrorBuilder.New()
+    public static IError PrizePoolNotFunded(int? tournamentId)
+    {
+        var builder = ErrorBuilder.New()
             .SetMessage("Tournament cannot be opened until its prize pool is funded.")
-            .SetCode(TournamentErrorCodes.PrizePoolNotFunded)
-            .SetExtension("TournamentId", tournamentId)
-            .Build();
+            .SetCode(TournamentErrorCodes.PrizePoolNotFunded);
+
+        if (tournamentId is not null)
+            builder.SetExtension("TournamentId", tournamentId.Value);
+
+        return builder.Build();
+    }
 }

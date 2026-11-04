@@ -99,7 +99,7 @@ public static class TournamentValidations
             ? null
             : TournamentErrors.PaidTermsLocked(tournamentId);
 
-    public static IError? ValidatePrizePoolAllowsOpening(int tournamentId, PrizePoolStatus prizePoolStatus, TournamentStatus newStatus)
+    public static IError? ValidatePrizePoolAllowsOpening(int? tournamentId, PrizePoolStatus prizePoolStatus, TournamentStatus newStatus)
         => newStatus == TournamentStatus.Open && prizePoolStatus is not (PrizePoolStatus.NotRequired or PrizePoolStatus.Funded)
             ? TournamentErrors.PrizePoolNotFunded(tournamentId)
             : null;

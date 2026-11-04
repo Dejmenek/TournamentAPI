@@ -44,7 +44,7 @@ public static partial class ParticipantMutations
         if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament.OwnerId, userId, input.TournamentId)))
             return null;
 
-        if (resolverContext.TryReportError(PaymentValidations.ValidateTournamentHasNoEntryFee(tournament.Id, tournament.EntryFeeAmount)))
+        if (resolverContext.TryReportError(PaymentValidations.ValidateTournamentDoesNotRequireCheckout(tournament.Id, tournament.EntryFeeAmount)))
             return null;
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotClosed(tournament, DateTime.UtcNow)))

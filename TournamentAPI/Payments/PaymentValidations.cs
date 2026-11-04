@@ -14,7 +14,7 @@ public static class PaymentValidations
     public static IError? ValidatePayoutCountry(string country)
         => PayoutCountries.Contains(country) ? null : PaymentErrors.UnsupportedPayoutCountry(country);
 
-    public static IError? ValidateTournamentHasNoEntryFee(int tournamentId, long entryFeeAmount)
+    public static IError? ValidateTournamentDoesNotRequireCheckout(int tournamentId, long entryFeeAmount)
         => entryFeeAmount > 0 ? PaymentErrors.PaidTournamentRequiresCheckout(tournamentId) : null;
 
     public static IError? ValidatePayoutAccountEnabledForPaidTournament(int ownerId, long entryFeeAmount, PayoutAccountStatus payoutAccountStatus)
