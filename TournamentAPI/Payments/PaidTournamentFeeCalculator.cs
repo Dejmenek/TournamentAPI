@@ -1,8 +1,5 @@
 namespace TournamentAPI.Payments;
 
-/// <summary>
-/// Pure money arithmetic for paid tournaments. All amounts are minor units (cents).
-/// </summary>
 public static class PaidTournamentFeeCalculator
 {
     public static long CalculatePlatformFee(long amount, decimal percent)
@@ -18,9 +15,6 @@ public static class PaidTournamentFeeCalculator
     /// Splits the combined prize money of the placements a tie covers equally between the tied users.
     /// Leftover cents go one each to the tied users in ascending user ID order.
     /// </summary>
-    /// <param name="prizesByPlacement">Prize amount per placement; placements without a prize pay nothing.</param>
-    /// <param name="firstPlacement">The placement the tied users share.</param>
-    /// <param name="userIds">The tied users.</param>
     public static IReadOnlyDictionary<int, long> SplitTiedPrizes(
         IReadOnlyDictionary<int, long> prizesByPlacement,
         int firstPlacement,
