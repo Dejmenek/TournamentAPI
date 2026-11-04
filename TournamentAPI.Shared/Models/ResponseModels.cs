@@ -72,6 +72,7 @@ public class ApplicationUserNode
     public string LastName { get; set; } = string.Empty;
     public string? Email { get; set; }
     public bool IsEmailPublic { get; set; }
+    public string? PayoutAccountStatus { get; set; }
     public TournamentsConnection? WonTournaments { get; set; }
     public TournamentsConnection? PlayedTournaments { get; set; }
     public MatchesByBracketConnection? WonMatches { get; set; }
@@ -296,6 +297,7 @@ public class UserNode
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public bool IsEmailPublic { get; set; }
+    public string? PayoutAccountStatus { get; set; }
     public TournamentsConnection? WonTournaments { get; set; }
     public TournamentsConnection? PlayedTournaments { get; set; }
     public MatchesByBracketConnection? WonMatches { get; set; }
@@ -309,4 +311,20 @@ public class UpdateEmailVisibilityResponse
 public class UpdateEmailVisibilityResult
 {
     public UserNode? ApplicationUser { get; set; }
+}
+
+public class StartStripeOnboardingResponse
+{
+    public StartStripeOnboardingResult? StartStripeOnboarding { get; set; }
+}
+
+public class StartStripeOnboardingResult
+{
+    public StripeOnboardingLinkNode? StripeOnboardingLink { get; set; }
+}
+
+public class StripeOnboardingLinkNode
+{
+    public string Url { get; set; } = string.Empty;
+    public DateTime ExpiresAt { get; set; }
 }

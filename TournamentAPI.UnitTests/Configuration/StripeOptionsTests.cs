@@ -39,6 +39,8 @@ public class StripeOptionsTests
         SecretKey = "sk_test_123",
         WebhookSigningSecret = "whsec_test",
         Currency = currency,
+        OnboardingRefreshUrl = "https://example.com/payouts/onboarding/refresh",
+        OnboardingReturnUrl = "https://example.com/payouts/onboarding/return",
     };
 
     private static List<ValidationResult> Validate(StripeOptions options)

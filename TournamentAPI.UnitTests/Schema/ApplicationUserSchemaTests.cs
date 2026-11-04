@@ -56,6 +56,7 @@ public class ApplicationUserSchemaTests
         services.AddApplicationAuthentication();
         services.AddApplicationAuthorization();
         services.AddApplicationMetrics();
+        services.AddApplicationPayments();
         services.AddApplicationGraphQL(isDevelopment: true);
 
         var provider = services.BuildServiceProvider();
@@ -80,7 +81,7 @@ public class ApplicationUserSchemaTests
         var expected = new[]
         {
             "email", "firstName", "id", "isEmailPublic", "lastName",
-            "playedTournaments", "wonMatches", "wonTournaments"
+            "payoutAccountStatus", "playedTournaments", "wonMatches", "wonTournaments"
         }
             .OrderBy(n => n, StringComparer.Ordinal)
             .ToArray();
@@ -96,7 +97,7 @@ public class ApplicationUserSchemaTests
 
         var fieldNames = type.Fields.Select(f => f.Name).ToHashSet();
 
-        var identityInternalFields = new[] { "userName", "passwordHash", "securityStamp", "phoneNumber" };
+        var identityInternalFields = new[] { "userName", "passwordHash", "securityStamp", "phoneNumber", "stripeAccountId", "payoutAccountStatusChangedAt", "stripeAccountCreationAttempt" };
 
         foreach (var field in identityInternalFields)
         {

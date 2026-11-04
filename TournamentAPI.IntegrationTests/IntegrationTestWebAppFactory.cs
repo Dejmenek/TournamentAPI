@@ -28,6 +28,8 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
 
     public QueryCommandRecorder CommandRecorder { get; } = new();
 
+    public BeforeCommandHook CommandHook { get; } = new();
+
     public RecordingStripeGateway StripeGateway { get; } = new();
 
     public RecordingStripeWebhookHandler RecordingWebhookHandler { get; } = new();
@@ -38,7 +40,9 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
             configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Stripe:SecretKey"] = "sk_test_integration_placeholder",
-                ["Stripe:WebhookSigningSecret"] = StripeWebhookPayloads.TestSigningSecret
+                ["Stripe:WebhookSigningSecret"] = StripeWebhookPayloads.TestSigningSecret,
+                ["Stripe:OnboardingRefreshUrl"] = "https://tournamentapi.test/payouts/onboarding/refresh",
+                ["Stripe:OnboardingReturnUrl"] = "https://tournamentapi.test/payouts/onboarding/return"
             }));
 
         builder.ConfigureTestServices(services =>
@@ -50,7 +54,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
             services.AddDbContextFactory<ApplicationDbContext>(options =>
             {
                 options.UseSqlServer(connectionString);
-                options.AddInterceptors(CommandRecorder);
+                options.AddInterceptors(CommandRecorder, CommandHook);
             });
 
             services.AddHangfire(config => config.UseSqlServerStorage(connectionString));
@@ -77,6 +81,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
     {
         StripeGateway.Reset();
         RecordingWebhookHandler.Reset();
+        CommandHook.Reset();
     }
 
     public Task InitializeAsync() => _dbContainer.StartAsync();

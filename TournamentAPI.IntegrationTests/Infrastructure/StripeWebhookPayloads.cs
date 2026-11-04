@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using Stripe;
+using TournamentAPI.Payments;
 
 namespace TournamentAPI.IntegrationTests.Infrastructure;
 
@@ -15,7 +16,8 @@ public static class StripeWebhookPayloads
         string eventType,
         string? eventId = null,
         object? dataObject = null,
-        string? apiVersion = null)
+        string? apiVersion = null,
+        DateTimeOffset? created = null)
     {
         var id = eventId ?? $"evt_test_{Guid.NewGuid():N}";
 
@@ -24,7 +26,7 @@ public static class StripeWebhookPayloads
             ["id"] = id,
             ["object"] = "event",
             ["api_version"] = apiVersion ?? StripeConfiguration.ApiVersion,
-            ["created"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            ["created"] = (created ?? DateTimeOffset.UtcNow).ToUnixTimeSeconds(),
             ["livemode"] = false,
             ["pending_webhooks"] = 1,
             ["type"] = eventType,
@@ -42,6 +44,34 @@ public static class StripeWebhookPayloads
 
         return new SignedStripeEvent(id, payload, signatureHeader);
     }
+
+    public static SignedStripeEvent AccountUpdated(
+        string accountId,
+        string transfers,
+        bool detailsSubmitted,
+        DateTimeOffset? created = null,
+        string[]? outstandingRequirements = null,
+        string? disabledReason = null,
+        int? metadataUserId = null) =>
+        Create(
+            "account.updated",
+            created: created,
+            dataObject: new Dictionary<string, object?>
+            {
+                ["id"] = accountId,
+                ["object"] = "account",
+                ["details_submitted"] = detailsSubmitted,
+                ["capabilities"] = new Dictionary<string, object?> { ["transfers"] = transfers },
+                ["requirements"] = new Dictionary<string, object?>
+                {
+                    ["currently_due"] = outstandingRequirements ?? [],
+                    ["past_due"] = outstandingRequirements ?? [],
+                    ["disabled_reason"] = disabledReason
+                },
+                ["metadata"] = metadataUserId is null
+                    ? new Dictionary<string, object?>()
+                    : new Dictionary<string, object?> { [StripeGateway.UserIdMetadataKey] = metadataUserId.Value.ToString() }
+            });
 
     public static HttpRequestMessage ToRequest(this SignedStripeEvent signedEvent, string? signatureHeader = null)
     {

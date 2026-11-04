@@ -10,6 +10,14 @@ public class ApplicationUser : IdentityUser<int>
     public bool IsEmailPublic { get; set; } = false;
 
     [GraphQLIgnore]
+    public string? StripeAccountId { get; set; }
+    public PayoutAccountStatus PayoutAccountStatus { get; set; } = PayoutAccountStatus.NotStarted;
+    [GraphQLIgnore]
+    public DateTime? PayoutAccountStatusChangedAt { get; set; }
+    [GraphQLIgnore]
+    public int StripeAccountCreationAttempt { get; set; }
+
+    [GraphQLIgnore]
     public ICollection<TournamentParticipant> ParticipatedTournaments { get; set; } = new List<TournamentParticipant>();
     [GraphQLIgnore]
     public ICollection<Tournament> OwnedTournaments { get; set; } = new List<Tournament>();

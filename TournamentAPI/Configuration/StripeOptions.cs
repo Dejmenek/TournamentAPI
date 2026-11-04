@@ -15,4 +15,12 @@ public record StripeOptions
     [Required]
     [AllowedValues("eur")]
     public string Currency { get; init; } = "eur";
+
+    [Required]
+    [Url]
+    public string OnboardingRefreshUrl { get; init; } = string.Empty;
+
+    [Required]
+    [Url]
+    public string OnboardingReturnUrl { get; init; } = string.Empty;
 }

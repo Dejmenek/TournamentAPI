@@ -30,7 +30,9 @@ public class LoadTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifet
             {
                 ["ApiKey:Value"] = ApiKey,
                 ["Stripe:SecretKey"] = "sk_test_load_test_placeholder",
-                ["Stripe:WebhookSigningSecret"] = "whsec_load_test_placeholder"
+                ["Stripe:WebhookSigningSecret"] = "whsec_load_test_placeholder",
+                ["Stripe:OnboardingRefreshUrl"] = "https://tournamentapi.test/payouts/onboarding/refresh",
+                ["Stripe:OnboardingReturnUrl"] = "https://tournamentapi.test/payouts/onboarding/return"
             }));
 
         builder.ConfigureTestServices(services =>

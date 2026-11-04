@@ -150,6 +150,15 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
         builder.Entity<MatchCorrectionAudit>()
             .HasIndex(e => e.CorrelationId);
 
+        builder.Entity<ApplicationUser>()
+            .Property(u => u.StripeAccountId)
+            .HasMaxLength(255);
+
+        builder.Entity<ApplicationUser>()
+            .HasIndex(u => u.StripeAccountId)
+            .IsUnique()
+            .HasFilter("[StripeAccountId] IS NOT NULL");
+
         builder.Entity<ProcessedStripeEvent>()
             .HasKey(e => e.Id)
             .HasName(ProcessedStripeEvent.PrimaryKeyName);
