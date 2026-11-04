@@ -20,4 +20,18 @@ public static class PaymentErrors
             .SetMessage("The payout account was created but could not be saved. Please try again.")
             .SetCode(PaymentErrorCodes.PayoutAccountSaveFailed)
             .Build();
+
+    public static IError PaidTournamentRequiresCheckout(int tournamentId) =>
+        ErrorBuilder.New()
+            .SetMessage("This tournament has an entry fee, so entries must be paid through checkout.")
+            .SetCode(PaymentErrorCodes.PaidTournamentRequiresCheckout)
+            .SetExtension("TournamentId", tournamentId)
+            .Build();
+
+    public static IError PayoutAccountNotEnabled(int ownerId) =>
+        ErrorBuilder.New()
+            .SetMessage("The tournament owner's payout account must be enabled before a tournament with an entry fee can open.")
+            .SetCode(PaymentErrorCodes.PayoutAccountNotEnabled)
+            .SetExtension("OwnerId", ownerId)
+            .Build();
 }

@@ -75,6 +75,32 @@ public static partial class Queries
             }
             """;
 
+        public const string GetAllWithPaidTermsAndEntryStatus = """
+            query {
+              tournaments(first: 10, order: { id: DESC }) {
+                edges {
+                  node {
+                    id
+                    entryFee
+                    prizePoolStatus
+                    prizes {
+                      placement
+                      amount
+                    }
+                    participants(first: 10) {
+                      edges {
+                        node {
+                          participantId
+                          entryStatus
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
         public const string GetAllWithParticipants = """
             query {
               tournaments(first: 10) {

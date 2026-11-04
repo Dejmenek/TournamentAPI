@@ -20,4 +20,10 @@ public static class TournamentErrorCodes
     public const string WithdrawalNotSupportedForFormat = "Tournament.WithdrawalNotSupportedForFormat";
     public const string WithdrawalRequiresBracket = "Tournament.WithdrawalRequiresBracket";
     public const string ParticipantNotFound = "Tournament.ParticipantNotFound";
+    public const string InvalidEntryFee = "Tournament.InvalidEntryFee";
+    public const string InvalidPrizeAmount = "Tournament.InvalidPrizeAmount";
+    public const string InvalidPrizePlacements = "Tournament.InvalidPrizePlacements";
+    public const string PrizePlacementNotSupportedForFormat = "Tournament.PrizePlacementNotSupportedForFormat";
+    public const string PaidTermsLocked = "Tournament.PaidTermsLocked";
+    public const string PrizePoolNotFunded = "Tournament.PrizePoolNotFunded";
 }

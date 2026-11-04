@@ -1,3 +1,5 @@
+using TournamentAPI.Data.Models;
+
 namespace TournamentAPI.Tournaments;
 
 public static class TournamentErrors
@@ -133,4 +135,52 @@ public static class TournamentErrors
             .SetExtension("TournamentId", tournamentId)
             .SetExtension("ParticipantId", participantId)
             .Build();
+
+    public static IError InvalidEntryFee(long entryFeeAmount) =>
+        ErrorBuilder.New()
+            .SetMessage("Entry fee cannot be negative.")
+            .SetCode(TournamentErrorCodes.InvalidEntryFee)
+            .SetExtension("EntryFeeAmount", entryFeeAmount)
+            .Build();
+
+    public static IError InvalidPrizeAmount(int placement, long amount) =>
+        ErrorBuilder.New()
+            .SetMessage("Prize amounts must be positive.")
+            .SetCode(TournamentErrorCodes.InvalidPrizeAmount)
+            .SetExtension("Placement", placement)
+            .SetExtension("Amount", amount)
+            .Build();
+
+    public static IError InvalidPrizePlacements(int maxParticipants) =>
+        ErrorBuilder.New()
+            .SetMessage("Prize placements must be unique, start at 1, be contiguous, and not exceed MaxParticipants.")
+            .SetCode(TournamentErrorCodes.InvalidPrizePlacements)
+            .SetExtension("MaxParticipants", maxParticipants)
+            .Build();
+
+    public static IError PrizePlacementNotSupportedForFormat(TournamentFormat format) =>
+        ErrorBuilder.New()
+            .SetMessage("Single elimination tournaments only support prizes for placements 1 and 2.")
+            .SetCode(TournamentErrorCodes.PrizePlacementNotSupportedForFormat)
+            .SetExtension("Format", format.ToString())
+            .Build();
+
+    public static IError PaidTermsLocked(int tournamentId) =>
+        ErrorBuilder.New()
+            .SetMessage("Entry fee and prizes can only change while the prize pool is unfunded and the tournament has no entries.")
+            .SetCode(TournamentErrorCodes.PaidTermsLocked)
+            .SetExtension("TournamentId", tournamentId)
+            .Build();
+
+    public static IError PrizePoolNotFunded(int? tournamentId)
+    {
+        var builder = ErrorBuilder.New()
+            .SetMessage("Tournament cannot be opened until its prize pool is funded.")
+            .SetCode(TournamentErrorCodes.PrizePoolNotFunded);
+
+        if (tournamentId is not null)
+            builder.SetExtension("TournamentId", tournamentId.Value);
+
+        return builder.Build();
+    }
 }

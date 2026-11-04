@@ -1,3 +1,5 @@
+using TournamentAPI.Data.Models;
+
 namespace TournamentAPI.Payments;
 
 public static class PaymentValidations
@@ -11,4 +13,10 @@ public static class PaymentValidations
 
     public static IError? ValidatePayoutCountry(string country)
         => PayoutCountries.Contains(country) ? null : PaymentErrors.UnsupportedPayoutCountry(country);
+
+    public static IError? ValidateTournamentDoesNotRequireCheckout(int tournamentId, long entryFeeAmount)
+        => entryFeeAmount > 0 ? PaymentErrors.PaidTournamentRequiresCheckout(tournamentId) : null;
+
+    public static IError? ValidatePayoutAccountEnabledForPaidTournament(int ownerId, long entryFeeAmount, PayoutAccountStatus payoutAccountStatus)
+        => entryFeeAmount > 0 && payoutAccountStatus != PayoutAccountStatus.Enabled ? PaymentErrors.PayoutAccountNotEnabled(ownerId) : null;
 }

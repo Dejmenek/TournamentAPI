@@ -2,4 +2,11 @@ using TournamentAPI.Data.Models;
 
 namespace TournamentAPI.Tournaments;
 
-public record UpdateTournamentInput(int TournamentId, string? Name, DateTime? StartDate, TournamentStatus? Status, int? MaxParticipants);
+public record UpdateTournamentInput(
+    int TournamentId,
+    string? Name,
+    DateTime? StartDate,
+    TournamentStatus? Status,
+    int? MaxParticipants,
+    long? EntryFeeAmount = null,
+    IReadOnlyList<PrizeInput>? Prizes = null);

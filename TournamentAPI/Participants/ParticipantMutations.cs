@@ -7,6 +7,7 @@ using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Extensions;
 using TournamentAPI.Metrics;
+using TournamentAPI.Payments;
 using TournamentAPI.Tournaments;
 using TournamentAPI.Users;
 
@@ -41,6 +42,9 @@ public static partial class ParticipantMutations
             return null;
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament.OwnerId, userId, input.TournamentId)))
+            return null;
+
+        if (resolverContext.TryReportError(PaymentValidations.ValidateTournamentDoesNotRequireCheckout(tournament.Id, tournament.EntryFeeAmount)))
             return null;
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotClosed(tournament, DateTime.UtcNow)))
