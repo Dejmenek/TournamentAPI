@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Concurrent;
 using TournamentAPI.Data.Models;
 
 namespace TournamentAPI.Data;
 
 public static class DatabaseSeeder
 {
+    private static readonly ConcurrentDictionary<string, string> PasswordHashes = new();
+
     public static async Task SeedAsync(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager)
@@ -435,7 +438,8 @@ public static class DatabaseSeeder
         var existing = await userManager.FindByNameAsync(user.UserName!);
         if (existing == null)
         {
-            var result = await userManager.CreateAsync(user, password);
+            user.PasswordHash = PasswordHashes.GetOrAdd(password, p => userManager.PasswordHasher.HashPassword(user, p));
+            var result = await userManager.CreateAsync(user);
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
