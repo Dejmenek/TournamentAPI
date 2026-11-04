@@ -8,6 +8,7 @@ using TournamentAPI.Data;
 using TournamentAPI.Data.Models;
 using TournamentAPI.Extensions;
 using TournamentAPI.Metrics;
+using TournamentAPI.Payments;
 
 namespace TournamentAPI.Tournaments;
 
@@ -36,6 +37,12 @@ public static partial class TournamentMutations
 
         if (tournament is null)
             return null;
+
+        if (resolverContext.TryReportError(PaymentValidations.ValidateTournamentHasNoEntryFee(tournament.Id, tournament.EntryFeeAmount)))
+        {
+            participantMetrics.JoinAttempt("checkout_required");
+            return null;
+        }
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotClosed(tournament, DateTime.UtcNow)))
         {
@@ -111,6 +118,37 @@ public static partial class TournamentMutations
         if (resolverContext.TryReportError(TournamentValidations.ValidateStatusIsNotCompleted(input.Status)))
             return null;
 
+        var format = input.Format ?? TournamentFormat.SingleElimination;
+        var prizes = input.Prizes ?? [];
+
+        if (resolverContext.TryReportError(TournamentValidations.ValidateEntryFeeNotNegative(input.EntryFeeAmount)))
+            return null;
+
+        if (resolverContext.TryReportError(TournamentValidations.ValidatePrizeAmountsArePositive(prizes)))
+            return null;
+
+        if (resolverContext.TryReportError(TournamentValidations.ValidatePrizePlacements(prizes, input.MaxParticipants)))
+            return null;
+
+        if (resolverContext.TryReportError(TournamentValidations.ValidatePrizePlacementsSupportedByFormat(prizes, format)))
+            return null;
+
+        var prizePoolStatus = prizes.Count > 0 ? PrizePoolStatus.Unfunded : PrizePoolStatus.NotRequired;
+
+        if (resolverContext.TryReportError(TournamentValidations.ValidatePrizePoolAllowsOpening(0, prizePoolStatus, input.Status)))
+            return null;
+
+        if (input.Status == TournamentStatus.Open && input.EntryFeeAmount > 0)
+        {
+            var ownerPayoutStatus = await context.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.PayoutAccountStatus)
+                .FirstAsync(token);
+
+            if (resolverContext.TryReportError(PaymentValidations.ValidatePayoutAccountEnabledForPaidTournament(userId, input.EntryFeeAmount, ownerPayoutStatus)))
+                return null;
+        }
+
         var tournament = new Tournament
         {
             Name = input.Name,
@@ -118,7 +156,10 @@ public static partial class TournamentMutations
             Status = input.Status,
             OwnerId = userId,
             MaxParticipants = input.MaxParticipants,
-            Format = input.Format ?? TournamentFormat.SingleElimination
+            Format = format,
+            EntryFeeAmount = input.EntryFeeAmount,
+            PrizePoolStatus = prizePoolStatus,
+            Prizes = prizes.Select(p => new TournamentPrize { Placement = p.Placement, Amount = p.Amount }).ToList()
         };
 
         context.Tournaments.Add(tournament);
@@ -149,6 +190,7 @@ public static partial class TournamentMutations
         var userId = userClaims.GetUserId();
 
         var tournament = await context.Tournaments
+            .Include(t => t.Prizes)
             .FirstOrDefaultAsync(t => t.Id == input.TournamentId, token);
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentExists(tournament, input.TournamentId)))
@@ -159,6 +201,8 @@ public static partial class TournamentMutations
 
         if (resolverContext.TryReportError(TournamentValidations.ValidateIsOwner(tournament.OwnerId, userId, input.TournamentId)))
             return null;
+
+        var termsChanged = input.EntryFeeAmount != null || input.Prizes != null;
 
         if (input.Name != null)
         {
@@ -193,6 +237,61 @@ public static partial class TournamentMutations
             tournament.MaxParticipants = input.MaxParticipants.Value;
         }
 
+        if (termsChanged)
+        {
+            var entryCount = await context.TournamentParticipants
+                .CountAsync(tp => tp.TournamentId == tournament.Id, token);
+
+            if (resolverContext.TryReportError(TournamentValidations.ValidatePaidTermsCanChange(tournament.Id, tournament.PrizePoolStatus, entryCount)))
+                return null;
+
+            if (input.EntryFeeAmount != null)
+            {
+                if (resolverContext.TryReportError(TournamentValidations.ValidateEntryFeeNotNegative(input.EntryFeeAmount.Value)))
+                    return null;
+
+                tournament.EntryFeeAmount = input.EntryFeeAmount.Value;
+            }
+
+            if (input.Prizes != null)
+            {
+                if (resolverContext.TryReportError(TournamentValidations.ValidatePrizeAmountsArePositive(input.Prizes)))
+                    return null;
+
+                ReplacePrizes(context, tournament, input.Prizes);
+                tournament.PrizePoolStatus = input.Prizes.Count > 0 ? PrizePoolStatus.Unfunded : PrizePoolStatus.NotRequired;
+            }
+        }
+
+        if (termsChanged || input.MaxParticipants != null)
+        {
+            IReadOnlyList<PrizeInput> currentPrizes = input.Prizes
+                ?? tournament.Prizes.Select(p => new PrizeInput(p.Placement, p.Amount)).ToList();
+
+            if (resolverContext.TryReportError(TournamentValidations.ValidatePrizePlacements(currentPrizes, tournament.MaxParticipants)))
+                return null;
+
+            if (resolverContext.TryReportError(TournamentValidations.ValidatePrizePlacementsSupportedByFormat(currentPrizes, tournament.Format)))
+                return null;
+        }
+
+        if (input.Status != null || (termsChanged && tournament.Status == TournamentStatus.Open))
+        {
+            if (resolverContext.TryReportError(TournamentValidations.ValidatePrizePoolAllowsOpening(tournament.Id, tournament.PrizePoolStatus, input.Status ?? tournament.Status)))
+                return null;
+
+            if ((input.Status ?? tournament.Status) == TournamentStatus.Open)
+            {
+                var ownerPayoutStatus = await context.Users
+                    .Where(u => u.Id == tournament.OwnerId)
+                    .Select(u => u.PayoutAccountStatus)
+                    .FirstAsync(token);
+
+                if (resolverContext.TryReportError(PaymentValidations.ValidatePayoutAccountEnabledForPaidTournament(tournament.OwnerId, tournament.EntryFeeAmount, ownerPayoutStatus)))
+                    return null;
+            }
+        }
+
         if (input.Status != null)
         {
             if (resolverContext.TryReportError(TournamentValidations.ValidateTournamentIsNotCompleted(tournament)))
@@ -221,6 +320,21 @@ public static partial class TournamentMutations
         await context.SaveChangesAsync(token);
 
         return context.Tournaments.AsNoTracking().Where(t => t.Id == tournament.Id).With(query);
+    }
+
+    private static void ReplacePrizes(ApplicationDbContext context, Tournament tournament, IReadOnlyList<PrizeInput> prizes)
+    {
+        foreach (var existing in tournament.Prizes.Where(e => prizes.All(p => p.Placement != e.Placement)).ToList())
+            context.Remove(existing);
+
+        foreach (var prize in prizes)
+        {
+            var existing = tournament.Prizes.FirstOrDefault(e => e.Placement == prize.Placement);
+            if (existing is null)
+                tournament.Prizes.Add(new TournamentPrize { Placement = prize.Placement, Amount = prize.Amount });
+            else
+                existing.Amount = prize.Amount;
+        }
     }
 
     [Authorize]

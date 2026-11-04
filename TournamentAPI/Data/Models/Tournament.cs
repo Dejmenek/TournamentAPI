@@ -13,6 +13,11 @@ public class Tournament : ISoftDeletable
     public int? ChampionId { get; set; }
     public TournamentFormat Format { get; set; } = TournamentFormat.SingleElimination;
 
+    [GraphQLName("entryFee")]
+    public long EntryFeeAmount { get; set; }
+    public PrizePoolStatus PrizePoolStatus { get; set; } = PrizePoolStatus.NotRequired;
+    public ICollection<TournamentPrize> Prizes { get; set; } = new List<TournamentPrize>();
+
     [GraphQLIgnore]
     public bool IsDeleted { get; set; }
 

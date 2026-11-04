@@ -62,6 +62,40 @@ public static partial class Mutations
             }
             """;
 
+        public const string CreateTournamentWithPaidTermsReturn = """
+            mutation CreateTournament($input: CreateTournamentInput!) {
+              createTournament(input: $input) {
+                tournament {
+                  id
+                  status
+                  entryFee
+                  prizePoolStatus
+                  prizes {
+                    placement
+                    amount
+                  }
+                }
+              }
+            }
+            """;
+
+        public const string UpdateTournamentWithPaidTermsReturn = """
+            mutation UpdateTournament($input: UpdateTournamentInput!) {
+              updateTournament(input: $input) {
+                tournament {
+                  id
+                  status
+                  entryFee
+                  prizePoolStatus
+                  prizes {
+                    placement
+                    amount
+                  }
+                }
+              }
+            }
+            """;
+
         public const string UpdateTournamentWithBasicFieldsReturn = """
             mutation UpdateTournament($input: UpdateTournamentInput!) {
               updateTournament(

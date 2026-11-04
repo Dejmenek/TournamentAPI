@@ -25,6 +25,12 @@ public class TournamentByIdResponse
     public TournamentNode? TournamentById { get; set; }
 }
 
+public class PrizeNode
+{
+    public int Placement { get; set; }
+    public long Amount { get; set; }
+}
+
 public class TournamentNode
 {
     public int Id { get; set; }
@@ -36,6 +42,9 @@ public class TournamentNode
     public bool IsActive { get; set; }
     public int? ChampionId { get; set; }
     public string? Format { get; set; }
+    public long? EntryFee { get; set; }
+    public string? PrizePoolStatus { get; set; }
+    public List<PrizeNode>? Prizes { get; set; }
     public ApplicationUserNode? Owner { get; set; }
     public ApplicationUserNode? Champion { get; set; }
     public BracketNode? Bracket { get; set; }
@@ -61,6 +70,7 @@ public class TournamentParticipantNode
 {
     public int TournamentId { get; set; }
     public int ParticipantId { get; set; }
+    public string? EntryStatus { get; set; }
     public ApplicationUserNode? Participant { get; set; }
     public TournamentNode? Tournament { get; set; }
 }

@@ -66,4 +66,41 @@ public static class TournamentValidations
 
     public static IError? ValidateBracketGeneratedForWithdrawal(bool bracketExists, int tournamentId)
         => bracketExists ? null : TournamentErrors.WithdrawalRequiresBracket(tournamentId);
+
+    public static IError? ValidateEntryFeeNotNegative(long entryFeeAmount)
+        => entryFeeAmount < 0 ? TournamentErrors.InvalidEntryFee(entryFeeAmount) : null;
+
+    public static IError? ValidatePrizeAmountsArePositive(IEnumerable<PrizeInput> prizes)
+    {
+        var invalid = prizes.FirstOrDefault(p => p.Amount <= 0);
+        return invalid is null ? null : TournamentErrors.InvalidPrizeAmount(invalid.Placement, invalid.Amount);
+    }
+
+    public static IError? ValidatePrizePlacements(IReadOnlyCollection<PrizeInput> prizes, int maxParticipants)
+    {
+        if (prizes.Count == 0)
+            return null;
+
+        var placements = prizes.Select(p => p.Placement).Order().ToList();
+        var isContiguousFromOne = placements.Select((placement, index) => placement == index + 1).All(ok => ok);
+
+        return isContiguousFromOne && placements.Count <= maxParticipants
+            ? null
+            : TournamentErrors.InvalidPrizePlacements(maxParticipants);
+    }
+
+    public static IError? ValidatePrizePlacementsSupportedByFormat(IReadOnlyCollection<PrizeInput> prizes, TournamentFormat format)
+        => format == TournamentFormat.SingleElimination && prizes.Any(p => p.Placement > 2)
+            ? TournamentErrors.PrizePlacementNotSupportedForFormat(format)
+            : null;
+
+    public static IError? ValidatePaidTermsCanChange(int tournamentId, PrizePoolStatus prizePoolStatus, int entryCount)
+        => (prizePoolStatus is PrizePoolStatus.NotRequired or PrizePoolStatus.Unfunded) && entryCount == 0
+            ? null
+            : TournamentErrors.PaidTermsLocked(tournamentId);
+
+    public static IError? ValidatePrizePoolAllowsOpening(int tournamentId, PrizePoolStatus prizePoolStatus, TournamentStatus newStatus)
+        => newStatus == TournamentStatus.Open && prizePoolStatus is not (PrizePoolStatus.NotRequired or PrizePoolStatus.Funded)
+            ? TournamentErrors.PrizePoolNotFunded(tournamentId)
+            : null;
 }
