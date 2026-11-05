@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Respawn;
+using Serilog.Core;
 using System.Threading.RateLimiting;
 using Testcontainers.MsSql;
 using TournamentAPI.Data;
@@ -39,6 +40,8 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
 
     public RecordingStripeWebhookHandler RecordingWebhookHandler { get; } = new();
 
+    public CapturingLogSink LogCapture { get; } = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -49,7 +52,9 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
                 ["Stripe:SecretKey"] = "sk_test_integration_placeholder",
                 ["Stripe:WebhookSigningSecret"] = StripeWebhookPayloads.TestSigningSecret,
                 ["Stripe:OnboardingRefreshUrl"] = "https://tournamentapi.test/payouts/onboarding/refresh",
-                ["Stripe:OnboardingReturnUrl"] = "https://tournamentapi.test/payouts/onboarding/return"
+                ["Stripe:OnboardingReturnUrl"] = "https://tournamentapi.test/payouts/onboarding/return",
+                ["PaidTournaments:FundingSuccessUrl"] = "https://tournamentapi.test/prize-pool/funded",
+                ["PaidTournaments:FundingCancelUrl"] = "https://tournamentapi.test/prize-pool/cancelled"
             }));
 
         builder.ConfigureTestServices(services =>
@@ -74,6 +79,8 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
                     RateLimitPartition.GetNoLimiter("no-limit"));
             });
 
+            services.AddSingleton<ILogEventSink>(LogCapture);
+
             services.RemoveAll<IStripeGateway>();
             services.AddSingleton<IStripeGateway>(StripeGateway);
 
@@ -86,6 +93,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
     {
         StripeGateway.Reset();
         RecordingWebhookHandler.Reset();
+        LogCapture.Reset();
         CommandHook.Reset();
     }
 
