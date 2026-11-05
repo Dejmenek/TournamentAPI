@@ -18,6 +18,8 @@ internal static class PaymentsExtensions
         services.AddSingleton<IStripeGateway, StripeGateway>();
         services.AddScoped<StripeWebhookProcessor>();
         services.AddSingleton<IStripeWebhookHandler, StripeAccountUpdatedHandler>();
+        services.AddSingleton<IStripeWebhookHandler, StripeCheckoutSessionCompletedHandler>();
+        services.AddSingleton<IStripeWebhookHandler, StripeCheckoutSessionExpiredHandler>();
 
         return services;
     }
