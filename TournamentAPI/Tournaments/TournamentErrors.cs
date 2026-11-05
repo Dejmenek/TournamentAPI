@@ -172,6 +172,13 @@ public static class TournamentErrors
             .SetExtension("TournamentId", tournamentId)
             .Build();
 
+    public static IError PrizePoolFundingInProgress(int tournamentId) =>
+        ErrorBuilder.New()
+            .SetMessage("Entry fee and prizes cannot change while a prize pool payment session is open. Wait for it to expire.")
+            .SetCode(TournamentErrorCodes.PrizePoolFundingInProgress)
+            .SetExtension("TournamentId", tournamentId)
+            .Build();
+
     public static IError PrizePoolNotFunded(int? tournamentId)
     {
         var builder = ErrorBuilder.New()

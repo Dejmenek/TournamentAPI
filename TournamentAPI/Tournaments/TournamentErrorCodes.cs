@@ -26,4 +26,5 @@ public static class TournamentErrorCodes
     public const string PrizePlacementNotSupportedForFormat = "Tournament.PrizePlacementNotSupportedForFormat";
     public const string PaidTermsLocked = "Tournament.PaidTermsLocked";
     public const string PrizePoolNotFunded = "Tournament.PrizePoolNotFunded";
+    public const string PrizePoolFundingInProgress = "Tournament.PrizePoolFundingInProgress";
 }
