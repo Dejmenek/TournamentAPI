@@ -28,6 +28,13 @@ public static class PaymentErrors
             .SetExtension("TournamentId", tournamentId)
             .Build();
 
+    public static IError PrizePoolNotFundable(int tournamentId) =>
+        ErrorBuilder.New()
+            .SetMessage("The prize pool can only be funded while the tournament is closed, has not started, and its pool is unfunded.")
+            .SetCode(PaymentErrorCodes.PrizePoolNotFundable)
+            .SetExtension("TournamentId", tournamentId)
+            .Build();
+
     public static IError PayoutAccountNotEnabled(int ownerId) =>
         ErrorBuilder.New()
             .SetMessage("The tournament owner's payout account must be enabled before a tournament with an entry fee can open.")
