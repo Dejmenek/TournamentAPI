@@ -333,6 +333,22 @@ public class StartStripeOnboardingResult
     public StripeOnboardingLinkNode? StripeOnboardingLink { get; set; }
 }
 
+public class FundTournamentPrizePoolResponse
+{
+    public FundTournamentPrizePoolResult? FundTournamentPrizePool { get; set; }
+}
+
+public class FundTournamentPrizePoolResult
+{
+    public PrizePoolFundingLinkNode? PrizePoolFundingLink { get; set; }
+}
+
+public class PrizePoolFundingLinkNode
+{
+    public string Url { get; set; } = string.Empty;
+    public DateTime? ExpiresAt { get; set; }
+}
+
 public class StripeOnboardingLinkNode
 {
     public string Url { get; set; } = string.Empty;

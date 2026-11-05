@@ -153,6 +153,14 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
             .HasForeignKey(e => e.PerformedByUserId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<Tournament>()
+            .Property(t => t.FundingSessionId)
+            .HasMaxLength(255);
+
+        builder.Entity<Tournament>()
+            .Property(t => t.FundingChargeId)
+            .HasMaxLength(255);
+
         builder.Entity<MatchCorrectionAudit>()
             .HasIndex(e => e.MatchId);
 

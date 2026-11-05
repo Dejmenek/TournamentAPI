@@ -13,5 +13,16 @@ public static partial class Mutations
               }
             }
             """;
+
+        public const string FundTournamentPrizePool = """
+            mutation FundTournamentPrizePool($input: FundTournamentPrizePoolInput!) {
+              fundTournamentPrizePool(input: $input) {
+                prizePoolFundingLink {
+                  url
+                  expiresAt
+                }
+              }
+            }
+            """;
     }
 }

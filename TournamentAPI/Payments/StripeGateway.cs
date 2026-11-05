@@ -14,6 +14,44 @@ public class StripeGateway : IStripeGateway
         _client = client;
     }
 
+    public Task<Session> CreateCheckoutSessionAsync(CheckoutSessionRequest request, CancellationToken cancellationToken)
+    {
+        var options = new SessionCreateOptions
+        {
+            Mode = PrizePoolFunding.CheckoutModePayment,
+            AllowedPaymentMethodTypes = [PrizePoolFunding.CardPaymentMethod],
+            SuccessUrl = request.SuccessUrl,
+            CancelUrl = request.CancelUrl,
+            ExpiresAt = request.ExpiresAt,
+            LineItems =
+            [
+                new SessionLineItemOptions
+                {
+                    Quantity = 1,
+                    PriceData = new SessionLineItemPriceDataOptions
+                    {
+                        Currency = request.Currency,
+                        UnitAmount = request.Amount,
+                        ProductData = new SessionLineItemPriceDataProductDataOptions { Name = request.ProductName }
+                    }
+                }
+            ],
+            PaymentIntentData = new SessionPaymentIntentDataOptions
+            {
+                TransferGroup = request.TransferGroup,
+                Metadata = request.Metadata.ToDictionary(m => m.Key, m => m.Value)
+            },
+            Metadata = request.Metadata.ToDictionary(m => m.Key, m => m.Value)
+        };
+
+        var requestOptions = new RequestOptions { IdempotencyKey = request.IdempotencyKey };
+
+        return _client.V1.Checkout.Sessions.CreateAsync(options, requestOptions, cancellationToken);
+    }
+
+    public Task<PaymentIntent> GetPaymentIntentAsync(string paymentIntentId, CancellationToken cancellationToken)
+        => _client.V1.PaymentIntents.GetAsync(paymentIntentId, cancellationToken: cancellationToken);
+
     public Task<Session> GetCheckoutSessionAsync(string sessionId, CancellationToken cancellationToken)
         => _client.V1.Checkout.Sessions.GetAsync(sessionId, cancellationToken: cancellationToken);
 

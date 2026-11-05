@@ -316,10 +316,36 @@ public static partial class TournamentMutations
             }
         }
 
-        await context.SaveChangesAsync(token);
+        if (termsChanged)
+        {
+            await using var transaction = await context.Database.BeginTransactionAsync(token);
+
+            if (!await HoldsNoFundingSessionAsync(context, tournament.Id, token))
+            {
+                resolverContext.ReportError(TournamentErrors.PrizePoolFundingInProgress(tournament.Id));
+                return null;
+            }
+
+            await context.SaveChangesAsync(token);
+            await transaction.CommitAsync(token);
+        }
+        else
+        {
+            await context.SaveChangesAsync(token);
+        }
 
         return context.Tournaments.AsNoTracking().Where(t => t.Id == tournament.Id).With(query);
     }
+
+    /// <summary>
+    /// Takes the tournament row lock with an update that changes nothing, and reports whether no funding session is stored.
+    /// Run inside the edit's transaction, it makes a concurrent session fill and the term edit commit one after the other,
+    /// so the second one sees the first one's result.
+    /// </summary>
+    private static async Task<bool> HoldsNoFundingSessionAsync(ApplicationDbContext context, int tournamentId, CancellationToken token)
+        => await context.Tournaments
+            .Where(t => t.Id == tournamentId && t.FundingSessionId == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(t => t.FundingSessionId, t => t.FundingSessionId), token) > 0;
 
     private static PrizePoolStatus PrizePoolStatusFor(int prizeCount)
         => prizeCount > 0 ? PrizePoolStatus.Unfunded : PrizePoolStatus.NotRequired;

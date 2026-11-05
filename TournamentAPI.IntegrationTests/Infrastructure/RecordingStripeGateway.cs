@@ -14,6 +14,10 @@ public sealed class RecordingStripeGateway : IStripeGateway
 
     public IReadOnlyList<StripeGatewayCall> Calls => _calls.ToArray();
 
+    public Func<CheckoutSessionRequest, Session> CreateCheckoutSessionResult { get; set; } = DefaultCreatedCheckoutSession;
+
+    public Func<string, PaymentIntent> PaymentIntentResult { get; set; } = DefaultPaymentIntent;
+
     public Func<string, Session> CheckoutSessionResult { get; set; } = DefaultCheckoutSession;
 
     public Func<string, Account> AccountResult { get; set; } = DefaultAccount;
@@ -21,6 +25,18 @@ public sealed class RecordingStripeGateway : IStripeGateway
     public Func<ConnectedAccountRequest, Account> ConnectedAccountResult { get; set; } = DefaultConnectedAccount;
 
     public Func<OnboardingLinkRequest, AccountLink>? OnboardingLinkResult { get; set; }
+
+    public Task<Session> CreateCheckoutSessionAsync(CheckoutSessionRequest request, CancellationToken cancellationToken)
+    {
+        _calls.Enqueue(new StripeGatewayCall(nameof(CreateCheckoutSessionAsync), request));
+        return Task.FromResult(CreateCheckoutSessionResult(request));
+    }
+
+    public Task<PaymentIntent> GetPaymentIntentAsync(string paymentIntentId, CancellationToken cancellationToken)
+    {
+        _calls.Enqueue(new StripeGatewayCall(nameof(GetPaymentIntentAsync), paymentIntentId));
+        return Task.FromResult(PaymentIntentResult(paymentIntentId));
+    }
 
     public Task<Session> GetCheckoutSessionAsync(string sessionId, CancellationToken cancellationToken)
     {
@@ -66,12 +82,30 @@ public sealed class RecordingStripeGateway : IStripeGateway
         _calls.Clear();
         Interlocked.Exchange(ref _accountLinkCounter, 0);
         CheckoutSessionResult = DefaultCheckoutSession;
+        CreateCheckoutSessionResult = DefaultCreatedCheckoutSession;
+        PaymentIntentResult = DefaultPaymentIntent;
         AccountResult = DefaultAccount;
         ConnectedAccountResult = DefaultConnectedAccount;
         OnboardingLinkResult = null;
     }
 
     private static Session DefaultCheckoutSession(string sessionId) => new() { Id = sessionId, Object = "checkout.session" };
+
+    private static Session DefaultCreatedCheckoutSession(CheckoutSessionRequest request) => new()
+    {
+        Id = $"cs_test_{request.IdempotencyKey}",
+        Object = "checkout.session",
+        Status = "open",
+        Url = $"https://checkout.stripe.com/c/pay/cs_test_{request.IdempotencyKey}",
+        ExpiresAt = request.ExpiresAt
+    };
+
+    private static PaymentIntent DefaultPaymentIntent(string paymentIntentId) => new()
+    {
+        Id = paymentIntentId,
+        Object = "payment_intent",
+        LatestChargeId = $"ch_test_{paymentIntentId}"
+    };
 
     private static Account DefaultAccount(string accountId) => new() { Id = accountId, Object = "account" };
 

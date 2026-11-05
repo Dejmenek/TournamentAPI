@@ -32,7 +32,9 @@ public class LoadTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifet
                 ["Stripe:SecretKey"] = "sk_test_load_test_placeholder",
                 ["Stripe:WebhookSigningSecret"] = "whsec_load_test_placeholder",
                 ["Stripe:OnboardingRefreshUrl"] = "https://tournamentapi.test/payouts/onboarding/refresh",
-                ["Stripe:OnboardingReturnUrl"] = "https://tournamentapi.test/payouts/onboarding/return"
+                ["Stripe:OnboardingReturnUrl"] = "https://tournamentapi.test/payouts/onboarding/return",
+                ["PaidTournaments:FundingSuccessUrl"] = "https://tournamentapi.test/prize-pool/funded",
+                ["PaidTournaments:FundingCancelUrl"] = "https://tournamentapi.test/prize-pool/cancelled"
             }));
 
         builder.ConfigureTestServices(services =>

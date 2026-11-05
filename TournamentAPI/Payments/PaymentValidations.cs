@@ -17,6 +17,13 @@ public static class PaymentValidations
     public static IError? ValidateTournamentDoesNotRequireCheckout(int tournamentId, long entryFeeAmount)
         => entryFeeAmount > 0 ? PaymentErrors.PaidTournamentRequiresCheckout(tournamentId) : null;
 
+    public static IError? ValidatePrizePoolFundable(Tournament tournament, DateTime now)
+        => tournament.Status == TournamentStatus.Closed
+           && tournament.StartDate > now
+           && tournament.PrizePoolStatus == PrizePoolStatus.Unfunded
+            ? null
+            : PaymentErrors.PrizePoolNotFundable(tournament.Id);
+
     public static IError? ValidatePayoutAccountEnabledForPaidTournament(int ownerId, long entryFeeAmount, PayoutAccountStatus payoutAccountStatus)
         => entryFeeAmount > 0 && payoutAccountStatus != PayoutAccountStatus.Enabled ? PaymentErrors.PayoutAccountNotEnabled(ownerId) : null;
 }

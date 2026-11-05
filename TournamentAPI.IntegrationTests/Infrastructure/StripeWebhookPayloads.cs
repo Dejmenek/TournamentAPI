@@ -73,6 +73,35 @@ public static class StripeWebhookPayloads
                     : new Dictionary<string, object?> { [StripeGateway.UserIdMetadataKey] = metadataUserId.Value.ToString() }
             });
 
+    public static SignedStripeEvent CheckoutSessionCompleted(
+        string sessionId,
+        string? paymentIntentId = null,
+        string sessionType = PrizePoolFunding.SessionTypeValue) =>
+        Create(
+            "checkout.session.completed",
+            dataObject: CheckoutSessionObject(sessionId, "complete", sessionType, paymentIntentId ?? $"pi_{sessionId}"));
+
+    public static SignedStripeEvent CheckoutSessionExpired(
+        string sessionId,
+        string sessionType = PrizePoolFunding.SessionTypeValue) =>
+        Create(
+            "checkout.session.expired",
+            dataObject: CheckoutSessionObject(sessionId, "expired", sessionType, paymentIntentId: null));
+
+    private static Dictionary<string, object?> CheckoutSessionObject(
+        string sessionId,
+        string status,
+        string sessionType,
+        string? paymentIntentId) =>
+        new()
+        {
+            ["id"] = sessionId,
+            ["object"] = "checkout.session",
+            ["status"] = status,
+            ["payment_intent"] = paymentIntentId,
+            ["metadata"] = new Dictionary<string, object?> { [PrizePoolFunding.SessionTypeMetadataKey] = sessionType }
+        };
+
     public static HttpRequestMessage ToRequest(this SignedStripeEvent signedEvent, string? signatureHeader = null)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "/webhooks/stripe")

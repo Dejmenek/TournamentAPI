@@ -19,6 +19,15 @@ public class Tournament : ISoftDeletable
     public ICollection<TournamentPrize> Prizes { get; set; } = new List<TournamentPrize>();
 
     [GraphQLIgnore]
+    public string? FundingSessionId { get; set; }
+    [GraphQLIgnore]
+    public DateTime? FundingSessionExpiresAt { get; set; }
+    [GraphQLIgnore]
+    public string? FundingChargeId { get; set; }
+    [GraphQLIgnore]
+    public int FundingSessionAttempt { get; set; }
+
+    [GraphQLIgnore]
     public bool IsDeleted { get; set; }
 
     [GraphQLIgnore]
