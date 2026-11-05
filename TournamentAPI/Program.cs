@@ -57,9 +57,10 @@ builder.Services.AddApplicationPayments();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<TournamentAutoCloseJob>();
 
-builder.Services.AddSerilog((_, loggerConfiguration) =>
+builder.Services.AddSerilog((services, loggerConfiguration) =>
     loggerConfiguration
         .ReadFrom.Configuration(builder.Configuration)
+        .ReadFrom.Services(services)
         .Enrich.FromLogContext()
         .WriteTo.Console()
         .WriteTo.OpenTelemetry(opt =>
